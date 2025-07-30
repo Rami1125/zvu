@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת הזמנות</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 2.5rem;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            direction: rtl; /* Right-to-left for Hebrew */
+            text-align: right; /* Align text to the right */
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #334155; /* Darker text for labels */
+        }
+        input[type="text"], input[type="tel"], select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1; /* Light gray border */
+            border-radius: 0.75rem; /* Rounded input fields */
+            font-size: 1rem;
+            color: #475569; /* Medium gray text */
+            background-color: #f8fafc; /* Very light background for inputs */
+        }
+        input[type="file"] {
+            padding: 0.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            background-color: #f8fafc;
+        }
+        button {
+            width: 100%;
+            padding: 0.85rem 1.5rem;
+            background-color: #3b82f6; /* Blue button */
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+        button:hover {
+            background-color: #2563eb; /* Darker blue on hover */
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background-color: #e2e8f0; /* Lighter gray for product items */
+            border-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .product-item img {
+            width: 60px;
+            height: 60px;
+            border-radius: 0.5rem;
+            object-fit: cover;
+            margin-left: 1rem; /* Margin to the left for RTL */
+            border: 1px solid #cbd5e1;
+        }
+        .product-details {
+            flex-grow: 1;
+        }
+        .product-details p {
+            margin: 0;
+            color: #334155;
+        }
+        .product-details .product-name {
+            font-weight: 600;
+        }
+        .product-details .product-sku {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        .history-item {
+            background-color: #f0f4f8;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            color: #475569;
+            font-size: 0.95rem;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3b82f6;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            display: none; /* Hidden by default */
+            text-align: center;
+            max-width: 80%;
+        }
+        .message-box h3 {
+            color: #334155;
+            margin-bottom: 1rem;
+        }
+        .message-box p {
+            color: #475569;
+            margin-bottom: 1.5rem;
+        }
+        .message-box button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>טוען נתונים...</p>
+    </div>
+
+    <div class="message-box" id="messageBox">
+        <h3 id="messageBoxTitle"></h3>
+        <p id="messageBoxContent"></p>
+        <button onclick="hideMessageBox()">אישור</button>
+    </div>
+
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">מערכת הזמנות</h1>
+
+        <div class="form-group">
+            <label for="familySelect">בחר משפחה:</label>
+            <select id="familySelect" class="form-control">
+                <option value="">בחר משפחה</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="addressInput">כתובת אספקה:</label>
+            <input type="text" id="addressInput" class="form-control" placeholder="כתובת אספקה" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="contactInput">איש קשר:</label>
+            <input type="text" id="contactInput" class="form-control" placeholder="איש קשר" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="phoneInput">טלפון:</label>
+            <input type="tel" id="phoneInput" class="form-control" placeholder="טלפון" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="historyDisplay">היסטוריית הזמנות קודמות:</label>
+            <div id="historyDisplay" class="bg-gray-100 p-4 rounded-xl max-h-48 overflow-y-auto">
+                <p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 mt-8">הזמנה חדשה</h2>
+
+        <div id="productsContainer">
+            <div class="form-group product-selection">
+                <label for="productSelect_0">בחר מוצר:</label>
+                <select id="productSelect_0" class="form-control product-select">
+                    <option value="">בחר מוצר</option>
+                </select>
+                <label for="quantityInput_0" class="mt-2">כמות:</label>
+                <input type="number" id="quantityInput_0" class="form-control quantity-input" value="1" min="1">
+                <div class="product-info mt-2" id="productInfo_0"></div>
+            </div>
+        </div>
+        <button id="addProductBtn" class="bg-green-500 hover:bg-green-600 mb-6">הוסף מוצר</button>
+
+        <div class="form-group">
+            <label for="productImage">צרף צילום מוצר מהשטח:</label>
+            <input type="file" id="productImage" accept="image/*" capture="camera">
+        </div>
+
+        <button id="submitOrderBtn">שלח הזמנה לוואטסאפ ושמור</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
