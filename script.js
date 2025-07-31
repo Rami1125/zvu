@@ -526,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const product = productsCatalog.find(p => p.name === selectedProductName);
                 orderedProducts.push({
                     name: selectedProductName,
-                    sku: product ? product.sku : 'N/A', // Use SKU if found, else N/A for free text
+                    sku: product ? product.sku : 'N/A', // Use SKU if found, else N/A
                     quantity: quantity
                 });
             }
