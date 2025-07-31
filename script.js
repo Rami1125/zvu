@@ -1,5 +1,8 @@
 // Function to show SweetAlert2 messages (Toast style)
 function showToast(icon, title, text) {
+    // Determine toast duration based on text length
+    const duration = text.length > 19 ? 5000 : 3000; // 5 seconds for long text, 3 for short
+
     Swal.fire({
         icon: icon,
         title: title,
@@ -7,7 +10,7 @@ function showToast(icon, title, text) {
         toast: true,
         position: 'top-end',
         showConfirmButton: false,
-        timer: 3000,
+        timer: duration,
         timerProgressBar: true,
         didOpen: (toast) => {
             toast.addEventListener('mouseenter', Swal.stopTimer);
@@ -38,10 +41,10 @@ let productsCatalog = []; // Stores product catalog fetched from Google Sheet "�
 let previousOrdersHistory = []; // Stores previous orders for smart history from "הזמנות קודמות"
 let currentOrderProducts = []; // Stores products currently added to the order for display/editing
 
-// Google Apps Script Web App URL (REPLACE THIS WITH YOUR DEPLOYED WEB APP URL)
+// Google Apps Script Web App URL
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzKYuXRpGAXXOn7pVfdjsDe4Xs7aNTmuEJcJqBgjhhXCt8N4EyLbKIsXLOwOqsUXx829Q/exec';
-// Company WhatsApp Number (REPLACE THIS WITH YOUR COMPANY'S WHATSAPP NUMBER, e.g., '9725XXXXXXXX')
-const COMPANY_WHATSAPP_NUMBER = '972508860896'; // Updated WhatsApp number
+// Company WhatsApp Number
+const COMPANY_WHATSAPP_NUMBER = '972508860896';
 
 // Current step in the order process
 let currentStep = 1;
@@ -226,18 +229,20 @@ function addProductSelection() {
     // Event listener for product search input (datalist)
     productSearchInput.addEventListener('input', (event) => {
         const typedValue = event.target.value;
-        // Filter datalist options based on typed value (at least 3 characters)
-        const filteredProducts = productsCatalog.filter(p =>
-            typedValue.length >= 3 && p.name.toLowerCase().includes(typedValue.toLowerCase())
-        );
-        const productOptions = document.getElementById('productOptions');
-        productOptions.innerHTML = ''; // Clear previous options
-        filteredProducts.forEach(product => {
-            const option = document.createElement('option');
-            option.value = product.name;
-            option.setAttribute('data-sku', product.sku);
-            productOptions.appendChild(option);
-        });
+        const productOptionsDatalist = document.getElementById('productOptions');
+        productOptionsDatalist.innerHTML = ''; // Clear previous options
+
+        if (typedValue.length >= 3) {
+            const filteredProducts = productsCatalog.filter(p =>
+                p.name.toLowerCase().includes(typedValue.toLowerCase())
+            );
+            filteredProducts.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.name;
+                option.setAttribute('data-sku', product.sku);
+                productOptionsDatalist.appendChild(option);
+            });
+        }
 
         const selectedProductName = typedValue; // Use the typed value for lookup
         const selectedProduct = productsCatalog.find(p => p.name === selectedProductName);
@@ -626,77 +631,123 @@ function closeConfirmationModal() {
     document.getElementById('orderConfirmationModal').classList.remove('active');
 }
 
-async function saveReceiptAsImage() {
-    showLoading('מכין תמונה...');
-    const receiptContent = document.getElementById('receiptContent');
+async function handleSaveAndShare() {
+    const orderConfirmationModalButton = document.querySelector('#orderConfirmationModal .btn-primary');
+    orderConfirmationModalButton.disabled = true; // Disable button to prevent double click
+    orderConfirmationModalButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שולח...';
+
+    closeConfirmationModal(); // Close modal first
+    showLoading('שולח הזמנה ושומר...');
+
+    const familyName = document.getElementById('familySelect').value;
+    const address = document.getElementById('addressInput').value;
+    const contact = document.getElementById('contactInput').value;
+    const phone = document.getElementById('phoneInput').value;
+    const deliveryType = document.getElementById('deliveryType').value;
+    const productImageFile = document.getElementById('productImage').files[0];
+    let base64Image = null;
+
+    if (productImageFile) {
+        try {
+            base64Image = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(productImageFile);
+            });
+        } catch (error) {
+            console.error('Error converting image to base64 for submission:', error);
+            showToast('error', 'שגיאה', 'אירעה שגיאה בהמרת התמונה לשליחה. נסה שוב.');
+            hideLoading();
+            orderConfirmationModalButton.disabled = false;
+            orderConfirmationModalButton.innerHTML = '<i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאפ';
+            return;
+        }
+    }
+
+    const orderData = {
+        timestamp: new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }),
+        familyName,
+        address,
+        contact,
+        phone,
+        products: currentOrderProducts.map(p => ({
+            name: p.name,
+            sku: p.sku,
+            quantity: p.quantity,
+            note: p.note
+        })),
+        imageData: base64Image,
+        imageFileName: productImageFile ? productImageFile.name : null,
+        deliveryType
+    };
+
     try {
-        const canvas = await html2canvas(receiptContent, {
-            scale: 2, // Increase scale for better quality
-            useCORS: true, // Enable CORS for images if any
-            backgroundColor: '#f0f4f8' // Match receipt background
+        const response = await fetch(`${WEB_APP_URL}?action=submitOrder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
         });
-        const imageDataURL = canvas.toDataURL('image/png');
+        const result = await response.json();
 
-        // Create a temporary link to download the image
-        const link = document.createElement('a');
-        link.href = imageDataURL;
-        link.download = `הזמנה_${document.getElementById('familySelect').value}_${new Date().getTime()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        if (result.success) {
+            showToast('success', 'הזמנה נשלחה', result.message);
 
-        hideLoading();
-        showToast('success', 'תמונה נשמרה', 'תעודת המשלוח נשמרה כתמונה!');
-
-        // Optionally, offer to share on WhatsApp with the image
-        Swal.fire({
-            title: 'האם תרצה לשתף את סיכום ההזמנה בוואטסאפ?',
-            showCancelButton: true,
-            confirmButtonText: 'כן, שתף',
-            cancelButtonText: 'לא תודה',
-            icon: 'question',
-            customClass: {
-                confirmButton: 'btn btn-primary',
-                cancelButton: 'btn btn-secondary'
-            },
-            buttonsStyling: false
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Generate WhatsApp message from currentOrderProducts
-                const familyName = document.getElementById('familySelect').value;
-                const address = document.getElementById('addressInput').value;
-                const contact = document.getElementById('contactInput').value;
-                const phone = document.getElementById('phoneInput').value;
-                const deliveryType = document.getElementById('deliveryType').value;
-
-                let whatsappMessage = `📦 הזמנה חדשה מבית סבן\n\n`;
-                whatsappMessage += `*משפחה:* ${familyName}\n`;
-                whatsappMessage += `*כתובת:* ${address}\n`;
-                whatsappMessage += `*איש קשר:* ${contact} ${phone}\n`;
-                whatsappMessage += `*סוג הובלה:* ${deliveryType || 'לא נבחר'}\n`;
-                whatsappMessage += `\n🧾 *מוצרים:*\n`;
-                currentOrderProducts.forEach(p => { // Use currentOrderProducts for WhatsApp
-                    whatsappMessage += `• ${p.name} × ${p.quantity}`;
-                    if (p.note) {
-                        whatsappMessage += ` (הערה: ${p.note})`;
-                    }
-                    whatsappMessage += `\n`;
-                });
-                whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
-                const productImageFile = document.getElementById('productImage').files[0];
-                if (productImageFile) {
-                    whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
+            // Generate WhatsApp message
+            let whatsappMessage = `📦 הזמנה חדשה מבית סבן\n\n`;
+            whatsappMessage += `*משפחה:* ${familyName}\n`;
+            whatsappMessage += `*כתובת:* ${address}\n`;
+            whatsappMessage += `*איש קשר:* ${contact} ${phone}\n`;
+            whatsappMessage += `*סוג הובלה:* ${deliveryType || 'לא נבחר'}\n`;
+            whatsappMessage += `\n🧾 *מוצרים:*\n`;
+            currentOrderProducts.forEach(p => {
+                whatsappMessage += `• ${p.name} × ${p.quantity}`;
+                if (p.note) {
+                    whatsappMessage += ` (הערה: ${p.note})`;
                 }
-
-                const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
-                window.open(whatsappUrl, '_blank');
+                whatsappMessage += `\n`;
+            });
+            whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
+            if (productImageFile) {
+                whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
             }
-        });
 
+            const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+            window.open(whatsappUrl, '_blank');
+
+            // Clear form after successful submission
+            document.getElementById('familySelect').value = '';
+            updateProgressBar(1); // Reset to Step 1
+            document.getElementById('dynamicFamilyHeading').classList.add('hidden');
+            document.getElementById('familyDetailsForm').classList.add('hidden');
+            document.getElementById('addressInput').value = '';
+            document.getElementById('addressInput').setAttribute('readonly', true);
+            document.getElementById('contactInput').value = '';
+            document.getElementById('contactInput').setAttribute('readonly', true);
+            document.getElementById('phoneInput').value = '';
+            document.getElementById('phoneInput').setAttribute('readonly', true);
+            document.getElementById('deliveryType').value = '';
+            document.getElementById('historyDisplay').innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
+            document.getElementById('productsContainer').innerHTML = '';
+            productRowCounter = 0;
+            currentOrderProducts = [];
+            addProductSelection();
+            renderCurrentOrderProducts();
+            document.getElementById('productImage').value = '';
+
+            // Re-fetch data to update history for next order
+            fetchDataFromGoogleSheets();
+
+        } else {
+            showToast('error', 'שגיאה', result.message || 'אירעה שגיאה בשליחת ההזמנה.');
+        }
     } catch (error) {
-        console.error('Error converting to image:', error);
+        console.error('Error submitting order:', error);
+        showToast('error', 'שגיאה', `אירעה שגיאה בשליחת ההזמנה: ${error.message}. נסה שוב מאוחר יותר.`);
+    } finally {
         hideLoading();
-        showToast('error', 'שגיאה', 'אירעה שגיאה בשמירת התמונה. נסה שוב.');
+        orderConfirmationModalButton.disabled = false;
+        orderConfirmationModalButton.innerHTML = '<i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאפ';
     }
 }
 
@@ -720,6 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const deliveryTypeSelect = document.getElementById('deliveryType');
     const addHistoricalProductButton = document.getElementById('addHistoricalProductBtn');
     const productFilterInput = document.getElementById('productFilterInput');
+    const saveAndShareButton = document.querySelector('#orderConfirmationModal .btn-primary');
 
 
     // Event listener for adding historical product from modal
@@ -730,6 +782,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listener for product filter in the current order list
     if (productFilterInput) {
         productFilterInput.addEventListener('input', renderCurrentOrderProducts);
+    }
+
+    // Attach the single event listener for the modal's primary button
+    if (saveAndShareButton) {
+        saveAndShareButton.addEventListener('click', handleSaveAndShare);
     }
 
 
@@ -749,6 +806,9 @@ document.addEventListener('DOMContentLoaded', () => {
             contactInput.removeAttribute('readonly'); // Make editable
             phoneInput.value = data.phone || '';
             phoneInput.removeAttribute('readonly'); // Make editable
+
+            // Show welcome message
+            showToast('info', 'ברוך הבא!', `שלום ${data.contact || selectedFamilyName}, ברוך הבא למערכת ההזמנות!`);
 
 
             // Populate history display
@@ -866,117 +926,26 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('All validations passed. Proceeding with order submission.');
         // --- End Debugging logs ---
 
-
-        const productImageFile = document.getElementById('productImage').files[0];
-        let base64Image = null;
-        if (productImageFile) {
-            showLoading('מעלה תמונה...');
-            try {
-                base64Image = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(productImageFile);
-                });
-            } catch (error) {
-                console.error('Error converting image to base64:', error);
-                showToast('error', 'שגיאה', 'אירעה שגיאה בהמרת התמונה. נסה שוב.');
-                hideLoading();
-                return;
-            }
-        }
-
-        const orderData = {
+        // Prepare data for the confirmation modal
+        const orderSummaryData = {
             timestamp: new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }),
             familyName,
             address,
             contact,
             phone,
-            products: currentOrderProducts.map(p => ({ // Map currentOrderProducts to the format expected by Apps Script
+            products: currentOrderProducts.map(p => ({
                 name: p.name,
                 sku: p.sku,
                 quantity: p.quantity,
                 note: p.note
             })),
-            imageData: base64Image,
-            imageFileName: productImageFile ? productImageFile.name : null,
-            deliveryType // Include delivery type in order data
+            // Image data will be retrieved again in handleSaveAndShare to avoid stale data
+            imageData: null, // Placeholder, will be populated in handleSaveAndShare
+            imageFileName: null, // Placeholder
+            deliveryType
         };
 
         updateProgressBar(4); // Move to Step 4 (Summary)
-        showConfirmationModal(orderData);
-
-        // Add an event listener to the "Save as Image" button in the modal
-        // This button will also trigger the actual submission to Google Sheets
-        document.querySelector('#orderConfirmationModal .btn-primary').onclick = async () => {
-            closeConfirmationModal(); // Close modal first
-            showLoading('שולח הזמנה ושומר...');
-            try {
-                const response = await fetch(`${WEB_APP_URL}?action=submitOrder`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderData)
-                });
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast('success', 'הזמנה נשלחה', result.message);
-
-                    // Generate WhatsApp message
-                    let whatsappMessage = `📦 הזמנה חדשה מבית סבן\n\n`;
-                    whatsappMessage += `*משפחה:* ${familyName}\n`;
-                    whatsappMessage += `*כתובת:* ${address}\n`;
-                    whatsappMessage += `*איש קשר:* ${contact} ${phone}\n`;
-                    whatsappMessage += `*סוג הובלה:* ${deliveryType || 'לא נבחר'}\n`;
-                    whatsappMessage += `\n🧾 *מוצרים:*\n`;
-                    currentOrderProducts.forEach(p => { // Use currentOrderProducts for WhatsApp
-                        whatsappMessage += `• ${p.name} × ${p.quantity}`;
-                        if (p.note) {
-                            whatsappMessage += ` (הערה: ${p.note})`;
-                        }
-                        whatsappMessage += `\n`;
-                    });
-                    whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
-                    const productImageFile = document.getElementById('productImage').files[0];
-                    if (productImageFile) {
-                        whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
-                    }
-
-                    const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
-                    window.open(whatsappUrl, '_blank');
-
-                    // Clear form after successful submission
-                    familySelect.value = '';
-                    updateProgressBar(1); // Reset to Step 1
-                    dynamicFamilyHeading.classList.add('hidden');
-                    familyDetailsForm.classList.add('hidden');
-                    addressInput.value = '';
-                    addressInput.setAttribute('readonly', true); // Make readonly again
-                    contactInput.value = '';
-                    contactInput.setAttribute('readonly', true); // Make readonly again
-                    phoneInput.value = '';
-                    phoneInput.setAttribute('readonly', true); // Make readonly again
-                    deliveryTypeSelect.value = '';
-                    historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
-                    document.getElementById('productsContainer').innerHTML = '';
-                    productRowCounter = 0; // Reset counter
-                    currentOrderProducts = []; // Clear current order products after successful submission
-                    addProductSelection(); // Add initial product row
-                    renderCurrentOrderProducts(); // Render the empty current order list
-                    document.getElementById('productImage').value = ''; // Clear file input
-
-                    // Re-fetch data to update history for next order
-                    fetchDataFromGoogleSheets();
-
-                } else {
-                    showToast('error', 'שגיאה', result.message || 'אירעה שגיאה בשליחת ההזמנה.');
-                }
-            } catch (error) {
-                console.error('Error submitting order:', error);
-                showToast('error', 'שגיאה', `אירעה שגיאה בשליחת ההזמנה: ${error.message}. נסה שוב מאוחר יותר.`);
-            } finally {
-                hideLoading();
-            }
-        };
+        showConfirmationModal(orderSummaryData);
     });
 });
