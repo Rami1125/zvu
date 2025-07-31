@@ -628,11 +628,15 @@ function showConfirmationModal(orderSummary) {
         </p>
     `;
 
+    // CRITICAL FIX: Ensure the 'hidden' class is removed before adding 'active'
+    modal.classList.remove('hidden');
     modal.classList.add('active');
 }
 
 function closeConfirmationModal() {
     document.getElementById('orderConfirmationModal').classList.remove('active');
+    // It's good practice to also add 'hidden' back when closing if it's used for display control
+    document.getElementById('orderConfirmationModal').classList.add('hidden');
 }
 
 async function handleSaveAndShare() {
