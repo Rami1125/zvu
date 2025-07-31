@@ -36,11 +36,12 @@ function hideLoading() {
 let familiesData = {}; // Stores family details fetched from Google Sheet "לקוחות"
 let productsCatalog = []; // Stores product catalog fetched from Google Sheet "מחסן מוצרים"
 let previousOrdersHistory = []; // Stores previous orders for smart history from "הזמנות קודמות"
+let currentOrderProducts = []; // Stores products currently added to the order for display/editing
 
 // Google Apps Script Web App URL (REPLACE THIS WITH YOUR DEPLOYED WEB APP URL)
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzKYuXRpGAXXOn7pVfdjsDe4Xs7aNTmuEJcJqBgjhhXCt8N4EyLbKIsXLOwOqsUXx829Q/exec';
 // Company WhatsApp Number (REPLACE THIS WITH YOUR COMPANY'S WHATSAPP NUMBER, e.g., '9725XXXXXXXX')
-const COMPANY_WHATSAPP_NUMBER = '972508860896';
+const COMPANY_WHATSAPP_NUMBER = '972508860896'; // Updated WhatsApp number
 
 // Current step in the order process
 let currentStep = 1;
@@ -217,6 +218,8 @@ function addProductSelection() {
     // Add event listeners for the new product row
     const productSearchInput = document.getElementById(`productSearch_${currentIndex}`);
     const freeTextProductInput = document.getElementById(`freeTextProduct_${currentIndex}`);
+    const quantityInput = document.getElementById(`quantityInput_${currentIndex}`);
+    const productNoteInput = document.getElementById(`productNote_${currentIndex}`);
     const productInfoDiv = document.getElementById(`productInfo_${currentIndex}`);
     const productHistoryInfoDiv = document.getElementById(`productHistoryInfo_${currentIndex}`);
 
@@ -232,7 +235,7 @@ function addProductSelection() {
         if (selectedProduct) {
             productInfoDiv.innerHTML = `
                 <div class="product-item-display">
-                    <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';">
+                    <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${selectedProduct.imageUrl}')">
                     <div class="product-details-display">
                         <p class="product-name-display">${selectedProduct.name}</p>
                         <p class="product-sku-display">מק"ט: ${selectedProduct.sku}</p>
@@ -240,6 +243,18 @@ function addProductSelection() {
                 </div>
             `;
             updateProductHistoryDisplay(selectedProductName, productHistoryInfoDiv);
+            // Add to currentOrderProducts immediately if selected from datalist
+            addOrUpdateCurrentOrderProduct({
+                name: selectedProductName,
+                sku: selectedProduct.sku,
+                imageUrl: selectedProduct.imageUrl,
+                quantity: parseInt(quantityInput.value, 10),
+                note: productNoteInput.value.trim()
+            }, currentIndex);
+        } else {
+            // If no product is selected from datalist, clear its entry from currentOrderProducts
+            // This is crucial for when user types something that isn't a valid product
+            removeCurrentOrderProduct(currentIndex); // Remove if no valid product found
         }
     });
 
@@ -251,6 +266,44 @@ function addProductSelection() {
             productInfoDiv.innerHTML = ''; // Clear product info display
             productHistoryInfoDiv.innerHTML = ''; // Clear history info
             // No history for free text products as they are not in catalog
+            // Add to currentOrderProducts immediately if free text is entered
+            addOrUpdateCurrentOrderProduct({
+                name: event.target.value.trim(),
+                sku: 'N/A', // SKU is N/A for free text
+                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                quantity: parseInt(quantityInput.value, 10),
+                note: productNoteInput.value.trim()
+            }, currentIndex);
+        } else {
+            // If free text is cleared, remove its entry from currentOrderProducts
+            removeCurrentOrderProduct(currentIndex);
+        }
+    });
+
+    // Event listeners for quantity and note changes to update currentOrderProducts
+    quantityInput.addEventListener('input', () => {
+        const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
+        if (selectedProductName) {
+            addOrUpdateCurrentOrderProduct({
+                name: selectedProductName,
+                sku: productsCatalog.find(p => p.name === selectedProductName)?.sku || 'N/A',
+                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                quantity: parseInt(quantityInput.value, 10),
+                note: productNoteInput.value.trim()
+            }, currentIndex);
+        }
+    });
+
+    productNoteInput.addEventListener('input', () => {
+        const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
+        if (selectedProductName) {
+            addOrUpdateCurrentOrderProduct({
+                name: selectedProductName,
+                sku: productsCatalog.find(p => p.name === selectedProductName)?.sku || 'N/A',
+                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                quantity: parseInt(quantityInput.value, 10),
+                note: productNoteInput.value.trim()
+            }, currentIndex);
         }
     });
 }
@@ -314,46 +367,152 @@ function addHistoricalProductToOrderForm() {
         // Find the product in the catalog to get SKU and image (if available)
         const product = productsCatalog.find(p => p.name === selectedHistoricalProductName);
         const sku = product ? product.sku : 'N/A';
+        const imageUrl = product ? product.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg';
 
-        // Add a new product row to the main order form
-        const productsContainer = document.getElementById('productsContainer');
-        const currentIndex = productRowCounter++; // Use global counter
-
-        const newProductDiv = document.createElement('div');
-        newProductDiv.className = 'form-group product-selection';
-        newProductDiv.innerHTML = `
-            <label for="productSearch_${currentIndex}" class="input-label">שם מוצר / מק"ט:</label>
-            <input type="text" id="productSearch_${currentIndex}" list="productOptions" class="form-control product-search-input" value="${selectedHistoricalProductName}" readonly>
-            <!-- The datalist is now global, no need to create it here again -->
-
-            <input type="text" id="freeTextProduct_${currentIndex}" class="form-control free-text-product-input mt-2" placeholder="הקלד שם מוצר ידנית (לא חובה)" style="display:none;">
-
-            <label for="quantityInput_${currentIndex}" class="input-label mt-2">כמות:</label>
-            <input type="number" id="quantityInput_${currentIndex}" class="form-control quantity-input" value="${quantity}" min="1">
-            <input type="text" id="productNote_${currentIndex}" class="form-control product-note-input mt-2" placeholder="הערה לאיש קשר למוצר (לא חובה)">
-            <div class="product-info-display mt-2" id="productInfo_${currentIndex}"></div>
-            <div class="product-history-info mt-2" id="productHistoryInfo_${currentIndex}"></div>
-        `;
-        productsContainer.appendChild(newProductDiv);
-
-        // Manually trigger display for the newly added product
-        const productInfoDiv = document.getElementById(`productInfo_${currentIndex}`);
-        productInfoDiv.innerHTML = `
-            <div class="product-item-display">
-                <img src="${product ? product.imageUrl : 'https://placehold.co/70x70/CCCCCC/000000?text=NoImg'}" alt="${selectedHistoricalProductName}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';">
-                <div class="product-details-display">
-                    <p class="product-name-display">${selectedHistoricalProductName}</p>
-                    <p class="product-sku-display">מק"ט: ${sku}</p>
-                </div>
-            </div>
-        `;
-        updateProductHistoryDisplay(selectedHistoricalProductName, document.getElementById(`productHistoryInfo_${currentIndex}`));
+        // Add to currentOrderProducts directly
+        // Assign a unique formIndex for this historical product, even if not tied to a visible form row initially
+        const newFormIndex = productRowCounter++;
+        addOrUpdateCurrentOrderProduct({
+            name: selectedHistoricalProductName,
+            sku: sku,
+            imageUrl: imageUrl,
+            quantity: quantity,
+            note: '', // No note from history selection initially
+            formIndex: newFormIndex // Assign a unique index
+        });
 
         showToast('success', 'נוסף בהצלחה', `'${selectedHistoricalProductName}' בכמות ${quantity} נוסף להזמנה.`);
         closeQuantitySelectionModal();
     } else {
         showToast('error', 'שגיאה', 'אנא בחר כמות חוקית.');
     }
+}
+
+
+// Function to add or update a product in the currentOrderProducts array
+// This function is called by the input change listeners in addProductSelection
+function addOrUpdateCurrentOrderProduct(productData, formIndex) {
+    // Ensure productData has a formIndex
+    if (formIndex === undefined) {
+        // If formIndex is not provided, this is likely a historical product being added
+        // It will get its formIndex from addHistoricalProductToOrderForm
+        console.warn("addOrUpdateCurrentOrderProduct called without formIndex. This should ideally come from addHistoricalProductToOrderForm or addProductSelection.");
+        return;
+    }
+
+    const existingIndex = currentOrderProducts.findIndex(p => p.formIndex === formIndex);
+
+    // Filter out invalid products (empty name or zero/negative quantity)
+    if (!productData.name.trim() || productData.quantity <= 0) {
+        if (existingIndex > -1) {
+            currentOrderProducts.splice(existingIndex, 1); // Remove invalid product
+        }
+    } else {
+        if (existingIndex > -1) {
+            currentOrderProducts[existingIndex] = { ...productData, formIndex };
+        } else {
+            currentOrderProducts.push({ ...productData, formIndex });
+        }
+    }
+    renderCurrentOrderProducts(); // Re-render the display list
+}
+
+
+// Function to remove a product from currentOrderProducts
+function removeCurrentOrderProduct(formIndex) {
+    currentOrderProducts = currentOrderProducts.filter(p => p.formIndex !== formIndex);
+    // Also remove the corresponding product selection row from the form if it exists
+    const productSelectionDiv = document.querySelector(`#productsContainer .product-selection:has(#productSearch_${formIndex})`);
+    if (productSelectionDiv) {
+        productSelectionDiv.remove();
+    }
+    renderCurrentOrderProducts(); // Re-render the display list
+    showToast('info', 'המוצר הוסר', 'המוצר הוסר מרשימת ההזמנה.');
+}
+
+// Function to render the current order products list (the "table")
+function renderCurrentOrderProducts() {
+    const listContainer = document.getElementById('currentOrderProductsList');
+    const filterInput = document.getElementById('productFilterInput');
+    const filterText = filterInput.value.trim().toLowerCase();
+
+    listContainer.innerHTML = ''; // Clear existing list
+
+    if (currentOrderProducts.length === 0) {
+        listContainer.innerHTML = '<p class="text-gray-500 text-center">אין מוצרים בהזמנה זו עדיין.</p>';
+        return;
+    }
+
+    const filteredProducts = currentOrderProducts.filter(p =>
+        p.name.toLowerCase().includes(filterText) || (p.sku && p.sku.toLowerCase().includes(filterText))
+    );
+
+    if (filteredProducts.length === 0 && filterText !== '') {
+        listContainer.innerHTML = '<p class="text-gray-500 text-center">לא נמצאו מוצרים תואמים לחיפוש.</p>';
+        return;
+    }
+
+    // Sort products alphabetically by name for consistent display
+    filteredProducts.sort((a, b) => a.name.localeCompare(b.name, 'he'));
+
+    filteredProducts.forEach(product => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'current-order-product-item';
+        itemDiv.innerHTML = `
+            <img src="${product.imageUrl}" alt="${product.name}" class="product-image-thumb" onerror="this.onerror=null;this.src='https://placehold.co/60x60/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${product.imageUrl}')">
+            <div class="product-details-summary">
+                <strong>${product.name}</strong>
+                <span>מק"ט: ${product.sku}</span>
+                ${product.note ? `<span class="product-note-display">הערה: ${product.note}</span>` : ''}
+            </div>
+            <div class="product-quantity-controls">
+                <label for="qty_item_${product.formIndex}" class="sr-only">כמות</label>
+                <input type="number" id="qty_item_${product.formIndex}" class="quantity-input-small" value="${product.quantity}" min="1">
+            </div>
+            <div class="action-buttons">
+                <button class="delete-btn glass-button" data-form-index="${product.formIndex}"><i class="fas fa-trash"></i> מחק</button>
+            </div>
+        `;
+        listContainer.appendChild(itemDiv);
+
+        // Add event listeners for quantity change and delete button
+        const qtyInput = itemDiv.querySelector(`#qty_item_${product.formIndex}`);
+        if (qtyInput) {
+            qtyInput.addEventListener('input', (event) => {
+                const newQuantity = parseInt(event.target.value, 10);
+                // Find the original product in currentOrderProducts by formIndex
+                const productToUpdate = currentOrderProducts.find(p => p.formIndex === product.formIndex);
+                if (productToUpdate) {
+                    if (newQuantity > 0) {
+                        productToUpdate.quantity = newQuantity;
+                    } else { // If quantity becomes 0 or less, remove it
+                        removeCurrentOrderProduct(product.formIndex);
+                    }
+                }
+                // No need to call renderCurrentOrderProducts here, as the input value itself updates.
+                // The array is updated, which is sufficient for submission.
+            });
+        }
+
+        const deleteButton = itemDiv.querySelector('.delete-btn');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', () => {
+                removeCurrentOrderProduct(product.formIndex);
+            });
+        }
+    });
+}
+
+
+// Image Preview Modal Functions
+function showImagePreviewModal(imageUrl) {
+    document.getElementById('previewImage').src = imageUrl;
+    document.getElementById('imagePreviewModal').classList.add('active');
+}
+
+function closeImagePreviewModal() {
+    document.getElementById('imagePreviewModal').classList.remove('active');
+    document.getElementById('previewImage').src = ''; // Clear image source
 }
 
 
@@ -429,48 +588,27 @@ async function saveReceiptAsImage() {
             buttonsStyling: false
         }).then((result) => {
             if (result.isConfirmed) {
-                // Re-generate WhatsApp text message
+                // Generate WhatsApp message from currentOrderProducts
                 const familyName = document.getElementById('familySelect').value;
                 const address = document.getElementById('addressInput').value;
                 const contact = document.getElementById('contactInput').value;
                 const phone = document.getElementById('phoneInput').value;
                 const deliveryType = document.getElementById('deliveryType').value;
 
-                const orderedProducts = [];
-                document.querySelectorAll('.product-selection').forEach(selection => {
-                    const productSearchInput = selection.querySelector('.product-search-input');
-                    const freeTextProductInput = selection.querySelector('.free-text-product-input');
-                    const quantityInput = selection.querySelector('.quantity-input');
-                    const productNoteInput = selection.querySelector('.product-note-input'); // Get the note
-
-                    const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
-                    const quantity = parseInt(quantityInput.value, 10);
-                    const note = productNoteInput ? productNoteInput.value.trim() : ''; // Get the note value
-
-                    if (selectedProductName && quantity > 0) {
-                        const product = productsCatalog.find(p => p.name === selectedProductName);
-                        orderedProducts.push({
-                            name: selectedProductName,
-                            sku: product ? product.sku : 'N/A', // Use SKU if found, else N/A
-                            quantity: quantity,
-                            note: note // Add the note
-                        });
-                    }
-                });
-
                 let whatsappMessage = `📦 הזמנה חדשה מבית סבן\n\n`;
                 whatsappMessage += `*משפחה:* ${familyName}\n`;
-whatsappMessage += `*כתובת:* ${address}\n`;
-whatsappMessage += `*איש קשר:* ${contact} ${phone}\n`;
-whatsappMessage += `*סוג הובלה:* ${deliveryType || 'לא נבחר'}\n`;
-whatsappMessage += `\n🧾 *מוצרים:*\n`;
-orderedProducts.forEach(p => {
-    whatsappMessage += `• ${p.name} × ${p.quantity}\n`;
-    if (p.note) {
-        whatsappMessage += `  (הערה: ${p.note})\n`;
-    }
-});
-whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
+                whatsappMessage += `*כתובת:* ${address}\n`;
+                whatsappMessage += `*איש קשר:* ${contact} ${phone}\n`;
+                whatsappMessage += `*סוג הובלה:* ${deliveryType || 'לא נבחר'}\n`;
+                whatsappMessage += `\n🧾 *מוצרים:*\n`;
+                currentOrderProducts.forEach(p => { // Use currentOrderProducts for WhatsApp
+                    whatsappMessage += `• ${p.name} × ${p.quantity}`;
+                    if (p.note) {
+                        whatsappMessage += ` (הערה: ${p.note})`;
+                    }
+                    whatsappMessage += `\n`;
+                });
+                whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
                 const productImageFile = document.getElementById('productImage').files[0];
                 if (productImageFile) {
                     whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
@@ -507,10 +645,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitOrderBtn = document.getElementById('submitOrderBtn');
     const deliveryTypeSelect = document.getElementById('deliveryType');
     const addHistoricalProductButton = document.getElementById('addHistoricalProductBtn');
+    const productFilterInput = document.getElementById('productFilterInput');
+
 
     // Event listener for adding historical product from modal
     if (addHistoricalProductButton) {
         addHistoricalProductButton.addEventListener('click', addHistoricalProductToOrderForm);
+    }
+
+    // Event listener for product filter in the current order list
+    if (productFilterInput) {
+        productFilterInput.addEventListener('input', renderCurrentOrderProducts);
     }
 
 
@@ -569,7 +714,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear existing product selections and add a fresh one
             document.getElementById('productsContainer').innerHTML = '';
             productRowCounter = 0; // Reset counter
+            currentOrderProducts = []; // Clear current order products when family changes
             addProductSelection(); // Add initial product row
+            renderCurrentOrderProducts(); // Render the empty or updated current order list
 
         } else {
             updateProgressBar(1); // Reset to Step 1
@@ -581,9 +728,12 @@ document.addEventListener('DOMContentLoaded', () => {
             contactInput.setAttribute('readonly', true); // Make readonly again
             phoneInput.value = '';
             phoneInput.setAttribute('readonly', true); // Make readonly again
+            deliveryTypeSelect.value = ''; // Clear delivery type
             historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
             document.getElementById('productsContainer').innerHTML = '';
             productRowCounter = 0;
+            currentOrderProducts = []; // Clear current order products
+            renderCurrentOrderProducts(); // Render the empty current order list
         }
     });
 
@@ -610,36 +760,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const orderedProducts = [];
-        const productSelections = document.querySelectorAll('.product-selection');
-        let hasValidProduct = false;
-
-        productSelections.forEach((selection) => {
-            const productSearchInput = selection.querySelector('.product-search-input');
-            const freeTextProductInput = selection.querySelector('.free-text-product-input');
-            const quantityInput = selection.querySelector('.quantity-input');
-            const productNoteInput = selection.querySelector('.product-note-input');
-
-            const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
-            const quantity = parseInt(quantityInput.value, 10);
-            const productNote = productNoteInput ? productNoteInput.value.trim() : '';
-
-            console.log(`Product Row: Name="${selectedProductName}", Quantity=${quantity}, Note="${productNote}"`);
-
-            if (selectedProductName && quantity > 0) {
-                hasValidProduct = true;
-                const product = productsCatalog.find(p => p.name === selectedProductName);
-                orderedProducts.push({
-                    name: selectedProductName,
-                    sku: product ? product.sku : 'N/A',
-                    quantity: quantity,
-                    note: productNote
-                });
-            }
-        });
-
-        console.log('Validation Check 2: Valid Products');
-        console.log(`Has Valid Product: ${hasValidProduct}`);
+        // Use currentOrderProducts for validation and submission
+        console.log('Validation Check 2: Valid Products in currentOrderProducts');
+        console.log(`Current Order Products Count: ${currentOrderProducts.length}`);
+        let hasValidProduct = currentOrderProducts.some(p => p.quantity > 0 && p.name.trim() !== '');
 
         if (!hasValidProduct) {
             showToast('error', 'שגיאה', 'אנא בחר לפחות מוצר אחד להזמנה או הזן שם מוצר ידנית.');
@@ -685,7 +809,12 @@ document.addEventListener('DOMContentLoaded', () => {
             address,
             contact,
             phone,
-            products: orderedProducts,
+            products: currentOrderProducts.map(p => ({ // Map currentOrderProducts to the format expected by Apps Script
+                name: p.name,
+                sku: p.sku,
+                quantity: p.quantity,
+                note: p.note
+            })),
             imageData: base64Image,
             imageFileName: productImageFile ? productImageFile.name : null,
             deliveryType // Include delivery type in order data
@@ -717,11 +846,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     whatsappMessage += `*איש קשר:* ${contact} ${phone}\n`;
                     whatsappMessage += `*סוג הובלה:* ${deliveryType || 'לא נבחר'}\n`;
                     whatsappMessage += `\n🧾 *מוצרים:*\n`;
-                    orderedProducts.forEach(p => {
-                        whatsappMessage += `• ${p.name} × ${p.quantity}\n`;
+                    currentOrderProducts.forEach(p => { // Use currentOrderProducts for WhatsApp
+                        whatsappMessage += `• ${p.name} × ${p.quantity}`;
                         if (p.note) {
-                            whatsappMessage += `  (הערה: ${p.note})\n`;
+                            whatsappMessage += ` (הערה: ${p.note})`;
                         }
+                        whatsappMessage += `\n`;
                     });
                     whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
                     const productImageFile = document.getElementById('productImage').files[0];
@@ -747,7 +877,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
                     document.getElementById('productsContainer').innerHTML = '';
                     productRowCounter = 0; // Reset counter
+                    currentOrderProducts = []; // Clear current order products after successful submission
                     addProductSelection(); // Add initial product row
+                    renderCurrentOrderProducts(); // Render the empty current order list
                     document.getElementById('productImage').value = ''; // Clear file input
 
                     // Re-fetch data to update history for next order
