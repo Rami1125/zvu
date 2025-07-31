@@ -623,6 +623,9 @@ function showConfirmationModal(orderSummary) {
         <h5 class="text-xl font-semibold text-dark-blue mt-4 mb-2">פרטי מוצרים:</h5>
         ${productsHtml}
         ${orderSummary.imageData ? '<p class="mt-4 text-center text-gray-600"><i class="fas fa-image"></i> צורפה תמונת מוצר מהשטח</p>' : ''}
+        <p class="text-center text-lg font-bold text-dark-blue mt-6 animate-pulse-effect">
+            לאחר בדיקת הנתונים, לחץ על הכפתור למטה לשליחה סופית!
+        </p>
     `;
 
     modal.classList.add('active');
@@ -667,6 +670,7 @@ async function handleSaveAndShare() {
     }
 
     const orderData = {
+        action: 'submitOrder', // Added action to the JSON body
         timestamp: new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }),
         familyName,
         address,
@@ -684,7 +688,7 @@ async function handleSaveAndShare() {
     };
 
     try {
-        const response = await fetch(`${WEB_APP_URL}?action=submitOrder`, {
+        const response = await fetch(`${WEB_APP_URL}`, { // Removed ?action=submitOrder from URL
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(orderData)
