@@ -42,7 +42,8 @@ let previousOrdersHistory = []; // Stores previous orders for smart history from
 let currentOrderProducts = []; // Stores products currently added to the order for display/editing
 
 // Google Apps Script Web App URL
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzOjjBNd3ziRd66OrIcSw7Q0x9-7_0nSUHMvYskSkGv_8UPS4BYhdvV0zVlvE1dM4ny/exec';
+// IMPORTANT: Replace this with your actual deployed Google Apps Script Web App URL
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzOjjBNd3ziRd66OrIcSw7Q0x9-7_0nSUHMvYskSkGv_8UPS4BYhdvV0zVlvE1dM4ny/exec'; // This URL needs to be updated by the user!
 // Company WhatsApp Number
 const COMPANY_WHATSAPP_NUMBER = '972508860896';
 
@@ -64,6 +65,40 @@ function updateDateTime() {
     const formattedDateTime = now.toLocaleString('he-IL', options).replace(/\./g, '/').replace(',', '');
     document.getElementById('currentDateTime').textContent = formattedDateTime;
 }
+
+// Function for typing effect
+function typeWriter(text, i, fnCallback) {
+    const typingElement = document.getElementById('typingEffectText');
+    if (i < text.length) {
+        typingElement.innerHTML = text.substring(0, i + 1) + '<span class="typing-effect"></span>';
+        setTimeout(function() {
+            typeWriter(text, i + 1, fnCallback);
+        }, 50); // Typing speed
+    } else if (typeof fnCallback == 'function') {
+        // Call callback once animation is complete
+        typingElement.innerHTML = text; // Remove blinking cursor
+        setTimeout(fnCallback, 1000); // Pause before next action
+    }
+}
+
+// Function to start the typing animation
+function startTypingAnimation() {
+    const phrases = [
+        "ברוכים הבאים למערכת ההזמנות המתקדמת!",
+        "מייעלים את תהליך ההזמנות שלכם.",
+        "הזמינו בקלות ובמהירות!"
+    ];
+    let phraseIndex = 0;
+
+    function nextPhrase() {
+        typeWriter(phrases[phraseIndex], 0, function() {
+            phraseIndex = (phraseIndex + 1) % phrases.length;
+            setTimeout(nextPhrase, 2000); // Wait 2 seconds before typing next phrase
+        });
+    }
+    nextPhrase();
+}
+
 
 // Function to update the progress bar and step labels
 function updateProgressBar(step) {
@@ -215,6 +250,9 @@ function addProductSelection() {
         <input type="text" id="productNote_${currentIndex}" class="form-control product-note-input mt-2" placeholder="הערה לאיש קשר למוצר (לא חובה)">
         <div class="product-info-display mt-2" id="productInfo_${currentIndex}"></div>
         <div class="product-history-info mt-2" id="productHistoryInfo_${currentIndex}"></div>
+        <button type="button" class="delete-product-row-btn btn-secondary mt-2 w-full glass-button" data-index="${currentIndex}">
+            <i class="fas fa-times-circle mr-2"></i> הסר מוצר זה
+        </button>
     `;
     productsContainer.appendChild(newProductDiv);
 
@@ -225,6 +263,8 @@ function addProductSelection() {
     const productNoteInput = document.getElementById(`productNote_${currentIndex}`);
     const productInfoDiv = document.getElementById(`productInfo_${currentIndex}`);
     const productHistoryInfoDiv = document.getElementById(`productHistoryInfo_${currentIndex}`);
+    const deleteRowBtn = document.querySelector(`.delete-product-row-btn[data-index="${currentIndex}"]`);
+
 
     // Event listener for product search input (datalist)
     productSearchInput.addEventListener('input', (event) => {
@@ -232,9 +272,10 @@ function addProductSelection() {
         const productOptionsDatalist = document.getElementById('productOptions');
         productOptionsDatalist.innerHTML = ''; // Clear previous options
 
-        if (typedValue.length >= 3) {
+        if (typedValue.length >= 2) { // Start filtering after 2 characters
             const filteredProducts = productsCatalog.filter(p =>
-                p.name.toLowerCase().includes(typedValue.toLowerCase())
+                p.name.toLowerCase().includes(typedValue.toLowerCase()) ||
+                (p.sku && p.sku.toLowerCase().includes(typedValue.toLowerCase()))
             );
             filteredProducts.forEach(product => {
                 const option = document.createElement('option');
@@ -325,6 +366,15 @@ function addProductSelection() {
             }, currentIndex);
         }
     });
+
+    // Event listener for deleting the product row from the form
+    if (deleteRowBtn) {
+        deleteRowBtn.addEventListener('click', () => {
+            newProductDiv.remove(); // Remove the entire product selection div
+            removeCurrentOrderProduct(currentIndex); // Remove from the current order array
+            showToast('info', 'המוצר הוסר', 'שורת המוצר הוסרה מהטופס.');
+        });
+    }
 }
 
 function updateProductHistoryDisplay(productName, displayDiv) {
@@ -371,11 +421,13 @@ let selectedHistoricalProductName = '';
 function showQuantitySelectionModal(productName) {
     selectedHistoricalProductName = productName;
     document.getElementById('modalProductName').innerText = `הוסף: ${productName}`;
+    document.getElementById('quantitySelectionModal').classList.remove('hidden'); // Ensure it's not hidden
     document.getElementById('quantitySelectionModal').classList.add('active');
 }
 
 function closeQuantitySelectionModal() {
     document.getElementById('quantitySelectionModal').classList.remove('active');
+    document.getElementById('quantitySelectionModal').classList.add('hidden'); // Hide it again
     selectedHistoricalProductName = ''; // Clear selected product
     document.getElementById('modalQuantitySelect').value = '1'; // Reset quantity
 }
@@ -440,11 +492,7 @@ function addOrUpdateCurrentOrderProduct(productData, formIndex) {
 // Function to remove a product from currentOrderProducts
 function removeCurrentOrderProduct(formIndex) {
     currentOrderProducts = currentOrderProducts.filter(p => p.formIndex !== formIndex);
-    // Also remove the corresponding product selection row from the form if it exists
-    const productSelectionDiv = document.querySelector(`#productsContainer .product-selection:has(#productSearch_${formIndex})`);
-    if (productSelectionDiv) {
-        productSelectionDiv.remove();
-    }
+    // The corresponding product selection row from the form is removed by its own delete button
     renderCurrentOrderProducts(); // Re-render the display list
     showToast('info', 'המוצר הוסר', 'המוצר הוסר מרשימת ההזמנה.');
 }
@@ -526,11 +574,13 @@ function renderCurrentOrderProducts() {
 // Image Preview Modal Functions
 function showImagePreviewModal(imageUrl) {
     document.getElementById('previewImage').src = imageUrl;
+    document.getElementById('imagePreviewModal').classList.remove('hidden'); // Ensure it's not hidden
     document.getElementById('imagePreviewModal').classList.add('active');
 }
 
 function closeImagePreviewModal() {
     document.getElementById('imagePreviewModal').classList.remove('active');
+    document.getElementById('imagePreviewModal').classList.add('hidden'); // Hide it again
     document.getElementById('previewImage').src = ''; // Clear image source
 }
 
@@ -587,11 +637,13 @@ function showProductDetailsModal(product) {
         historyInModal.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריית הזמנות.</p>';
     }
 
+    modal.classList.remove('hidden'); // Ensure it's not hidden
     modal.classList.add('active');
 }
 
 function closeProductDetailsModal() {
     document.getElementById('productDetailsModal').classList.remove('active');
+    document.getElementById('productDetailsModal').classList.add('hidden'); // Hide it again
 }
 
 
@@ -766,6 +818,9 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDateTime();
     setInterval(updateDateTime, 1000); // Update every second
 
+    // Start typing animation
+    startTypingAnimation();
+
     fetchDataFromGoogleSheets(); // Load initial data
 
     const familySelect = document.getElementById('familySelect');
@@ -848,6 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     p.innerHTML = `<i class="fas fa-box"></i> ${prodName} (סה"כ: ${item.totalQty}, אחרונה: ${item.lastDate.split(',')[0]})`;
                     // Add click listener to open quantity selection modal
                     p.addEventListener('click', () => {
+                        // When clicking a history item, show product details and then allow adding to current order
                         const productFromCatalog = productsCatalog.find(p => p.name === prodName);
                         showProductDetailsModal({
                             name: prodName,
