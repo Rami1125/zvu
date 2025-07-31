@@ -597,6 +597,7 @@ function closeProductDetailsModal() {
 
 // Modal functions for order confirmation
 function showConfirmationModal(orderSummary) {
+    console.log('Confirmation modal attempting to show.'); // Added log
     const modal = document.getElementById('orderConfirmationModal');
     const receiptContent = document.getElementById('receiptContent');
 
@@ -660,7 +661,7 @@ async function handleSaveAndShare() {
             showToast('error', 'שגיאה', 'אירעה שגיאה בהמרת התמונה לשליחה. נסה שוב.');
             hideLoading();
             orderConfirmationModalButton.disabled = false;
-            orderConfirmationModalButton.innerHTML = '<i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאפ';
+            orderConfirmationModalButton.innerHTML = '<i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאף';
             return;
         }
     }
@@ -707,7 +708,7 @@ async function handleSaveAndShare() {
                 }
                 whatsappMessage += `\n`;
             });
-            whatsappMessage += `\n� *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
+            whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
             if (productImageFile) {
                 whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
             }
@@ -747,7 +748,7 @@ async function handleSaveAndShare() {
     } finally {
         hideLoading();
         orderConfirmationModalButton.disabled = false;
-        orderConfirmationModalButton.innerHTML = '<i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאפ';
+        orderConfirmationModalButton.innerHTML = '<i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאף';
     }
 }
 
@@ -875,8 +876,9 @@ document.addEventListener('DOMContentLoaded', () => {
             historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
             document.getElementById('productsContainer').innerHTML = '';
             productRowCounter = 0;
-            currentOrderProducts = []; // Clear current order products
-            renderCurrentOrderProducts(); // Render the empty current order list
+            currentOrderProducts = [];
+            addProductSelection();
+            renderCurrentOrderProducts();
         }
     });
 
@@ -949,4 +951,3 @@ document.addEventListener('DOMContentLoaded', () => {
         showConfirmationModal(orderSummaryData);
     });
 });
-�
