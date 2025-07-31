@@ -32,7 +32,7 @@
                 <!-- Receipt content will be dynamically loaded here -->
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="saveReceiptAsImage()"><i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאפ</button>
+                <button class="btn btn-primary glass-button" onclick="saveReceiptAsImage()"><i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאפ</button>
             </div>
         </div>
     </div>
@@ -62,7 +62,20 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" id="addHistoricalProductBtn"><i class="fas fa-cart-plus"></i> הוסף להזמנה</button>
+                <button class="btn btn-primary glass-button" id="addHistoricalProductBtn"><i class="fas fa-cart-plus"></i> הוסף להזמנה</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div id="imagePreviewModal" class="modal-overlay hidden">
+        <div class="modal-content image-preview-content">
+            <div class="modal-header">
+                <h3 class="text-2xl font-bold text-dark-blue">תצוגה מקדימה של תמונה</h3>
+                <button class="close-button" onclick="closeImagePreviewModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body image-preview-body">
+                <img id="previewImage" src="" alt="תצוגה מקדימה של תמונה" class="max-w-full h-auto rounded-lg shadow-lg">
             </div>
         </div>
     </div>
@@ -139,7 +152,7 @@
                 <div id="productsContainer">
                     <!-- Product selection rows will be added here by JS -->
                 </div>
-                <button id="addProductBtn" class="btn btn-secondary mt-4 animate-bounce-in shine-button"><i class="fas fa-plus-circle"></i> הוסף מוצר</button>
+                <button id="addProductBtn" class="btn btn-secondary glass-button mt-4 animate-bounce-in"><i class="fas fa-plus-circle"></i> הוסף מוצר</button>
 
                 <div class="form-group mt-6">
                     <label for="productImage" class="input-label">צרף צילום מוצר מהשטח:</label>
@@ -161,14 +174,23 @@
                     <p class="text-sm text-gray-500 mt-2">בחר את סוג ההובלה המתאים להזמנה זו.</p>
                 </div>
 
+                <!-- Selected Products Table/List -->
+                <h2 class="text-2xl font-extrabold text-dark-blue mb-6 mt-8 shine-text">מוצרים בהזמנה</h2>
+                <div id="currentOrderProductsList" class="current-order-products-list">
+                    <p class="text-gray-500 text-center">אין מוצרים בהזמנה זו עדיין.</p>
+                    <!-- Products will be dynamically added here -->
+                </div>
+                <input type="text" id="productFilterInput" class="form-control mt-4 mb-4" placeholder="חפש מוצר ברשימת ההזמנה...">
+
+
                 <!-- Step 4: Summary and Submit -->
-                <button id="submitOrderBtn" class="btn btn-primary mt-8 animate-pulse-effect shine-button"><i class="fas fa-paper-plane"></i> שלח הזמנה</button>
+                <button id="submitOrderBtn" class="btn btn-primary glass-button mt-8 animate-pulse-effect"><i class="fas fa-paper-plane"></i> שלח הזמנה</button>
                 <p class="text-sm text-gray-500 mt-2">לחיצה על כפתור זה תציג סיכום ותאפשר שליחה סופית.</p>
             </div>
         </div>
     </div>
 
-    <!-- Datalist for product search - moved outside productsContainer -->
+    <!-- Datalist for product search - kept globally as it should be -->
     <datalist id="productOptions"></datalist>
 
     <!-- SweetAlert2 and html2canvas CDN -->
