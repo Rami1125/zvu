@@ -80,6 +80,34 @@
         </div>
     </div>
 
+    <!-- Product Details/History Modal (New) -->
+    <div id="productDetailsModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-2xl font-bold text-dark-blue" id="productDetailsModalTitle"></h3>
+                <button class="close-button" onclick="closeProductDetailsModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="flex items-center mb-4">
+                    <img id="productDetailsImage" src="" alt="תמונת מוצר" class="w-24 h-24 rounded-lg object-cover ml-4 border border-gray-300">
+                    <div>
+                        <p id="productDetailsName" class="text-lg font-semibold text-dark-blue"></p>
+                        <p id="productDetailsSku" class="text-gray-700 text-sm"></p>
+                        <p id="productDetailsQuantity" class="text-gray-700 text-sm"></p>
+                        <p id="productDetailsNote" class="text-gray-700 text-sm"></p>
+                    </div>
+                </div>
+                <h4 class="text-xl font-semibold text-dark-blue mt-6 mb-3">היסטוריית רכישות למוצר זה:</h4>
+                <div id="productHistoryInModal" class="history-box">
+                    <!-- Product specific history will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary glass-button" onclick="closeProductDetailsModal()"><i class="fas fa-check-circle"></i> סגור</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Header Section -->
     <header class="fixed top-0 left-0 w-full flex items-center justify-between bg-white p-4 rounded-b-xl shadow-md border-b border-gray-200 z-10">
@@ -140,14 +168,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="historyDisplay" class="input-label">היסטוריית הזמנות קודמות: (לחץ על מוצר להוספה מהירה)</label>
+                    <label for="historyDisplay" class="input-label">היסטוריית הזמנות קודמות: (לחץ על מוצר לפרטים או הוספה מהירה)</label>
                     <div id="historyDisplay" class="history-box">
                         <p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>
                     </div>
                 </div>
 
                 <h2 class="text-2xl font-extrabold text-dark-blue mb-6 mt-8 shine-text">הזמנה חדשה</h2>
-                <p class="text-sm text-gray-500 mb-4">הקלד שם מוצר לחיפוש או בחר מהרשימה. ניתן גם להזין מוצר בטקסט חופשי אם אינו קיים.</p>
+                <p class="text-sm text-gray-500 mb-4">הקלד שם מוצר לחיפוש (3 אותיות ומעלה) או בחר מהרשימה. ניתן גם להזין מוצר בטקסט חופשי אם אינו קיים.</p>
 
                 <div id="productsContainer">
                     <!-- Product selection rows will be added here by JS -->
@@ -176,11 +204,11 @@
 
                 <!-- Selected Products Table/List -->
                 <h2 class="text-2xl font-extrabold text-dark-blue mb-6 mt-8 shine-text">מוצרים בהזמנה</h2>
+                <input type="text" id="productFilterInput" class="form-control mt-4 mb-4" placeholder="חפש מוצר ברשימת ההזמנה...">
                 <div id="currentOrderProductsList" class="current-order-products-list">
                     <p class="text-gray-500 text-center">אין מוצרים בהזמנה זו עדיין.</p>
                     <!-- Products will be dynamically added here -->
                 </div>
-                <input type="text" id="productFilterInput" class="form-control mt-4 mb-4" placeholder="חפש מוצר ברשימת ההזמנה...">
 
 
                 <!-- Step 4: Summary and Submit -->
