@@ -10,6 +10,7 @@
     --text-dark: #1f2937; /* Tailwind gray-900 */
     --success-green: #10b981; /* Tailwind green-500 */
     --error-red: #ef4444; /* Tailwind red-500 */
+    --button-shine-color: rgba(255, 255, 255, 0.6);
 }
 
 body {
@@ -183,6 +184,8 @@ input[readonly] {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Standard button shadow */
+    position: relative; /* For shine effect */
+    overflow: hidden; /* For shine effect */
 }
 
 .btn-primary {
@@ -216,6 +219,24 @@ input[readonly] {
     transform: translateY(0);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
+
+/* Shine effect for buttons */
+.shine-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, var(--button-shine-color) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-20deg);
+    transition: all 0.7s ease;
+}
+
+.shine-button:hover::before {
+    left: 125%;
+}
+
 
 /* Product List Items */
 .product-item-display {
@@ -281,7 +302,8 @@ input[readonly] {
     border-radius: 0.5rem;
     margin-bottom: 0.4rem;
     font-size: 0.95rem;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    cursor: pointer; /* Indicate clickable */
 }
 
 .history-item:last-child {
@@ -290,6 +312,7 @@ input[readonly] {
 
 .history-item:hover {
     background-color: #4a8ee0; /* Darker medium blue on hover */
+    transform: translateX(-3px); /* Slight slide effect on hover */
 }
 
 /* Product History Info (dynamic message) */
@@ -305,6 +328,19 @@ input[readonly] {
     align-items: center;
     gap: 0.5rem;
 }
+
+/* Product Note Input */
+.product-note-input {
+    margin-top: 0.75rem;
+    font-size: 0.95rem;
+    padding: 0.6rem 1rem;
+    border: 1px dashed #9ca3af; /* Dashed border for notes */
+    background-color: #f3f4f6; /* Light gray background */
+}
+.product-note-input::placeholder {
+    color: #9ca3af;
+}
+
 
 /* Loading Overlay */
 .loading-overlay {
@@ -337,7 +373,7 @@ input[readonly] {
     100% { transform: rotate(360deg); }
 }
 
-/* Modal Styling (for order confirmation/receipt) */
+/* Modal Styling (for order confirmation/receipt and quantity selection) */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -462,6 +498,23 @@ input[readonly] {
     font-weight: 600;
     color: var(--medium-blue);
 }
+
+/* Shine effect for text */
+.shine-text {
+    position: relative;
+    display: inline-block; /* Essential for text shine */
+    background: linear-gradient(to right, var(--text-dark) 0%, var(--dark-blue) 50%, var(--text-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine-text-animation 4s infinite linear;
+    background-size: 200% 100%;
+}
+
+@keyframes shine-text-animation {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
 
 /* Animations */
 @keyframes fade-in {
