@@ -202,7 +202,7 @@ function addProductSelection() {
     newProductDiv.innerHTML = `
         <label for="productSearch_${currentIndex}" class="input-label">שם מוצר / מק"ט:</label>
         <input type="text" id="productSearch_${currentIndex}" list="productOptions" class="form-control product-search-input" placeholder="הקלד לחיפוש מוצר או בחר מהרשימה">
-        <datalist id="productOptions"></datalist>
+        <!-- The datalist is now global, no need to create it here again -->
 
         <input type="text" id="freeTextProduct_${currentIndex}" class="form-control free-text-product-input mt-2" placeholder="הקלד שם מוצר ידנית (לא חובה)">
 
@@ -324,7 +324,7 @@ function addHistoricalProductToOrderForm() {
         newProductDiv.innerHTML = `
             <label for="productSearch_${currentIndex}" class="input-label">שם מוצר / מק"ט:</label>
             <input type="text" id="productSearch_${currentIndex}" list="productOptions" class="form-control product-search-input" value="${selectedHistoricalProductName}" readonly>
-            <datalist id="productOptions"></datalist>
+            <!-- The datalist is now global, no need to create it here again -->
 
             <input type="text" id="freeTextProduct_${currentIndex}" class="form-control free-text-product-input mt-2" placeholder="הקלד שם מוצר ידנית (לא חובה)" style="display:none;">
 
@@ -590,14 +590,23 @@ document.addEventListener('DOMContentLoaded', () => {
     addProductBtn.addEventListener('click', addProductSelection);
 
     submitOrderBtn.addEventListener('click', async () => {
+        // --- Debugging logs for validation ---
+        console.log('Submit button clicked!');
         const familyName = familySelect.value;
         const address = addressInput.value;
         const contact = contactInput.value;
         const phone = phoneInput.value;
-        const deliveryType = deliveryTypeSelect.value; // Get selected delivery type
+        const deliveryType = deliveryTypeSelect.value;
+
+        console.log('Validation Check 1: Family Details');
+        console.log(`Family Name: "${familyName}" (Valid: ${!!familyName})`);
+        console.log(`Address: "${address}" (Valid: ${!!address})`);
+        console.log(`Contact: "${contact}" (Valid: ${!!contact})`);
+        console.log(`Phone: "${phone}" (Valid: ${!!phone})`);
 
         if (!familyName || !address || !contact || !phone) {
             showToast('error', 'שגיאה', 'אנא מלא את כל פרטי המשפחה, הכתובת, איש הקשר והטלפון.');
+            console.error('Validation failed: Missing family details.');
             return;
         }
 
@@ -609,33 +618,47 @@ document.addEventListener('DOMContentLoaded', () => {
             const productSearchInput = selection.querySelector('.product-search-input');
             const freeTextProductInput = selection.querySelector('.free-text-product-input');
             const quantityInput = selection.querySelector('.quantity-input');
-            const productNoteInput = selection.querySelector('.product-note-input'); // Get the note input
+            const productNoteInput = selection.querySelector('.product-note-input');
 
             const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
             const quantity = parseInt(quantityInput.value, 10);
-            const productNote = productNoteInput ? productNoteInput.value.trim() : ''; // Get note, handle if element doesn't exist
+            const productNote = productNoteInput ? productNoteInput.value.trim() : '';
+
+            console.log(`Product Row: Name="${selectedProductName}", Quantity=${quantity}, Note="${productNote}"`);
 
             if (selectedProductName && quantity > 0) {
                 hasValidProduct = true;
                 const product = productsCatalog.find(p => p.name === selectedProductName);
                 orderedProducts.push({
                     name: selectedProductName,
-                    sku: product ? product.sku : 'N/A', // Use SKU if found, else N/A
+                    sku: product ? product.sku : 'N/A',
                     quantity: quantity,
-                    note: productNote // Add the note to the product object
+                    note: productNote
                 });
             }
         });
 
+        console.log('Validation Check 2: Valid Products');
+        console.log(`Has Valid Product: ${hasValidProduct}`);
+
         if (!hasValidProduct) {
             showToast('error', 'שגיאה', 'אנא בחר לפחות מוצר אחד להזמנה או הזן שם מוצר ידנית.');
+            console.error('Validation failed: No valid products selected.');
             return;
         }
 
+        console.log('Validation Check 3: Delivery Type');
+        console.log(`Delivery Type: "${deliveryType}" (Valid: ${!!deliveryType})`);
+
         if (!deliveryType) {
             showToast('error', 'שגיאה', 'אנא בחר סוג הובלה.');
+            console.error('Validation failed: No delivery type selected.');
             return;
         }
+
+        console.log('All validations passed. Proceeding with order submission.');
+        // --- End Debugging logs ---
+
 
         const productImageFile = document.getElementById('productImage').files[0];
         let base64Image = null;
@@ -701,6 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                     whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
+                    const productImageFile = document.getElementById('productImage').files[0];
                     if (productImageFile) {
                         whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
                     }
