@@ -707,7 +707,7 @@ async function handleSaveAndShare() {
                 }
                 whatsappMessage += `\n`;
             });
-            whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
+            whatsappMessage += `\n� *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
             if (productImageFile) {
                 whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
             }
@@ -949,3 +949,4 @@ document.addEventListener('DOMContentLoaded', () => {
         showConfirmationModal(orderSummaryData);
     });
 });
+�
