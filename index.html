@@ -28,52 +28,30 @@
             </p>
             <h2 id="typingEffectText" class="text-2xl font-semibold text-purple-700 min-h-[32px]"></h2>
 
-            <!-- Progress Bar -->
-            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-6 relative overflow-hidden">
-                <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-2.5 rounded-full transition-all duration-500 ease-in-out" style="width: 0%;"></div>
-                <div class="flex justify-between text-xs font-medium text-gray-600 mt-2">
-                    <span id="step1Label" class="flex-1 text-center active-step">בחירת משפחה</span>
-                    <span id="step2Label" class="flex-1 text-center">פרטי הזמנה</span>
-                    <span id="step3Label" class="flex-1 text-center">בחירת מוצרים</span>
-                    <span id="step4Label" class="flex-1 text-center">אישור ושליחה</span>
-                </div>
-            </div>
+            <!-- Progress Bar removed as it's no longer a multi-step process -->
         </header>
 
-        <!-- Step 1: Family Selection -->
-        <section id="step1Content" class="step-content">
-            <h3 class="text-2xl font-bold text-dark-blue mb-4 text-center">שלב 1: בחר משפחה</h3>
-            <div class="form-group mb-6">
-                <label for="familySelect" class="input-label text-lg">בחר משפחה קיימת:</label>
-                <select id="familySelect" class="form-control text-lg py-3">
-                    <option value="">-- בחר משפחה --</option>
-                </select>
-            </div>
-            <div id="quickFamilyButtons" class="flex flex-wrap justify-center gap-3 mb-6">
-                <p class="w-full text-center text-gray-600 mb-2">או בחר מהרשימה המהירה:</p>
-                <!-- Quick family buttons will be populated by JS -->
-            </div>
-        </section>
-
-        <!-- Step 2 & 3 & 4: Order Details, Product Selection, Confirmation -->
-        <section id="step2Content" class="step-content hidden">
-            <h3 id="dynamicFamilyHeading" class="text-3xl font-bold text-dark-blue mb-6 text-center hidden"></h3>
-
+        <!-- Main Content (formerly Step 2) -->
+        <section id="mainContent" class="step-content">
             <!-- Family Details Form -->
-            <div id="familyDetailsForm" class="bg-gray-50 p-6 rounded-xl shadow-inner mb-8 border border-gray-200 hidden">
+            <div id="familyDetailsForm" class="bg-gray-50 p-6 rounded-xl shadow-inner mb-8 border border-gray-200">
                 <h4 class="text-xl font-semibold text-dark-blue mb-4">פרטי משפחה וכתובת</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div class="form-group">
+                        <label for="familyNameInput" class="input-label">שם משפחה:</label>
+                        <input type="text" id="familyNameInput" class="form-control" placeholder="הקלד שם משפחה">
+                    </div>
+                    <div class="form-group">
                         <label for="addressInput" class="input-label">כתובת:</label>
-                        <input type="text" id="addressInput" class="form-control" placeholder="כתובת מלאה" readonly>
+                        <input type="text" id="addressInput" class="form-control" placeholder="כתובת מלאה">
                     </div>
                     <div class="form-group">
                         <label for="contactInput" class="input-label">איש קשר:</label>
-                        <input type="text" id="contactInput" class="form-control" placeholder="שם איש קשר" readonly>
+                        <input type="text" id="contactInput" class="form-control" placeholder="שם איש קשר">
                     </div>
                     <div class="form-group">
                         <label for="phoneInput" class="input-label">טלפון:</label>
-                        <input type="tel" id="phoneInput" class="form-control" placeholder="מספר טלפון" readonly>
+                        <input type="tel" id="phoneInput" class="form-control" placeholder="מספר טלפון">
                     </div>
                     <div class="form-group">
                         <label for="deliveryType" class="input-label">סוג הובלה:</label>
@@ -93,7 +71,7 @@
                     <i class="fas fa-history mr-2 text-blue-600"></i> היסטוריית הזמנות קודמות למשפחה
                 </h4>
                 <div id="historyDisplay" class="max-h-60 overflow-y-auto custom-scrollbar p-2">
-                    <p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>
+                    <p class="text-gray-500">הקלד שם משפחה כדי לראות היסטוריה.</p>
                 </div>
             </div>
 
@@ -140,197 +118,6 @@
     <datalist id="productOptions"></datalist>
 
     <!-- Modals -->
-
-    <!-- Image Preview Modal -->
-    <div id="imagePreviewModal" class="modal-overlay hidden">
-        <div class="modal-content text-center">
-            <button class="modal-close-btn" onclick="closeImagePreviewModal()"><i class="fas fa-times"></i></button>
-            <img id="previewImage" src="" alt="Product Image Preview" class="max-w-full max-h-[80vh] object-contain mx-auto rounded-lg shadow-lg">
-        </div>
-    </div>
-
-    <!-- Product Details/History Modal -->
-    <div id="productDetailsModal" class="modal-overlay hidden">
-        <div class="modal-content max-w-lg">
-            <button class="modal-close-btn" onclick="closeProductDetailsModal()"><i class="fas fa-times"></i></button>
-            <h3 id="productDetailsModalTitle" class="modal-title"></h3>
-            <div class="flex flex-col items-center mb-4">
-                <img id="productDetailsImage" src="" alt="Product Image" class="w-24 h-24 object-contain rounded-lg border border-gray-200 shadow-sm mb-2" onerror="this.onerror=null;this.src='https://placehold.co/60x60/CCCCCC/000000?text=NoImg';">
-                <p id="productDetailsName" class="font-semibold text-lg text-dark-blue"></p>
-                <p id="productDetailsSku" class="text-gray-600 text-sm"></p>
-                <p id="productDetailsQuantity" class="text-gray-700 text-base"></p>
-                <p id="productDetailsNote" class="text-gray-700 text-base"></p>
-            </div>
-            <h4 class="text-lg font-semibold text-dark-blue mb-2 border-b pb-1">היסטוריית הזמנות למוצר זה:</h4>
-            <div id="productHistoryInModal" class="max-h-48 overflow-y-auto custom-scrollbar p-2">
-                <!-- History will be loaded here -->
-            </div>
-            <button class="btn-primary w-full mt-4" onclick="showQuantitySelectionModal(document.getElementById('productDetailsName').innerText.replace('שם: ', ''))">
-                <i class="fas fa-cart-plus mr-2"></i> הוסף מוצר זה להזמנה
-            </button>
-        </div>
-    </div>
-
-    <!-- Quantity Selection Modal (for adding from history) -->
-    <div id="quantitySelectionModal" class="modal-overlay hidden">
-        <div class="modal-content max-w-sm">
-            <button class="modal-close-btn" onclick="closeQuantitySelectionModal()"><i class="fas fa-times"></i></button>
-            <h3 id="modalProductName" class="modal-title mb-4"></h3>
-            <div class="form-group mb-4">
-                <label for="modalQuantitySelect" class="input-label">כמות:</label>
-                <input type="number" id="modalQuantitySelect" class="form-control text-center" value="1" min="1">
-            </div>
-            <button id="addHistoricalProductBtn" class="btn-primary w-full">
-                <i class="fas fa-check-circle mr-2"></i> אשר והוסף
-            </button>
-        </div>
-    </div>
-
-    <!-- Order Confirmation Modal -->
-    <div id="orderConfirmationModal" class="modal-overlay hidden">
-        <div class="modal-content max-w-xl"><!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת הזמנות סבן</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- SweetAlert2 for beautiful alerts -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Custom Styles -->
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4 font-sans text-right">
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center z-[10000] text-white transition-opacity duration-300 opacity-0 invisible">
-        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-16 w-16 mb-4"></div>
-        <p class="text-xl font-semibold">טוען נתונים...</p>
-    </div>
-
-    <div class="app-container bg-white rounded-3xl shadow-2xl p-8 w-full max-w-4xl border border-blue-200 transform transition-all duration-500 scale-95 hover:scale-100">
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-extrabold text-dark-blue mb-2">מערכת הזמנות <span class="text-orange-500">סבן</span></h1>
-            <p class="text-lg text-gray-700 mb-4">
-                <span id="currentDateTime" class="font-medium"></span>
-            </p>
-            <h2 id="typingEffectText" class="text-2xl font-semibold text-purple-700 min-h-[32px]"></h2>
-
-            <!-- Progress Bar -->
-            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-6 relative overflow-hidden">
-                <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-2.5 rounded-full transition-all duration-500 ease-in-out" style="width: 0%;"></div>
-                <div class="flex justify-between text-xs font-medium text-gray-600 mt-2">
-                    <span id="step1Label" class="flex-1 text-center active-step">בחירת משפחה</span>
-                    <span id="step2Label" class="flex-1 text-center">פרטי הזמנה</span>
-                    <span id="step3Label" class="flex-1 text-center">בחירת מוצרים</span>
-                    <span id="step4Label" class="flex-1 text-center">אישור ושליחה</span>
-                </div>
-            </div>
-        </header>
-
-        <!-- Step 1: Family Selection -->
-        <section id="step1Content" class="step-content">
-            <h3 class="text-2xl font-bold text-dark-blue mb-4 text-center">שלב 1: בחר משפחה</h3>
-            <div class="form-group mb-6">
-                <label for="familySelect" class="input-label text-lg">בחר משפחה קיימת:</label>
-                <select id="familySelect" class="form-control text-lg py-3">
-                    <option value="">-- בחר משפחה --</option>
-                </select>
-            </div>
-            <div id="quickFamilyButtons" class="flex flex-wrap justify-center gap-3 mb-6">
-                <p class="w-full text-center text-gray-600 mb-2">או בחר מהרשימה המהירה:</p>
-                <!-- Quick family buttons will be populated by JS -->
-            </div>
-        </section>
-
-        <!-- Step 2 & 3 & 4: Order Details, Product Selection, Confirmation -->
-        <section id="step2Content" class="step-content hidden">
-            <h3 id="dynamicFamilyHeading" class="text-3xl font-bold text-dark-blue mb-6 text-center hidden"></h3>
-
-            <!-- Family Details Form -->
-            <div id="familyDetailsForm" class="bg-gray-50 p-6 rounded-xl shadow-inner mb-8 border border-gray-200 hidden">
-                <h4 class="text-xl font-semibold text-dark-blue mb-4">פרטי משפחה וכתובת</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="form-group">
-                        <label for="addressInput" class="input-label">כתובת:</label>
-                        <input type="text" id="addressInput" class="form-control" placeholder="כתובת מלאה" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="contactInput" class="input-label">איש קשר:</label>
-                        <input type="text" id="contactInput" class="form-control" placeholder="שם איש קשר" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="phoneInput" class="input-label">טלפון:</label>
-                        <input type="tel" id="phoneInput" class="form-control" placeholder="מספר טלפון" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="deliveryType" class="input-label">סוג הובלה:</label>
-                        <select id="deliveryType" class="form-control">
-                            <option value="">-- בחר סוג הובלה --</option>
-                            <option value="רגילה">רגילה</option>
-                            <option value="מנוף">מנוף</option>
-                            <option value="הובלה קטנה">הובלה קטנה</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Previous Orders History -->
-            <div class="bg-blue-50 p-6 rounded-xl shadow-inner mb-8 border border-blue-200">
-                <h4 class="text-xl font-semibold text-dark-blue mb-4 flex items-center">
-                    <i class="fas fa-history mr-2 text-blue-600"></i> היסטוריית הזמנות קודמות למשפחה
-                </h4>
-                <div id="historyDisplay" class="max-h-60 overflow-y-auto custom-scrollbar p-2">
-                    <p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>
-                </div>
-            </div>
-
-            <!-- Product Selection -->
-            <div class="bg-green-50 p-6 rounded-xl shadow-inner mb-8 border border-green-200">
-                <h4 class="text-xl font-semibold text-dark-blue mb-4 flex items-center">
-                    <i class="fas fa-boxes mr-2 text-green-600"></i> בחירת מוצרים להזמנה
-                </h4>
-                <div id="productsContainer">
-                    <!-- Product selection rows will be added here by JS -->
-                </div>
-                <button id="addProductBtn" class="btn-secondary w-full mt-4">
-                    <i class="fas fa-plus-circle mr-2"></i> הוסף מוצר נוסף
-                </button>
-            </div>
-
-            <!-- Image Upload -->
-            <div class="bg-yellow-50 p-6 rounded-xl shadow-inner mb-8 border border-yellow-200">
-                <h4 class="text-xl font-semibold text-dark-blue mb-4 flex items-center">
-                    <i class="fas fa-camera mr-2 text-yellow-600"></i> העלאת תמונת מוצר מהשטח (אופציונלי)
-                </h4>
-                <input type="file" id="productImage" accept="image/*" class="form-control-file w-full p-2 border border-gray-300 rounded-lg">
-                <p class="text-sm text-gray-600 mt-2">ניתן לצרף תמונה אחת של מוצר מהאתר.</p>
-            </div>
-
-            <!-- Current Order Summary -->
-            <div class="bg-purple-50 p-6 rounded-xl shadow-inner mb-8 border border-purple-200">
-                <h4 class="text-xl font-semibold text-dark-blue mb-4 flex items-center">
-                    <i class="fas fa-shopping-cart mr-2 text-purple-600"></i> סיכום הזמנה נוכחית
-                </h4>
-                <input type="text" id="productFilterInput" class="form-control mb-4" placeholder="סנן מוצרים ברשימה...">
-                <div id="currentOrderProductsList" class="max-h-60 overflow-y-auto custom-scrollbar p-2">
-                    <p class="text-gray-500 text-center">אין מוצרים בהזמנה זו עדיין.</p>
-                </div>
-            </div>
-
-            <button id="submitOrderBtn" class="btn-primary w-full mt-6">
-                <i class="fas fa-paper-plane mr-2"></i> שלח הזמנה
-            </button>
-        </section>
-    </div>
-
-    <!-- Datalist for Product Search (Global) -->
-    <datalist id="productOptions"></datalist>
-
-    <!-- Modals -->
-
     <!-- Image Preview Modal -->
     <div id="imagePreviewModal" class="modal-overlay hidden">
         <div class="modal-content text-center">
@@ -379,22 +166,6 @@
     <!-- Order Confirmation Modal -->
     <div id="orderConfirmationModal" class="modal-overlay hidden">
         <div class="modal-content max-w-xl">
-            <button class="modal-close-btn" onclick="closeConfirmationModal()"><i class="fas fa-times"></i></button>
-            <h3 class="modal-title mb-4">אישור הזמנה</h3>
-            <div id="receiptContent" class="receipt-content bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                <!-- Receipt summary will be generated here by JS -->
-            </div>
-            <button class="btn-primary w-full mt-6">
-                <i class="fas fa-camera mr-2"></i> שמור כתמונה / שתף בוואטסאף
-            </button>
-        </div>
-    </div>
-
-    <!-- Custom JavaScript -->
-    <script src="script.js"></script>
-</body>
-</html>
-
             <button class="modal-close-btn" onclick="closeConfirmationModal()"><i class="fas fa-times"></i></button>
             <h3 class="modal-title mb-4">אישור הזמנה</h3>
             <div id="receiptContent" class="receipt-content bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-[70vh] overflow-y-auto custom-scrollbar">
