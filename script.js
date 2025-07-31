@@ -225,7 +225,21 @@ function addProductSelection() {
 
     // Event listener for product search input (datalist)
     productSearchInput.addEventListener('input', (event) => {
-        const selectedProductName = event.target.value;
+        const typedValue = event.target.value;
+        // Filter datalist options based on typed value (at least 3 characters)
+        const filteredProducts = productsCatalog.filter(p =>
+            typedValue.length >= 3 && p.name.toLowerCase().includes(typedValue.toLowerCase())
+        );
+        const productOptions = document.getElementById('productOptions');
+        productOptions.innerHTML = ''; // Clear previous options
+        filteredProducts.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.name;
+            option.setAttribute('data-sku', product.sku);
+            productOptions.appendChild(option);
+        });
+
+        const selectedProductName = typedValue; // Use the typed value for lookup
         const selectedProduct = productsCatalog.find(p => p.name === selectedProductName);
 
         productInfoDiv.innerHTML = ''; // Clear previous info
@@ -459,7 +473,7 @@ function renderCurrentOrderProducts() {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'current-order-product-item';
         itemDiv.innerHTML = `
-            <img src="${product.imageUrl}" alt="${product.name}" class="product-image-thumb" onerror="this.onerror=null;this.src='https://placehold.co/60x60/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${product.imageUrl}')">
+            <img src="${product.imageUrl}" alt="${product.name}" class="product-image-thumb" onerror="this.onerror=null;this.src='https://placehold.co/40x40/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${product.imageUrl}')">
             <div class="product-details-summary">
                 <strong>${product.name}</strong>
                 <span>מק"ט: ${product.sku}</span>
@@ -513,6 +527,66 @@ function showImagePreviewModal(imageUrl) {
 function closeImagePreviewModal() {
     document.getElementById('imagePreviewModal').classList.remove('active');
     document.getElementById('previewImage').src = ''; // Clear image source
+}
+
+// Product Details/History Modal Functions
+function showProductDetailsModal(product) {
+    const modal = document.getElementById('productDetailsModal');
+    document.getElementById('productDetailsModalTitle').innerText = `פרטי מוצר: ${product.name}`;
+    document.getElementById('productDetailsImage').src = product.imageUrl;
+    document.getElementById('productDetailsName').innerText = `שם: ${product.name}`;
+    document.getElementById('productDetailsSku').innerText = `מק"ט: ${product.sku}`;
+    document.getElementById('productDetailsQuantity').innerText = `כמות בהזמנה זו: ${product.quantity}`;
+    document.getElementById('productDetailsNote').innerText = product.note ? `הערה: ${product.note}` : 'אין הערה.';
+
+    const historyInModal = document.getElementById('productHistoryInModal');
+    historyInModal.innerHTML = '<p class="text-gray-500">טוען היסטוריה...</p>';
+
+    const selectedFamilyName = document.getElementById('familySelect').value;
+    if (selectedFamilyName) {
+        const productSpecificHistory = previousOrdersHistory.filter(order =>
+            order['שם מוצר'] === product.name
+        ).sort((a, b) => {
+            // Sort by date descending
+            const parseDateString = (dateStr) => {
+                const [datePart, timePart] = dateStr.split(',');
+                const [day, month, year] = datePart.split('.').map(Number);
+                const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                return new Date(year, month - 1, day, hours, minutes, seconds);
+            };
+            const dateA = parseDateString(a['תאריך ושעה']);
+            const dateB = parseDateString(b['תאריך ושעה']);
+            return dateB.getTime() - dateA.getTime();
+        });
+
+        if (productSpecificHistory.length > 0) {
+            historyInModal.innerHTML = ''; // Clear loading message
+            const ul = document.createElement('ul');
+            ul.className = 'list-none p-0';
+            productSpecificHistory.forEach(order => {
+                const li = document.createElement('li');
+                li.className = 'bg-white p-2 rounded-md mb-2 shadow-sm border border-gray-200';
+                li.innerHTML = `
+                    <p><strong>משפחה:</strong> ${order['שם משפחה']}</p>
+                    <p><strong>תאריך:</strong> ${order['תאריך ושעה'].split(',')[0]}</p>
+                    <p><strong>שעה:</strong> ${order['תאריך ושעה'].split(',')[1]}</p>
+                    <p><strong>כמות:</strong> ${order['כמות']}</p>
+                `;
+                ul.appendChild(li);
+            });
+            historyInModal.appendChild(ul);
+        } else {
+            historyInModal.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות למוצר זה.</p>';
+        }
+    } else {
+        historyInModal.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריית הזמנות.</p>';
+    }
+
+    modal.classList.add('active');
+}
+
+function closeProductDetailsModal() {
+    document.getElementById('productDetailsModal').classList.remove('active');
 }
 
 
@@ -704,7 +778,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     p.className = 'history-item';
                     p.innerHTML = `<i class="fas fa-box"></i> ${prodName} (סה"כ: ${item.totalQty}, אחרונה: ${item.lastDate.split(',')[0]})`;
                     // Add click listener to open quantity selection modal
-                    p.addEventListener('click', () => showQuantitySelectionModal(prodName));
+                    p.addEventListener('click', () => {
+                        const productFromCatalog = productsCatalog.find(p => p.name === prodName);
+                        showProductDetailsModal({
+                            name: prodName,
+                            sku: productFromCatalog ? productFromCatalog.sku : 'N/A',
+                            imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                            quantity: item.totalQty, // This is the total historical quantity, not current order quantity
+                            note: '' // No note from history display
+                        });
+                    });
                     historyDisplay.appendChild(p);
                 }
             } else {
