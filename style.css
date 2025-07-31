@@ -299,7 +299,28 @@ input[readonly] {
     border: 2px solid var(--dark-blue); /* Darker blue border for image */
     flex-shrink: 0; /* Prevent image from shrinking */
     cursor: zoom-in; /* Indicate clickability for zoom */
+    position: relative; /* For magnifying glass icon */
 }
+
+.product-item-display .magnifying-glass-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    padding: 0.3rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.product-item-display img:hover + .magnifying-glass-icon,
+.product-item-display .magnifying-glass-icon:hover {
+    opacity: 1;
+}
+
 
 .product-details-display {
     flex-grow: 1;
@@ -644,9 +665,28 @@ input[readonly] {
     object-fit: cover;
     margin-left: 0.8rem; /* Adjusted margin */
     border: 1px solid var(--light-blue); /* Lighter border for thumb */
-    cursor: zoom-in; /* Indicate clickability for zoom */
+    cursor: zoom-in;
     flex-shrink: 0;
+    position: relative; /* For magnifying glass icon */
 }
+
+.current-order-product-item .product-image-thumb:hover::after {
+    content: '\f002'; /* Font Awesome magnifying glass icon */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem; /* Adjust size as needed */
+    color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    padding: 0.2rem;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
 
 .current-order-product-item .product-details-summary {
     flex-grow: 1;
