@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Replace with your company's WhatsApp number
-                const companyWhatsappNumber = 'YOUR_COMPANY_WHATSAPP_NUMBER'; // e.g., '9725XXXXXXXX'
+                const companyWhatsappNumber = '972508860896'; // e.g., '9725XXXXXXXX'
                 const whatsappUrl = `https://wa.me/${companyWhatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
                 window.open(whatsappUrl, '_blank');
 
