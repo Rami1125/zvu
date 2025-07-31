@@ -6,7 +6,7 @@
     <title>מערכת הזמנות ח.סבן</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter for modern look -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- SweetAlert2 for beautiful alerts -->
@@ -37,6 +37,37 @@
         </div>
     </div>
 
+    <!-- Quantity Selection Modal for History Products -->
+    <div id="quantitySelectionModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-2xl font-bold text-dark-blue" id="modalProductName"></h3>
+                <button class="close-button" onclick="closeQuantitySelectionModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="modalQuantitySelect" class="input-label">בחר כמות להזמנה:</label>
+                    <select id="modalQuantitySelect" class="form-control">
+                        <!-- Options will be dynamically populated -->
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="addHistoricalProductBtn"><i class="fas fa-cart-plus"></i> הוסף להזמנה</button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Header Section -->
     <header class="fixed top-0 left-0 w-full flex items-center justify-between bg-white p-4 rounded-b-xl shadow-md border-b border-gray-200 z-10">
         <img src="https://placehold.co/60x60/60a5fa/ffffff?text=LOGO" class="w-12 h-12 rounded-full shadow-sm" alt="לוגו ח.סבן">
@@ -44,7 +75,7 @@
     </header>
 
     <div class="container mt-24"> <!-- Adjusted margin-top to account for fixed header -->
-        <h1 class="text-4xl font-extrabold text-dark-blue mb-8 text-center animate-fade-in">מערכת הזמנות חכמה</h1>
+        <h1 class="text-4xl font-extrabold text-dark-blue mb-8 text-center animate-fade-in shine-text">מערכת הזמנות חכמה</h1>
 
         <!-- Progress Steps Bar -->
         <div class="progress-bar-container">
@@ -77,38 +108,38 @@
         <!-- Step 2-4 Content (hidden initially) -->
         <div id="step2Content" class="hidden">
             <!-- Dynamic Family Name Heading -->
-            <h2 id="dynamicFamilyHeading" class="text-3xl font-bold text-dark-blue mb-6 mt-8 text-center animate-fade-in-up"></h2>
+            <h2 id="dynamicFamilyHeading" class="text-3xl font-extrabold text-dark-blue mb-6 mt-8 text-center animate-fade-in-up shine-text"></h2>
 
             <div id="familyDetailsForm">
                 <div class="form-group">
                     <label for="addressInput" class="input-label">כתובת אספקה:</label>
-                    <input type="text" id="addressInput" class="form-control" placeholder="כתובת אספקה" readonly>
+                    <input type="text" id="addressInput" class="form-control" placeholder="כתובת אספקה">
                 </div>
 
                 <div class="form-group">
                     <label for="contactInput" class="input-label">איש קשר:</label>
-                    <input type="text" id="contactInput" class="form-control" placeholder="איש קשר" readonly>
+                    <input type="text" id="contactInput" class="form-control" placeholder="איש קשר">
                 </div>
 
                 <div class="form-group">
                     <label for="phoneInput" class="input-label">טלפון:</label>
-                    <input type="tel" id="phoneInput" class="form-control" placeholder="טלפון" readonly>
+                    <input type="tel" id="phoneInput" class="form-control" placeholder="טלפון">
                 </div>
 
                 <div class="form-group">
-                    <label for="historyDisplay" class="input-label">היסטוריית הזמנות קודמות:</label>
+                    <label for="historyDisplay" class="input-label">היסטוריית הזמנות קודמות: (לחץ על מוצר להוספה מהירה)</label>
                     <div id="historyDisplay" class="history-box">
                         <p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>
                     </div>
                 </div>
 
-                <h2 class="text-2xl font-bold text-dark-blue mb-6 mt-8">הזמנה חדשה</h2>
+                <h2 class="text-2xl font-extrabold text-dark-blue mb-6 mt-8 shine-text">הזמנה חדשה</h2>
                 <p class="text-sm text-gray-500 mb-4">הקלד שם מוצר לחיפוש או בחר מהרשימה. ניתן גם להזין מוצר בטקסט חופשי אם אינו קיים.</p>
 
                 <div id="productsContainer">
                     <!-- Product selection rows will be added here by JS -->
                 </div>
-                <button id="addProductBtn" class="btn btn-secondary mt-4 animate-bounce-in"><i class="fas fa-plus-circle"></i> הוסף מוצר</button>
+                <button id="addProductBtn" class="btn btn-secondary mt-4 animate-bounce-in shine-button"><i class="fas fa-plus-circle"></i> הוסף מוצר</button>
 
                 <div class="form-group mt-6">
                     <label for="productImage" class="input-label">צרף צילום מוצר מהשטח:</label>
@@ -117,7 +148,7 @@
                 </div>
 
                 <!-- Step 3: Delivery Type -->
-                <h2 class="text-2xl font-bold text-dark-blue mb-6 mt-8">בחירת סוג הובלה</h2>
+                <h2 class="text-2xl font-extrabold text-dark-blue mb-6 mt-8 shine-text">בחירת סוג הובלה</h2>
                 <div class="form-group">
                     <label for="deliveryType" class="input-label">סוג הובלה:</label>
                     <select id="deliveryType" class="form-control">
@@ -131,7 +162,7 @@
                 </div>
 
                 <!-- Step 4: Summary and Submit -->
-                <button id="submitOrderBtn" class="btn btn-primary mt-8 animate-pulse-effect"><i class="fas fa-paper-plane"></i> שלח הזמנה</button>
+                <button id="submitOrderBtn" class="btn btn-primary mt-8 animate-pulse-effect shine-button"><i class="fas fa-paper-plane"></i> שלח הזמנה</button>
                 <p class="text-sm text-gray-500 mt-2">לחיצה על כפתור זה תציג סיכום ותאפשר שליחה סופית.</p>
             </div>
         </div>
