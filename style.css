@@ -638,13 +638,13 @@ input[readonly] {
 }
 
 .current-order-product-item .product-image-thumb {
-    width: 60px;
-    height: 60px;
+    width: 40px; /* Smaller image */
+    height: 40px; /* Smaller image */
     border-radius: 0.5rem;
     object-fit: cover;
-    margin-left: 1rem;
-    border: 1px solid var(--light-blue);
-    cursor: zoom-in;
+    margin-left: 0.8rem; /* Adjusted margin */
+    border: 1px solid var(--light-blue); /* Lighter border for thumb */
+    cursor: zoom-in; /* Indicate clickability for zoom */
     flex-shrink: 0;
 }
 
@@ -652,40 +652,40 @@ input[readonly] {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    margin-left: 1rem; /* Space between details and image */
+    margin-left: 0.8rem; /* Space between details and image */
 }
 
 .current-order-product-item .product-details-summary strong {
-    font-size: 1.1rem;
+    font-size: 1.0rem; /* Slightly smaller font */
     color: var(--dark-blue);
 }
 
 .current-order-product-item .product-details-summary span {
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* Slightly smaller font */
     color: #475569;
 }
 
 .current-order-product-item .product-quantity-controls {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-right: 1rem; /* Space from details */
+    gap: 0.4rem; /* Smaller gap */
+    margin-right: 0.8rem; /* Space from details */
     flex-shrink: 0;
 }
 
 .current-order-product-item .quantity-input-small {
-    width: 60px; /* Smaller input for quantity */
-    padding: 0.4rem 0.6rem;
-    font-size: 0.9rem;
+    width: 50px; /* Smaller input for quantity */
+    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
     text-align: center;
-    border-radius: 0.5rem;
+    border-radius: 0.4rem;
     border: 1px solid var(--light-blue);
 }
 
 .current-order-product-item .action-buttons {
     display: flex;
-    gap: 0.5rem;
-    margin-right: 1rem; /* Space from quantity controls */
+    gap: 0.4rem; /* Smaller gap */
+    margin-right: 0.8rem; /* Space from quantity controls */
     flex-shrink: 0;
 }
 
@@ -693,12 +693,12 @@ input[readonly] {
     background-color: var(--medium-blue);
     color: var(--white);
     border: none;
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
+    border-radius: 0.4rem; /* Slightly smaller radius */
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .current-order-product-item .action-buttons .delete-btn {
@@ -717,10 +717,10 @@ input[readonly] {
 
 .current-order-product-item .product-note-display {
     width: 100%; /* Take full width on new line */
-    font-size: 0.85rem;
+    font-size: 0.8rem; /* Smaller font for note */
     color: #475569;
-    margin-top: 0.5rem;
-    padding-right: calc(60px + 1rem); /* Align with product details, accounting for image */
+    margin-top: 0.4rem; /* Smaller margin */
+    padding-right: calc(40px + 0.8rem); /* Align with product details, accounting for smaller image */
 }
 
 /* Responsive adjustments */
