@@ -42,7 +42,7 @@ let previousOrdersHistory = []; // Stores previous orders for smart history from
 let currentOrderProducts = []; // Stores products currently added to the order for display/editing
 
 // Google Apps Script Web App URL
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzKYuXRpGAXXOn7pVfdjsDe4Xs7aNTmuEJcJqBgjhhXCt8N4EyLbKIsXLOwOqsUXx829Q/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzOjjBNd3ziRd66OrIcSw7Q0x9-7_0nSUHMvYskSkGv_8UPS4BYhdvV0zVlvE1dM4ny/exec';
 // Company WhatsApp Number
 const COMPANY_WHATSAPP_NUMBER = '972508860896';
 
