@@ -38,7 +38,7 @@ let productsCatalog = []; // Stores product catalog fetched from Google Sheet "�
 let previousOrdersHistory = []; // Stores previous orders for smart history from "הזמנות קודמות"
 
 // Google Apps Script Web App URL (REPLACE THIS WITH YOUR DEPLOYED WEB APP URL)
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxvBPHFmT9trPCTGGzrhcKAxik28Pzco7OAhnY0gWLFKDHzfFyHpllheCt9ac78RMH-ZA/execL';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzKYuXRpGAXXOn7pVfdjsDe4Xs7aNTmuEJcJqBgjhhXCt8N4EyLbKIsXLOwOqsUXx829Q/exec';
 // Company WhatsApp Number (REPLACE THIS WITH YOUR COMPANY'S WHATSAPP NUMBER, e.g., '9725XXXXXXXX')
 const COMPANY_WHATSAPP_NUMBER = '972508860896';
 
