@@ -1,14 +1,19 @@
-// Function to show custom message box
-function showMessageBox(title, message) {
-    const messageBox = document.getElementById('messageBox');
-    document.getElementById('messageBoxTitle').innerText = title;
-    document.getElementById('messageBoxContent').innerText = message;
-    messageBox.style.display = 'block';
-}
-
-// Function to hide custom message box
-function hideMessageBox() {
-    document.getElementById('messageBox').style.display = 'none';
+// Function to show SweetAlert2 messages (Toast style)
+function showToast(icon, title, text) {
+    Swal.fire({
+        icon: icon,
+        title: title,
+        text: text,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+        }
+    });
 }
 
 // Function to show loading overlay
@@ -16,85 +21,125 @@ function showLoading(message = 'טוען נתונים...') {
     const loadingOverlay = document.getElementById('loadingOverlay');
     loadingOverlay.querySelector('p').innerText = message;
     loadingOverlay.style.display = 'flex';
+    loadingOverlay.style.opacity = '1';
+    loadingOverlay.style.visibility = 'visible';
 }
 
 // Function to hide loading overlay
 function hideLoading() {
-    document.getElementById('loadingOverlay').style.display = 'none';
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    loadingOverlay.style.opacity = '0';
+    loadingOverlay.style.visibility = 'hidden';
 }
 
-// Mock data for products (replace with actual data fetched from Google Sheet "מחסן נתונים")
-const mockProducts = [
-    { name: "מסמר 4", sku: "MSR-001", imageUrl: "https://placehold.co/60x60/FF5733/FFFFFF?text=MSR1" },
-    { name: "מסמר 6", sku: "MSR-002", imageUrl: "https://placehold.co/60x60/33FF57/FFFFFF?text=MSR2" },
-    { name: "מסמר 10", sku: "MSR-003", imageUrl: "https://placehold.co/60x60/3357FF/FFFFFF?text=MSR3" },
-    { name: "מסמר פלדה לבטון", sku: "MSR-004", imageUrl: "https://placehold.co/60x60/FF33A1/FFFFFF?text=MSR4" },
-    { name: "חוט שיזור", sku: "HUT-001", imageUrl: "https://placehold.co/60x60/A133FF/FFFFFF?text=HUT1" },
-    { name: "חוט קשירה", sku: "HUT-002", imageUrl: "https://placehold.co/60x60/FFC733/FFFFFF?text=HUT2" },
-    { name: "בלוקים", sku: "BLK-001", imageUrl: "https://placehold.co/60x60/33FFC7/FFFFFF?text=BLK1" },
-    { name: "טיט", sku: "TIT-001", imageUrl: "https://placehold.co/60x60/C733FF/FFFFFF?text=TIT1" },
-    { name: "דבק קרמיקה", sku: "DBK-001", imageUrl: "https://placehold.co/60x60/FF3333/FFFFFF?text=DBK1" },
-    { name: "שקיות פוגה", sku: "SHK-001", imageUrl: "https://placehold.co/60x60/33A1FF/FFFFFF?text=SHK1" },
-    { name: "מטאטא כביש + ידית", sku: "MTA-001", imageUrl: "https://placehold.co/60x60/FF5733/FFFFFF?text=MTA1" },
-    { name: "ניילון", sku: "NYL-001", imageUrl: "https://placehold.co/60x60/33FF57/FFFFFF?text=NYL1" },
-    { name: "קרטון סיליקון שקוף", sku: "CRT-001", imageUrl: "https://placehold.co/60x60/3357FF/FFFFFF?text=CRT1" },
-    { name: "משולשים 1.5/1.5 100 מ\"א", sku: "MSL-001", imageUrl: "https://placehold.co/60x60/FF33A1/FFFFFF?text=MSL1" },
-    { name: "כבל חשמל 30 מטר", sku: "KBL-001", imageUrl: "https://placehold.co/60x60/A133FF/FFFFFF?text=KBL1" },
-    { name: "סכין למסור חשמלי", sku: "SKN-001", imageUrl: "https://placehold.co/60x60/FFC733/FFFFFF?text=SKN1" },
-    { name: "ברז 3/4", sku: "BRZ-001", imageUrl: "https://placehold.co/60x60/33FFC7/FFFFFF?text=BRZ1" },
-    { name: "ברגים 4 ס\"מ", sku: "BRG-001", imageUrl: "https://placehold.co/60x60/C733FF/FFFFFF?text=BRG1" },
-    { name: "נקניקיות סיקה בצבע אפור", sku: "NKN-001", imageUrl: "https://placehold.co/60x60/FF3333/FFFFFF?text=NKN1" },
-    { name: "דיסקיות 9 ״", sku: "DSK-001", imageUrl: "https://placehold.co/60x60/33A1FF/FFFFFF?text=DSK1" },
-    { name: "דסקיות 4״", sku: "DSK-002", imageUrl: "https://placehold.co/60x60/FF5733/FFFFFF?text=DSK2" },
-    { name: "מסורית למסור חשמלי מקיטה", sku: "MSRT-001", imageUrl: "https://placehold.co/60x60/33FF57/FFFFFF?text=MSRT1" },
-    { name: "מקצץ", sku: "MKZ-001", imageUrl: "https://placehold.co/60x60/3357FF/FFFFFF?text=MKZ1" },
-    { name: "פטיש תפס", sku: "PTT-001", imageUrl: "https://placehold.co/60x60/FF33A1/FFFFFF?text=PTT1" },
-    { name: "שומרי מרחק עגולים לכלונסאות", sku: "SMR-001", imageUrl: "https://placehold.co/60x60/A133FF/FFFFFF?text=SMR1" },
-    { name: "קונוסים לקידוח דיבידג קוטר 20 וקוטר 25", sku: "KNS-001", imageUrl: "https://placehold.co/60x60/FFC733/FFFFFF?text=KNS1" },
-    { name: "אום פרפר - 60 יחידות", sku: "OUM-001", imageUrl: "https://placehold.co/60x60/33FFC7/FFFFFF?text=OUM1" }
-];
+// Global data stores
+let familiesData = {}; // Stores family details fetched from Google Sheet "לקוחות"
+let productsCatalog = []; // Stores product catalog fetched from Google Sheet "מחסן מוצרים"
+let previousOrdersHistory = []; // Stores previous orders for smart history from "הזמנות קודמות"
+
+// Google Apps Script Web App URL (REPLACE THIS WITH YOUR DEPLOYED WEB APP URL)
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxvBPHFmT9trPCTGGzrhcKAxik28Pzco7OAhnY0gWLFKDHzfFyHpllheCt9ac78RMH-ZA/exec';
+// Company WhatsApp Number (REPLACE THIS WITH YOUR COMPANY'S WHATSAPP NUMBER, e.g., '9725XXXXXXXX')
+const COMPANY_WHATSAPP_NUMBER = '972508860896';
+
+// Current step in the order process
+let currentStep = 1;
+
+// Function to update live date and time in the header
+function updateDateTime() {
+    const now = new Date();
+    const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false // 24-hour format
+    };
+    const formattedDateTime = now.toLocaleString('he-IL', options).replace(/\./g, '/').replace(',', '');
+    document.getElementById('currentDateTime').textContent = formattedDateTime;
+}
+
+// Function to update the progress bar and step labels
+function updateProgressBar(step) {
+    currentStep = step;
+    const progressBar = document.getElementById('progressBar');
+    const stepLabels = [
+        document.getElementById('step1Label'),
+        document.getElementById('step2Label'),
+        document.getElementById('step3Label'),
+        document.getElementById('step4Label')
+    ];
+
+    let progressWidth = 0;
+    switch (step) {
+        case 1: progressWidth = 25; break;
+        case 2: progressWidth = 50; break;
+        case 3: progressWidth = 75; break;
+        case 4: progressWidth = 100; break;
+        default: progressWidth = 0;
+    }
+    progressBar.style.width = `${progressWidth}%`;
+
+    stepLabels.forEach((label, index) => {
+        if (index + 1 <= step) {
+            label.classList.add('active-step');
+        } else {
+            label.classList.remove('active-step');
+        }
+    });
+
+    // Toggle content visibility based on step
+    document.getElementById('step1Content').classList.toggle('hidden', step !== 1);
+    document.getElementById('step2Content').classList.toggle('hidden', step === 1);
+}
 
 
-// Mock data for families (replace with actual data from analysis)
-// This should be populated from the Python script's summary_df
-let familiesData = {}; // Will be populated dynamically
-
-// Function to fetch data from Google Apps Script (simulated here)
+// Function to fetch data from Google Apps Script
 async function fetchDataFromGoogleSheets() {
     showLoading('טוען נתוני משפחות ומוצרים...');
     try {
-        // In a real scenario, this would be a fetch call to your Google Apps Script Web App URL
-        // Example: const response = await fetch('YOUR_WEB_APP_URL?action=getInitialData');
-        // const data = await response.json();
-        // For now, we'll use the mock data derived from the Python analysis
-        const mockFamilyData = [
-            { "משפחה": "סמדרי", "כתובת": "הניצנים 20 כפר סבא", "איש קשר": "עלא", "טלפון": "0506620029", "מוצרים שהוזמנו": "1 מסמר 4, 5 מסמר 6, 3 מסמר 10, 1000 מסמר פלדה, 2 פטיש תפסנים פשוט, 50 חוט שזור, 50 חוט קשירה, 1 מטאטא כביש + ידית, 2 ניילון, 10 קרטון סיליקון שקוף, 1 משולשים 1.5/1.5 100 מ\"א" },
-            { "משפחה": "ארבוב", "כתובת": "האשל 139 הרצליה", "איש קשר": "סמיר", "טלפון": "0524421272", "מוצרים שהוזמנו": "1 כבל חשמל 30 מטר, 1 סכין למסור חשמלי, 1 ברז 3/4, 50 חוט שזור, 30 חוט קשירה, 4 ברגים 4 ס\"מ" },
-            { "משפחה": "הופמן", "כתובת": "החורש 21 כפר שמריהו", "איש קשר": "אבו עלי", "טלפון": "0524656174", "מוצרים שהוזמנו": "4 שומרי מרחק עגולים לכלונסאות" },
-            { "משפחה": "ויזל", "כתובת": "הגדרות 45 סביון", "איש קשר": "עלי", "טלפון": "0523993017", "מוצרים שהוזמנו": "40 חוט שיזור, 30 חוט קשירה, 6 מסמר 6, 1000 מסמר בטון 10, 10 נקניקיות סיקה בצבע אפור, 10 דיסקיות 9 ״, 10 דסקיות 4״, 1 מסורית למסור חשמלי מקיטה, 1 מקצץ, 1 פטיש תפס" }
-        ];
+        const response = await fetch(`${WEB_APP_URL}?action=getInitialData`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
 
-        // Populate familiesData for quick lookup
-        mockFamilyData.forEach(family => {
-            familiesData[family['משפחה']] = {
-                address: family['כתובת'],
-                contact: family['איש קשר'],
-                phone: family['טלפון'],
-                history: family['מוצרים שהוזמנו']
+        if (data.success === false) {
+            throw new Error(data.message || 'Failed to fetch initial data from Google Sheets.');
+        }
+
+        // Populate global data stores
+        familiesData = {};
+        data.families.forEach(family => {
+            familiesData[family['שם משפחה']] = {
+                address: family['כתובת'] || 'לא ידוע',
+                contact: family['איש קשר'] || 'לא ידוע',
+                phone: family['טלפון'] || 'לא ידוע',
             };
         });
 
+        productsCatalog = data.products.map(p => ({
+            name: p['שם מוצר'],
+            sku: p['מק"ט'],
+            imageUrl: p['תמונה (URL)'] || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg'
+        }));
+
+        previousOrdersHistory = data.previousOrders;
+
         populateFamilySelect();
-        populateProductSelect(0); // Populate the first product selection dropdown
+        populateQuickFamilyButtons(); // Populate quick select buttons
+        populateProductDatalist(); // Populate the datalist for product search
+        addProductSelection(0); // Add the first product selection row
 
     } catch (error) {
         console.error('Error fetching initial data:', error);
-        showMessageBox('שגיאה', 'אירעה שגיאה בטעינת הנתונים הראשוניים. נסה לרענן את הדף.');
+        showToast('error', 'שגיאה', `אירעה שגיאה בטעינת הנתונים הראשוניים: ${error.message}. אנא ודא שה-Apps Script פרוס כראוי והגיליונות קיימים.`);
     } finally {
         hideLoading();
     }
 }
-
 
 function populateFamilySelect() {
     const familySelect = document.getElementById('familySelect');
@@ -110,96 +155,343 @@ function populateFamilySelect() {
     }
 }
 
-function populateProductSelect(index) {
-    const productSelect = document.getElementById(`productSelect_${index}`);
-    // Clear existing options except the first one
-    while (productSelect.options.length > 1) {
-        productSelect.remove(1);
+function populateQuickFamilyButtons() {
+    const quickFamilyButtonsContainer = document.getElementById('quickFamilyButtons');
+    // Clear existing buttons, keep the instruction paragraph
+    const existingButtons = quickFamilyButtonsContainer.querySelectorAll('button');
+    existingButtons.forEach(button => button.remove());
+
+    for (const familyName in familiesData) {
+        const button = document.createElement('button');
+        button.className = 'bg-gray-200 px-4 py-2 rounded-full hover:bg-blue-100 transition-all duration-200 shadow-sm';
+        button.textContent = familyName;
+        button.onclick = () => {
+            document.getElementById('familySelect').value = familyName;
+            document.getElementById('familySelect').dispatchEvent(new Event('change')); // Trigger change event
+        };
+        quickFamilyButtonsContainer.appendChild(button);
     }
-    mockProducts.forEach(product => {
+}
+
+
+function populateProductDatalist() {
+    const productOptions = document.getElementById('productOptions');
+    productOptions.innerHTML = ''; // Clear existing options
+
+    productsCatalog.forEach(product => {
         const option = document.createElement('option');
-        option.value = product.sku; // Use SKU as value
-        option.textContent = product.name;
-        productSelect.appendChild(option);
-    });
-
-    // Add event listener for product selection change
-    productSelect.addEventListener('change', (event) => {
-        const selectedSku = event.target.value;
-        const productInfoDiv = document.getElementById(`productInfo_${index}`);
-        productInfoDiv.innerHTML = ''; // Clear previous info
-
-        if (selectedSku) {
-            const selectedProduct = mockProducts.find(p => p.sku === selectedSku);
-            if (selectedProduct) {
-                productInfoDiv.innerHTML = `
-                    <div class="product-item">
-                        <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/60x60/CCCCCC/000000?text=NoImg';">
-                        <div class="product-details">
-                            <p class="product-name">${selectedProduct.name}</p>
-                            <p class="product-sku">מק"ט: ${selectedProduct.sku}</p>
-                        </div>
-                    </div>
-                `;
-            }
-        }
+        option.value = product.name; // Display product name in datalist
+        option.setAttribute('data-sku', product.sku); // Store SKU for later use
+        productOptions.appendChild(option);
     });
 }
 
+let productRowCounter = 0; // To keep track of multiple product selection rows
+
 function addProductSelection() {
     const productsContainer = document.getElementById('productsContainer');
-    const currentIndex = productsContainer.children.length;
+    const currentIndex = productRowCounter++; // Increment counter for unique IDs
 
     const newProductDiv = document.createElement('div');
     newProductDiv.className = 'form-group product-selection';
     newProductDiv.innerHTML = `
-        <label for="productSelect_${currentIndex}">בחר מוצר:</label>
-        <select id="productSelect_${currentIndex}" class="form-control product-select">
-            <option value="">בחר מוצר</option>
-        </select>
-        <label for="quantityInput_${currentIndex}" class="mt-2">כמות:</label>
+        <label for="productSearch_${currentIndex}" class="input-label">שם מוצר / מק"ט:</label>
+        <input type="text" id="productSearch_${currentIndex}" list="productOptions" class="form-control product-search-input" placeholder="הקלד לחיפוש מוצר או בחר מהרשימה">
+        <datalist id="productOptions"></datalist>
+
+        <input type="text" id="freeTextProduct_${currentIndex}" class="form-control free-text-product-input mt-2" placeholder="הקלד שם מוצר ידנית (לא חובה)">
+
+        <label for="quantityInput_${currentIndex}" class="input-label mt-2">כמות:</label>
         <input type="number" id="quantityInput_${currentIndex}" class="form-control quantity-input" value="1" min="1">
-        <div class="product-info mt-2" id="productInfo_${currentIndex}"></div>
+        <div class="product-info-display mt-2" id="productInfo_${currentIndex}"></div>
+        <div class="product-history-info mt-2" id="productHistoryInfo_${currentIndex}"></div>
     `;
     productsContainer.appendChild(newProductDiv);
-    populateProductSelect(currentIndex); // Populate the new dropdown
+
+    // Re-populate datalist for new input (it's shared, but good practice)
+    populateProductDatalist();
+
+    // Add event listeners for the new product row
+    const productSearchInput = document.getElementById(`productSearch_${currentIndex}`);
+    const freeTextProductInput = document.getElementById(`freeTextProduct_${currentIndex}`);
+    const productInfoDiv = document.getElementById(`productInfo_${currentIndex}`);
+    const productHistoryInfoDiv = document.getElementById(`productHistoryInfo_${currentIndex}`);
+
+    // Event listener for product search input (datalist)
+    productSearchInput.addEventListener('input', (event) => {
+        const selectedProductName = event.target.value;
+        const selectedProduct = productsCatalog.find(p => p.name === selectedProductName);
+
+        productInfoDiv.innerHTML = ''; // Clear previous info
+        productHistoryInfoDiv.innerHTML = ''; // Clear history info
+        freeTextProductInput.value = ''; // Clear free text input if datalist is used
+
+        if (selectedProduct) {
+            productInfoDiv.innerHTML = `
+                <div class="product-item-display">
+                    <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';">
+                    <div class="product-details-display">
+                        <p class="product-name-display">${selectedProduct.name}</p>
+                        <p class="product-sku-display">מק"ט: ${selectedProduct.sku}</p>
+                    </div>
+                </div>
+            `;
+            updateProductHistoryDisplay(selectedProduct.name, productHistoryInfoDiv);
+        }
+    });
+
+    // Event listener for free text product input
+    freeTextProductInput.addEventListener('input', (event) => {
+        // If free text is entered, clear datalist selection display
+        if (event.target.value.trim() !== '') {
+            productSearchInput.value = ''; // Clear datalist input
+            productInfoDiv.innerHTML = ''; // Clear product info display
+            productHistoryInfoDiv.innerHTML = ''; // Clear history info
+            // No history for free text products as they are not in catalog
+        }
+    });
 }
 
+function updateProductHistoryDisplay(productName, displayDiv) {
+    const selectedFamilyName = document.getElementById('familySelect').value;
+    if (!selectedFamilyName) {
+        displayDiv.innerHTML = '';
+        return;
+    }
+
+    // Filter history for the selected family and product
+    const familyProductOrders = previousOrdersHistory.filter(order =>
+        order['שם משפחה'] === selectedFamilyName && order['שם מוצר'] === productName
+    );
+
+    if (familyProductOrders.length > 0) {
+        const totalQuantity = familyProductOrders.reduce((sum, order) => sum + (parseInt(order['כמות']) || 0), 0);
+        // Sort by date to get the last order date
+        familyProductOrders.sort((a, b) => {
+            // Convert "DD.MM.YYYY,HH:MM:SS" to a comparable Date object
+            const parseDateString = (dateStr) => {
+                const [datePart, timePart] = dateStr.split(',');
+                const [day, month, year] = datePart.split('.').map(Number);
+                const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                return new Date(year, month - 1, day, hours, minutes, seconds);
+            };
+            const dateA = parseDateString(a['תאריך ושעה']);
+            const dateB = parseDateString(b['תאריך ושעה']);
+            return dateB.getTime() - dateA.getTime(); // Latest date first
+        });
+        const lastOrderDate = familyProductOrders[0]['תאריך ושעה'].split(',')[0]; // Just the date part
+
+        displayDiv.innerHTML = `
+            <i class="fas fa-history"></i> המוצר '${productName}' הוזמן ${totalQuantity} פעמים (אחרונה: ${lastOrderDate})
+        `;
+    } else {
+        displayDiv.innerHTML = `<i class="fas fa-info-circle"></i> המוצר '${productName}' לא הוזמן בעבר על ידי משפחה זו.`;
+    }
+}
+
+
+// Modal functions for order confirmation
+function showConfirmationModal(orderSummary) {
+    const modal = document.getElementById('orderConfirmationModal');
+    const receiptContent = document.getElementById('receiptContent');
+
+    // Format the products for the receipt
+    let productsHtml = '<ul>';
+    orderSummary.products.forEach(p => {
+        productsHtml += `<li><span class="product-receipt-name">${p.name}</span> <span class="product-receipt-qty">× ${p.quantity}</span></li>`;
+    });
+    productsHtml += '</ul>';
+
+    receiptContent.innerHTML = `
+        <h4 class="text-center">קבלה / תעודת משלוח</h4>
+        <p><strong>משפחה:</strong> ${orderSummary.familyName}</p>
+        <p><strong>כתובת:</strong> ${orderSummary.address}</p>
+        <p><strong>איש קשר:</strong> ${orderSummary.contact}</p>
+        <p><strong>טלפון:</strong> ${orderSummary.phone}</p>
+        <p><strong>סוג הובלה:</strong> ${orderSummary.deliveryType || 'לא נבחר'}</p>
+        <p><strong>תאריך:</strong> ${orderSummary.timestamp.split(',')[0]}</p>
+        <p><strong>שעה:</strong> ${orderSummary.timestamp.split(',')[1]}</p>
+        <h5 class="text-xl font-semibold text-dark-blue mt-4 mb-2">פרטי מוצרים:</h5>
+        ${productsHtml}
+        ${orderSummary.imageData ? '<p class="mt-4 text-center text-gray-600"><i class="fas fa-image"></i> צורפה תמונת מוצר מהשטח</p>' : ''}
+    `;
+
+    modal.classList.add('active');
+}
+
+function closeConfirmationModal() {
+    document.getElementById('orderConfirmationModal').classList.remove('active');
+}
+
+async function saveReceiptAsImage() {
+    showLoading('מכין תמונה...');
+    const receiptContent = document.getElementById('receiptContent');
+    try {
+        const canvas = await html2canvas(receiptContent, {
+            scale: 2, // Increase scale for better quality
+            useCORS: true, // Enable CORS for images if any
+            backgroundColor: '#f0f4f8' // Match receipt background
+        });
+        const imageDataURL = canvas.toDataURL('image/png');
+
+        // Create a temporary link to download the image
+        const link = document.createElement('a');
+        link.href = imageDataURL;
+        link.download = `הזמנה_${document.getElementById('familySelect').value}_${new Date().getTime()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        hideLoading();
+        showToast('success', 'תמונה נשמרה', 'תעודת המשלוח נשמרה כתמונה!');
+
+        // Optionally, offer to share on WhatsApp with the image
+        Swal.fire({
+            title: 'האם תרצה לשתף את סיכום ההזמנה בוואטסאפ?',
+            showCancelButton: true,
+            confirmButtonText: 'כן, שתף',
+            cancelButtonText: 'לא תודה',
+            icon: 'question',
+            customClass: {
+                confirmButton: 'btn btn-primary',
+                cancelButton: 'btn btn-secondary'
+            },
+            buttonsStyling: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Re-generate WhatsApp text message
+                const familyName = document.getElementById('familySelect').value;
+                const address = document.getElementById('addressInput').value;
+                const contact = document.getElementById('contactInput').value;
+                const phone = document.getElementById('phoneInput').value;
+                const deliveryType = document.getElementById('deliveryType').value;
+
+                const orderedProducts = [];
+                document.querySelectorAll('.product-selection').forEach(selection => {
+                    const productSearchInput = selection.querySelector('.product-search-input');
+                    const freeTextProductInput = selection.querySelector('.free-text-product-input');
+                    const quantityInput = selection.querySelector('.quantity-input');
+
+                    const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
+                    const quantity = parseInt(quantityInput.value, 10);
+
+                    if (selectedProductName && quantity > 0) {
+                        const product = productsCatalog.find(p => p.name === selectedProductName);
+                        orderedProducts.push({
+                            name: selectedProductName,
+                            sku: product ? product.sku : 'N/A', // Use SKU if found, else N/A
+                            quantity: quantity
+                        });
+                    }
+                });
+
+                let whatsappMessage = `📦 הזמנה חדשה מבית סבן\n\n`;
+                whatsappMessage += `*משפחה:* ${familyName}\n`;
+whatsappMessage += `*כתובת:* ${address}\n`;
+whatsappMessage += `*איש קשר:* ${contact} ${phone}\n`;
+whatsappMessage += `*סוג הובלה:* ${deliveryType || 'לא נבחר'}\n`;
+whatsappMessage += `\n🧾 *מוצרים:*\n`;
+orderedProducts.forEach(p => {
+    whatsappMessage += `• ${p.name} × ${p.quantity}\n`;
+});
+whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
+                const productImageFile = document.getElementById('productImage').files[0];
+                if (productImageFile) {
+                    whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
+                }
+
+                const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+                window.open(whatsappUrl, '_blank');
+            }
+        });
+
+    } catch (error) {
+        console.error('Error converting to image:', error);
+        hideLoading();
+        showToast('error', 'שגיאה', 'אירעה שגיאה בשמירת התמונה. נסה שוב.');
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize live date and time
+    updateDateTime();
+    setInterval(updateDateTime, 1000); // Update every second
+
     fetchDataFromGoogleSheets(); // Load initial data
 
     const familySelect = document.getElementById('familySelect');
+    const dynamicFamilyHeading = document.getElementById('dynamicFamilyHeading');
+    const familyDetailsForm = document.getElementById('familyDetailsForm');
     const addressInput = document.getElementById('addressInput');
     const contactInput = document.getElementById('contactInput');
     const phoneInput = document.getElementById('phoneInput');
     const historyDisplay = document.getElementById('historyDisplay');
     const addProductBtn = document.getElementById('addProductBtn');
     const submitOrderBtn = document.getElementById('submitOrderBtn');
+    const deliveryTypeSelect = document.getElementById('deliveryType');
+
 
     familySelect.addEventListener('change', (event) => {
-        const selectedFamily = event.target.value;
-        if (selectedFamily && familiesData[selectedFamily]) {
-            const data = familiesData[selectedFamily];
+        const selectedFamilyName = event.target.value;
+        if (selectedFamilyName && familiesData[selectedFamilyName]) {
+            updateProgressBar(2); // Move to Step 2
+            const data = familiesData[selectedFamilyName];
+            dynamicFamilyHeading.textContent = `הזמנה עבור משפחת ${selectedFamilyName}`;
+            dynamicFamilyHeading.classList.remove('hidden');
+            familyDetailsForm.classList.remove('hidden');
+
             addressInput.value = data.address || '';
             contactInput.value = data.contact || '';
             phoneInput.value = data.phone || '';
 
+            // Populate history display
             historyDisplay.innerHTML = '';
-            if (data.history && data.history !== "לא זוהו מוצרים") {
-                data.history.split(', ').forEach(item => {
+            const familyHistory = previousOrdersHistory.filter(order => order['שם משפחה'] === selectedFamilyName);
+            if (familyHistory.length > 0) {
+                // Aggregate history for display (e.g., unique products and last order date)
+                const aggregatedHistory = {};
+                familyHistory.forEach(order => {
+                    const productName = order['שם מוצר'];
+                    const quantity = parseInt(order['כמות']) || 0;
+                    const orderDate = order['תאריך ושעה'];
+
+                    if (!aggregatedHistory[productName]) {
+                        aggregatedHistory[productName] = { totalQty: 0, lastDate: '' };
+                    }
+                    aggregatedHistory[productName].totalQty += quantity;
+                    // Keep the latest date
+                    if (orderDate > aggregatedHistory[productName].lastDate) {
+                        aggregatedHistory[productName].lastDate = orderDate;
+                    }
+                });
+
+                for (const prodName in aggregatedHistory) {
+                    const item = aggregatedHistory[prodName];
                     const p = document.createElement('p');
                     p.className = 'history-item';
-                    p.textContent = item;
+                    p.innerHTML = `<i class="fas fa-box"></i> ${prodName} (סה"כ: ${item.totalQty}, אחרונה: ${item.lastDate.split(',')[0]})`;
                     historyDisplay.appendChild(p);
-                });
+                }
             } else {
                 historyDisplay.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות זמינה למשפחה זו.</p>';
             }
+
+            // Clear existing product selections and add a fresh one
+            document.getElementById('productsContainer').innerHTML = '';
+            productRowCounter = 0; // Reset counter
+            addProductSelection(); // Add initial product row
+
         } else {
+            updateProgressBar(1); // Reset to Step 1
+            dynamicFamilyHeading.classList.add('hidden');
+            familyDetailsForm.classList.add('hidden');
             addressInput.value = '';
             contactInput.value = '';
             phoneInput.value = '';
             historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
+            document.getElementById('productsContainer').innerHTML = ''; // Clear product rows
+            productRowCounter = 0;
         }
     });
 
@@ -210,35 +502,43 @@ document.addEventListener('DOMContentLoaded', () => {
         const address = addressInput.value;
         const contact = contactInput.value;
         const phone = phoneInput.value;
+        const deliveryType = deliveryTypeSelect.value; // Get selected delivery type
 
         if (!familyName || !address || !contact || !phone) {
-            showMessageBox('שגיאה', 'אנא מלא את כל פרטי המשפחה, הכתובת, איש הקשר והטלפון.');
+            showToast('error', 'שגיאה', 'אנא מלא את כל פרטי המשפחה, הכתובת, איש הקשר והטלפון.');
             return;
         }
 
         const orderedProducts = [];
         const productSelections = document.querySelectorAll('.product-selection');
-        productSelections.forEach((selection, index) => {
-            const productSelect = selection.querySelector('.product-select');
+        let hasValidProduct = false;
+
+        productSelections.forEach((selection) => {
+            const productSearchInput = selection.querySelector('.product-search-input');
+            const freeTextProductInput = selection.querySelector('.free-text-product-input');
             const quantityInput = selection.querySelector('.quantity-input');
 
-            const selectedSku = productSelect.value;
+            const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
             const quantity = parseInt(quantityInput.value, 10);
 
-            if (selectedSku && quantity > 0) {
-                const product = mockProducts.find(p => p.sku === selectedSku);
-                if (product) {
-                    orderedProducts.push({
-                        name: product.name,
-                        sku: product.sku,
-                        quantity: quantity
-                    });
-                }
+            if (selectedProductName && quantity > 0) {
+                hasValidProduct = true;
+                const product = productsCatalog.find(p => p.name === selectedProductName);
+                orderedProducts.push({
+                    name: selectedProductName,
+                    sku: product ? product.sku : 'N/A', // Use SKU if found, else N/A for free text
+                    quantity: quantity
+                });
             }
         });
 
-        if (orderedProducts.length === 0) {
-            showMessageBox('שגיאה', 'אנא בחר לפחות מוצר אחד להזמנה.');
+        if (!hasValidProduct) {
+            showToast('error', 'שגיאה', 'אנא בחר לפחות מוצר אחד להזמנה או הזן שם מוצר ידנית.');
+            return;
+        }
+
+        if (!deliveryType) {
+            showToast('error', 'שגיאה', 'אנא בחר סוג הובלה.');
             return;
         }
 
@@ -255,11 +555,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } catch (error) {
                 console.error('Error converting image to base64:', error);
-                showMessageBox('שגיאה', 'אירעה שגיאה בהמרת התמונה. נסה שוב.');
+                showToast('error', 'שגיאה', 'אירעה שגיאה בהמרת התמונה. נסה שוב.');
                 hideLoading();
                 return;
             }
-            hideLoading();
         }
 
         const orderData = {
@@ -270,71 +569,74 @@ document.addEventListener('DOMContentLoaded', () => {
             phone,
             products: orderedProducts,
             imageData: base64Image,
-            imageFileName: productImageFile ? productImageFile.name : null
+            imageFileName: productImageFile ? productImageFile.name : null,
+            deliveryType // Include delivery type in order data
         };
 
-        showLoading('שולח הזמנה...');
-        try {
-            // In a real scenario, this would be a fetch call to your Google Apps Script Web App URL
-            // Example: const response = await fetch('YOUR_WEB_APP_URL?action=submitOrder', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify(orderData)
-            // });
-            // const result = await response.json();
+        updateProgressBar(4); // Move to Step 4 (Summary)
+        showConfirmationModal(orderData);
 
-            // Simulate API call success
-            await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-            const result = { success: true, message: "הזמנה נשלחה בהצלחה!" };
-
-            if (result.success) {
-                showMessageBox('הזמנה נשלחה', result.message);
-                // Generate WhatsApp message
-                let whatsappMessage = `*הזמנה חדשה - משפחת ${familyName}*\n\n`;
-                whatsappMessage += `*כתובת:* ${address}\n`;
-                whatsappMessage += `*איש קשר:* ${contact}\n`;
-                whatsappMessage += `*טלפון:* ${phone}\n\n`;
-                whatsappMessage += `*פרטי הזמנה:*\n`;
-                orderedProducts.forEach(p => {
-                    whatsappMessage += `- ${p.name} (מק"ט: ${p.sku}): ${p.quantity}\n`;
+        // Add an event listener to the "Save as Image" button in the modal
+        // This button will also trigger the actual submission to Google Sheets
+        document.querySelector('#orderConfirmationModal .btn-primary').onclick = async () => {
+            closeConfirmationModal(); // Close modal first
+            showLoading('שולח הזמנה ושומר...');
+            try {
+                const response = await fetch(`${WEB_APP_URL}?action=submitOrder`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
                 });
-                if (productImageFile) {
-                    whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('success', 'הזמנה נשלחה', result.message);
+
+                    // Generate WhatsApp message
+                    let whatsappMessage = `📦 הזמנה חדשה מבית סבן\n\n`;
+                    whatsappMessage += `*משפחה:* ${familyName}\n`;
+                    whatsappMessage += `*כתובת:* ${address}\n`;
+                    whatsappMessage += `*איש קשר:* ${contact} ${phone}\n`;
+                    whatsappMessage += `*סוג הובלה:* ${deliveryType || 'לא נבחר'}\n`;
+                    whatsappMessage += `\n🧾 *מוצרים:*\n`;
+                    orderedProducts.forEach(p => {
+                        whatsappMessage += `• ${p.name} × ${p.quantity}\n`;
+                    });
+                    whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
+                    if (productImageFile) {
+                        whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
+                    }
+
+                    const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+                    window.open(whatsappUrl, '_blank');
+
+                    // Clear form after successful submission
+                    familySelect.value = '';
+                    updateProgressBar(1); // Reset to Step 1
+                    dynamicFamilyHeading.classList.add('hidden');
+                    familyDetailsForm.classList.add('hidden');
+                    addressInput.value = '';
+                    contactInput.value = '';
+                    phoneInput.value = '';
+                    deliveryTypeSelect.value = '';
+                    historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
+                    document.getElementById('productsContainer').innerHTML = '';
+                    productRowCounter = 0; // Reset counter
+                    addProductSelection(); // Add initial product row
+                    document.getElementById('productImage').value = ''; // Clear file input
+
+                    // Re-fetch data to update history for next order
+                    fetchDataFromGoogleSheets();
+
+                } else {
+                    showToast('error', 'שגיאה', result.message || 'אירעה שגיאה בשליחת ההזמנה.');
                 }
-
-                // Replace with your company's WhatsApp number
-                const companyWhatsappNumber = '972508860896'; // e.g., '9725XXXXXXXX'
-                const whatsappUrl = `https://wa.me/${companyWhatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
-                window.open(whatsappUrl, '_blank');
-
-                // Clear form (optional)
-                familySelect.value = '';
-                addressInput.value = '';
-                contactInput.value = '';
-                phoneInput.value = '';
-                historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
-                document.getElementById('productsContainer').innerHTML = `
-                    <div class="form-group product-selection">
-                        <label for="productSelect_0">בחר מוצר:</label>
-                        <select id="productSelect_0" class="form-control product-select">
-                            <option value="">בחר מוצר</option>
-                        </select>
-                        <label for="quantityInput_0" class="mt-2">כמות:</label>
-                        <input type="number" id="quantityInput_0" class="form-control quantity-input" value="1" min="1">
-                        <div class="product-info mt-2" id="productInfo_0"></div>
-                    </div>
-                `;
-                populateProductSelect(0);
-                document.getElementById('productImage').value = ''; // Clear file input
-
-            } else {
-                showMessageBox('שגיאה', result.message || 'אירעה שגיאה בשליחת ההזמנה.');
+            } catch (error) {
+                console.error('Error submitting order:', error);
+                showToast('error', 'שגיאה', `אירעה שגיאה בשליחת ההזמנה: ${error.message}. נסה שוב מאוחר יותר.`);
+            } finally {
+                hideLoading();
             }
-        } catch (error) {
-            console.error('Error submitting order:', error);
-            showMessageBox('שגיאה', 'אירעה שגיאה בשליחת ההזמנה. נסה שוב מאוחר יותר.');
-        } finally {
-            hideLoading();
-        }
+        };
     });
 });
