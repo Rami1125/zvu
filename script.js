@@ -44,8 +44,8 @@ let currentOrderProducts = []; // Stores products currently added to the order f
 // Google Apps Script Web App URL
 // IMPORTANT: Replace this with your actual deployed Google Apps Script Web App URL
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzOjjBNd3ziRd66OrIcSw7Q0x9-7_0nSUHMvYskSkGv_8UPS4BYhdvV0zVlvE1dM4ny/exec'; // This URL needs to be updated by the user!
-// Company WhatsApp Number
-const COMPANY_WHATSAPP_NUMBER = '972508860896';
+// Company WhatsApp Number (Using the full number provided previously)
+const COMPANY_WHATSAPP_NUMBER = '972508860896'; // User provided 97250886, assuming this is the full correct number.
 
 // Current step in the order process
 let currentStep = 1;
@@ -267,12 +267,14 @@ function addProductSelection() {
 
 
     // Event listener for product search input (datalist)
+    // This input allows typing and filters suggestions from the product catalog.
+    // If a product is selected or typed and matches a catalog item, its info is displayed.
     productSearchInput.addEventListener('input', (event) => {
         const typedValue = event.target.value;
         const productOptionsDatalist = document.getElementById('productOptions');
-        productOptionsDatalist.innerHTML = ''; // Clear previous options
+        productOptionsDatalist.innerHTML = ''; // Clear previous options in the datalist
 
-        if (typedValue.length >= 2) { // Start filtering after 2 characters
+        if (typedValue.length >= 2) { // Start filtering after 2 characters for performance
             const filteredProducts = productsCatalog.filter(p =>
                 p.name.toLowerCase().includes(typedValue.toLowerCase()) ||
                 (p.sku && p.sku.toLowerCase().includes(typedValue.toLowerCase()))
@@ -290,7 +292,7 @@ function addProductSelection() {
 
         productInfoDiv.innerHTML = ''; // Clear previous info
         productHistoryInfoDiv.innerHTML = ''; // Clear history info
-        freeTextProductInput.value = ''; // Clear free text input if datalist is used
+        freeTextProductInput.value = ''; // Clear free text input if datalist is used (exclusive behavior)
 
         if (selectedProduct) {
             productInfoDiv.innerHTML = `
@@ -303,7 +305,7 @@ function addProductSelection() {
                 </div>
             `;
             updateProductHistoryDisplay(selectedProductName, productHistoryInfoDiv);
-            // Add to currentOrderProducts immediately if selected from datalist
+            // Add or update product in currentOrderProducts array
             addOrUpdateCurrentOrderProduct({
                 name: selectedProductName,
                 sku: selectedProduct.sku,
@@ -312,25 +314,25 @@ function addProductSelection() {
                 note: productNoteInput.value.trim()
             }, currentIndex);
         } else {
-            // If no product is selected from datalist, clear its entry from currentOrderProducts
-            // This is crucial for when user types something that isn't a valid product
+            // If no product is selected from datalist or typed value doesn't match catalog,
+            // ensure it's removed from currentOrderProducts if it was there previously.
             removeCurrentOrderProduct(currentIndex); // Remove if no valid product found
         }
     });
 
     // Event listener for free text product input
+    // This input is for manually entering product names not in the catalog.
+    // It clears the product search input for exclusive use.
     freeTextProductInput.addEventListener('input', (event) => {
-        // If free text is entered, clear datalist selection display
         if (event.target.value.trim() !== '') {
-            productSearchInput.value = ''; // Clear datalist input
+            productSearchInput.value = ''; // Clear datalist input (exclusive behavior)
             productInfoDiv.innerHTML = ''; // Clear product info display
-            productHistoryInfoDiv.innerHTML = ''; // Clear history info
-            // No history for free text products as they are not in catalog
-            // Add to currentOrderProducts immediately if free text is entered
+            productHistoryInfoDiv.innerHTML = ''; // Clear history info (no history for free text)
+            // Add or update product in currentOrderProducts array
             addOrUpdateCurrentOrderProduct({
                 name: event.target.value.trim(),
-                sku: 'N/A', // SKU is N/A for free text
-                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                sku: 'N/A', // SKU is N/A for free text products
+                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg', // Generic image for free text
                 quantity: parseInt(quantityInput.value, 10),
                 note: productNoteInput.value.trim()
             }, currentIndex);
@@ -341,6 +343,7 @@ function addProductSelection() {
     });
 
     // Event listeners for quantity and note changes to update currentOrderProducts
+    // These ensure the data in the internal array is always up-to-date with form inputs.
     quantityInput.addEventListener('input', () => {
         const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
         if (selectedProductName) {
@@ -370,7 +373,7 @@ function addProductSelection() {
     // Event listener for deleting the product row from the form
     if (deleteRowBtn) {
         deleteRowBtn.addEventListener('click', () => {
-            newProductDiv.remove(); // Remove the entire product selection div
+            newProductDiv.remove(); // Remove the entire product selection div from the DOM
             removeCurrentOrderProduct(currentIndex); // Remove from the current order array
             showToast('info', 'המוצר הוסר', 'שורת המוצר הוסרה מהטופס.');
         });
@@ -432,25 +435,50 @@ function closeQuantitySelectionModal() {
     document.getElementById('modalQuantitySelect').value = '1'; // Reset quantity
 }
 
+// FIX: This function was updated to create a new product input row and populate it.
 function addHistoricalProductToOrderForm() {
     const quantity = parseInt(document.getElementById('modalQuantitySelect').value, 10);
     if (selectedHistoricalProductName && quantity > 0) {
-        // Find the product in the catalog to get SKU and image (if available)
         const product = productsCatalog.find(p => p.name === selectedHistoricalProductName);
         const sku = product ? product.sku : 'N/A';
         const imageUrl = product ? product.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg';
 
-        // Add to currentOrderProducts directly
-        // Assign a unique formIndex for this historical product, even if not tied to a visible form row initially
-        const newFormIndex = productRowCounter++;
+        // 1. Create a new, empty product selection row in the form
+        addProductSelection(); // This increments productRowCounter and adds a new div to productsContainer
+
+        // 2. Get the index of the *last* added row (which is the one we just created)
+        const lastIndex = productRowCounter - 1;
+
+        // 3. Find the inputs for this newly created row
+        const productSearchInput = document.getElementById(`productSearch_${lastIndex}`);
+        const freeTextProductInput = document.getElementById(`freeTextProduct_${lastIndex}`);
+        const quantityInput = document.getElementById(`quantityInput_${lastIndex}`);
+        const productNoteInput = document.getElementById(`productNote_${lastIndex}`);
+        // No need to get productInfoDiv/productHistoryInfoDiv here, as they will be updated by input event
+
+        // 4. Populate the inputs with the historical product data
+        if (product) { // If it's a known product from the catalog
+            productSearchInput.value = selectedHistoricalProductName;
+            // Manually trigger input event on productSearchInput to update its display and currentOrderProducts
+            productSearchInput.dispatchEvent(new Event('input'));
+        } else { // If it's a free text product from history (less common, but handled)
+            freeTextProductInput.value = selectedHistoricalProductName;
+            // Manually trigger input event on freeTextProductInput
+            freeTextProductInput.dispatchEvent(new Event('input'));
+        }
+        quantityInput.value = quantity;
+        productNoteInput.value = ''; // Note is empty when adding from history by default
+
+        // The input event dispatching above should handle calling addOrUpdateCurrentOrderProduct.
+        // We ensure it is called here explicitly just in case, though it should be redundant.
         addOrUpdateCurrentOrderProduct({
             name: selectedHistoricalProductName,
             sku: sku,
             imageUrl: imageUrl,
             quantity: quantity,
-            note: '', // No note from history selection initially
-            formIndex: newFormIndex // Assign a unique index
-        });
+            note: '' // Note is empty when adding from history
+        }, lastIndex);
+
 
         showToast('success', 'נוסף בהצלחה', `'${selectedHistoricalProductName}' בכמות ${quantity} נוסף להזמנה.`);
         closeQuantitySelectionModal();
@@ -465,8 +493,6 @@ function addHistoricalProductToOrderForm() {
 function addOrUpdateCurrentOrderProduct(productData, formIndex) {
     // Ensure productData has a formIndex
     if (formIndex === undefined) {
-        // If formIndex is not provided, this is likely a historical product being added
-        // It will get its formIndex from addHistoricalProductToOrderForm
         console.warn("addOrUpdateCurrentOrderProduct called without formIndex. This should ideally come from addHistoricalProductToOrderForm or addProductSelection.");
         return;
     }
