@@ -149,12 +149,19 @@ async function fetchDataFromGoogleSheets() {
     showLoading('טוען נתוני משפחות, מוצרים והיסטוריית הזמנות...');
     try {
         const response = await fetch(`${WEB_APP_URL}?action=getInitialData`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        console.log('Fetch response status for getInitialData:', response.status);
+        console.log('Fetch response headers for getInitialData:', response.headers);
 
-        if (data.success === false) {
+        if (!response.ok) {
+            const errorText = await response.text(); // Get raw error text
+            console.error('HTTP error response text for getInitialData:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}. Response: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Parsed data from Apps Script (getInitialData):', data); // Log the parsed data
+
+        if (data.success === false) { // Assuming Apps Script sends { success: false, message: ... } on error
             throw new Error(data.message || 'Failed to fetch initial data from Google Sheets.');
         }
 
@@ -209,6 +216,18 @@ function populateFamilySelect() {
         option.value = familyName;
         option.textContent = familyName;
         familySelect.appendChild(option);
+    }
+    // If no families loaded, disable select or show message
+    if (Object.keys(familiesData).length === 0) {
+        const option = document.createElement('option');
+        option.value = "";
+        option.textContent = "אין משפחות זמינות";
+        option.disabled = true;
+        option.selected = true;
+        familySelect.appendChild(option);
+        familySelect.disabled = true;
+    } else {
+        familySelect.disabled = false;
     }
 }
 
@@ -298,7 +317,7 @@ function addProductSelection(productToPrepopulate = null) {
         addOrUpdateCurrentOrderProduct({
             name: productToPrepopulate.name,
             sku: productToPrepopulate.sku || 'N/A',
-            imageUrl: productToPrepopulate.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+            imageUrl: productToPrepopulate.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב',
             quantity: parseInt(quantityInput.value, 10),
             note: productNoteInput.value.trim()
         }, currentIndex);
@@ -334,7 +353,7 @@ function addProductSelection(productToPrepopulate = null) {
         if (selectedProduct) {
             productInfoDiv.innerHTML = `
                 <div class="product-item-display">
-                    <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${selectedProduct.imageUrl}')">
+                    <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=תמונת מוצר בקרוב';" onclick="showImagePreviewModal('${selectedProduct.imageUrl}')">
                     <div class="product-details-display">
                         <p class="product-name-display">${selectedProduct.name}</p>
                         <p class="product-sku-display">מק"ט: ${selectedProduct.sku}</p>
@@ -363,7 +382,7 @@ function addProductSelection(productToPrepopulate = null) {
             addOrUpdateCurrentOrderProduct({
                 name: event.target.value.trim(),
                 sku: 'N/A',
-                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב',
                 quantity: parseInt(quantityInput.value, 10),
                 note: productNoteInput.value.trim()
             }, currentIndex);
@@ -379,7 +398,7 @@ function addProductSelection(productToPrepopulate = null) {
             addOrUpdateCurrentOrderProduct({
                 name: selectedProductName,
                 sku: productsCatalog.find(p => p.name === selectedProductName)?.sku || 'N/A',
-                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב',
                 quantity: parseInt(quantityInput.value, 10),
                 note: productNoteInput.value.trim()
             }, currentIndex);
@@ -392,7 +411,7 @@ function addProductSelection(productToPrepopulate = null) {
             addOrUpdateCurrentOrderProduct({
                 name: selectedProductName,
                 sku: productsCatalog.find(p => p.name === selectedProductName)?.sku || 'N/A',
-                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב',
                 quantity: parseInt(quantityInput.value, 10),
                 note: productNoteInput.value.trim()
             }, currentIndex);
@@ -416,6 +435,13 @@ function updateFamilyHistoryDisplay(familyName) {
 
     if (!familyName.trim()) {
         historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
+        return;
+    }
+    
+    // Check if previousOrdersHistory is defined before filtering
+    if (!previousOrdersHistory) {
+        console.error("previousOrdersHistory is undefined. Cannot update family history display.");
+        historyDisplay.innerHTML = '<p class="text-red-500">שגיאה: היסטוריית הזמנות לא נטענה. אנא רענן את הדף.</p>';
         return;
     }
 
@@ -449,7 +475,7 @@ function updateFamilyHistoryDisplay(familyName) {
                 showProductDetailsModal({
                     name: prodName,
                     sku: productFromCatalog ? productFromCatalog.sku : 'N/A',
-                    imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                    imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב',
                     quantity: item.totalQty, // This is the total historical quantity, not current order quantity
                     note: '' // No note from history display
                 });
@@ -466,6 +492,13 @@ function updateProductHistoryDisplay(productName, displayDiv) {
     const selectedFamilyName = document.getElementById('familyNameDisplay').value; // Get from display field
     if (!selectedFamilyName.trim()) {
         displayDiv.innerHTML = '';
+        return;
+    }
+
+    // Check if previousOrdersHistory is defined before filtering
+    if (!previousOrdersHistory) {
+        console.error("previousOrdersHistory is undefined. Cannot update product history display.");
+        displayDiv.innerHTML = '<p class="text-red-500">שגיאה: היסטוריית הזמנות לא נטענה.</p>';
         return;
     }
 
@@ -517,7 +550,7 @@ function addHistoricalProductToOrderForm() {
     if (selectedHistoricalProductName && quantity > 0) {
         const product = productsCatalog.find(p => p.name === selectedHistoricalProductName);
         const sku = product ? product.sku : 'N/A';
-        const imageUrl = product ? product.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg';
+        const imageUrl = product ? product.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב';
 
         // Check if the product is already in the current order before adding
         const isProductAlreadyInOrder = currentOrderProducts.some(p => p.name === selectedHistoricalProductName);
@@ -677,7 +710,7 @@ function renderCurrentOrderProducts() {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'current-order-product-item';
         itemDiv.innerHTML = `
-            <img src="${product.imageUrl}" alt="${product.name}" class="product-image-thumb" onerror="this.onerror=null;this.src='https://placehold.co/40x40/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${product.imageUrl}')">
+            <img src="${product.imageUrl}" alt="${product.name}" class="product-image-thumb" onerror="this.onerror=null;this.src='https://placehold.co/40x40/CCCCCC/000000?text=תמונת מוצר בקרוב';" onclick="showImagePreviewModal('${product.imageUrl}')">
             <div class="product-details-summary">
                 <strong>${product.name}</strong>
                 <span>מק"ט: ${product.sku}</span>
@@ -750,8 +783,15 @@ function showProductDetailsModal(product) {
 
     const selectedFamilyName = document.getElementById('familyNameDisplay').value; // Get from display field
     if (selectedFamilyName.trim()) {
+        // Check if previousOrdersHistory is defined before filtering
+        if (!previousOrdersHistory) {
+            console.error("previousOrdersHistory is undefined. Cannot update product history in modal.");
+            historyInModal.innerHTML = '<p class="text-red-500">שגיאה: היסטוריית הזמנות לא נטענה.</p>';
+            return;
+        }
+
         const productSpecificHistory = previousOrdersHistory.filter(order =>
-            order['שם משפחה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === product.name
+            order['שם משפמה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === product.name
         ).sort((a, b) => {
             const parseDateString = (dateStr) => {
                 const [datePart, timePart] = dateStr.split(',');
