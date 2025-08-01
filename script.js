@@ -1,8 +1,6 @@
 // Function to show SweetAlert2 messages (Toast style)
 function showToast(icon, title, text) {
-    // Determine toast duration based on text length
     const duration = text.length > 19 ? 5000 : 3000; // 5 seconds for long text, 3 for short
-
     Swal.fire({
         icon: icon,
         title: title,
@@ -40,12 +38,15 @@ let familiesData = {}; // Stores family details fetched from Google Sheet "לק�
 let productsCatalog = []; // Stores product catalog fetched from Google Sheet "מחסן מוצרים"
 let previousOrdersHistory = []; // Stores previous orders for smart history from "הזמנות קודמות"
 let currentOrderProducts = []; // Stores products currently added to the order for display/editing
+let allContactsData = []; // Stores all contact data from Google Sheet for Contacts screen
 
 // Google Apps Script Web App URL
-// IMPORTANT: Replace this with your actual deployed Google Apps Script Web App URL
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzOjjBNd3ziRd66OrIcSw7Q0x9-7_0nSUHMvYskSkGv_8UPS4BYhdvV0zVlvE1dM4ny/exec'; // This URL needs to be updated by the user!
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzyEb1lsAbvm79TWiN7fFaleQwi4H8cEKf-bfMldyGVPAmXfxlMviWRAo6FNt4mM_r-FQ/exec'; // This URL needs to be updated by the user!
 // Company WhatsApp Number
 const COMPANY_WHATSAPP_NUMBER = '972508860896';
+
+// Current step in the order process (for progress bar)
+let currentStep = 0; // 0 for login, 1 for family select, 2 for order form, 3 for products, 4 for confirmation
 
 // Function to update live date and time in the header
 function updateDateTime() {
@@ -72,7 +73,6 @@ function typeWriter(text, i, fnCallback) {
             typeWriter(text, i + 1, fnCallback);
         }, 50); // Typing speed
     } else if (typeof fnCallback == 'function') {
-        // Call callback once animation is complete
         typingElement.innerHTML = text; // Remove blinking cursor
         setTimeout(fnCallback, 1000); // Pause before next action
     }
@@ -81,7 +81,7 @@ function typeWriter(text, i, fnCallback) {
 // Function to start the typing animation
 function startTypingAnimation() {
     const phrases = [
-        "זבולון-עדירן ברוכים הבאים למערכת ההזמנות המתקדמת!",
+        "למשפחות זבולון עדירן ברוכים הבאים למערכת ההזמנות המתקדמת!",
         "מייעלים את תהליך ההזמנות שלכם.",
         "הזמינו בקלות ובמהירות!"
     ];
@@ -96,9 +96,63 @@ function startTypingAnimation() {
     nextPhrase();
 }
 
+// Function to update the progress bar and step labels
+function updateProgressBar(step) {
+    currentStep = step;
+    const progressBar = document.getElementById('progressBar');
+    const stepLabels = [
+        document.getElementById('step1Label'),
+        document.getElementById('step2Label'),
+        document.getElementById('step3Label'),
+        document.getElementById('step4Label')
+    ];
+
+    let progressWidth = 0;
+    switch (step) {
+        case 1: progressWidth = 25; break;
+        case 2: progressWidth = 50; break;
+        case 3: progressWidth = 75; break;
+        case 4: progressWidth = 100; break;
+        default: progressWidth = 0;
+    }
+    progressBar.style.width = `${progressWidth}%`;
+
+    stepLabels.forEach((label, index) => {
+        if (index + 1 <= step) {
+            label.classList.add('active-step');
+        } else {
+            label.classList.remove('active-step');
+        }
+    });
+}
+
+// Function to switch between content sections
+function showContent(sectionId) {
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach(section => {
+        section.classList.add('hidden');
+    });
+    document.getElementById(sectionId).classList.remove('hidden');
+
+    // Update active navigation button
+    const navButtons = document.querySelectorAll('.nav-button');
+    navButtons.forEach(button => {
+        if (button.dataset.targetView === sectionId.replace('Content', '')) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+    });
+
+    // Reset progress bar if not on order form
+    if (sectionId !== 'orderFormContent') {
+        updateProgressBar(0);
+    }
+}
+
 // Function to fetch data from Google Apps Script
 async function fetchDataFromGoogleSheets() {
-    showLoading('טוען נתוני מוצרים והיסטוריית הזמנות...');
+    showLoading('טוען נתוני משפחות, מוצרים והיסטוריית הזמנות...');
     try {
         const response = await fetch(`${WEB_APP_URL}?action=getInitialData`);
         if (!response.ok) {
@@ -110,8 +164,8 @@ async function fetchDataFromGoogleSheets() {
             throw new Error(data.message || 'Failed to fetch initial data from Google Sheets.');
         }
 
-        // Populate global data stores (familiesData is still populated for internal lookups for history)
-        familiesData = {}; // This will now be populated but not used for a dropdown
+        // Populate global data stores
+        familiesData = {};
         data.families.forEach(family => {
             familiesData[family['שם משפחה']] = {
                 address: family['כתובת'] || 'לא ידוע',
@@ -128,8 +182,19 @@ async function fetchDataFromGoogleSheets() {
 
         previousOrdersHistory = data.previousOrders;
 
-        populateProductDatalist(); // Populate the datalist for product search
-        addProductSelection(); // Add the first product selection row (no index needed for initial call)
+        // Populate allContactsData for the Contacts screen
+        allContactsData = data.families.map(family => ({
+            familyName: family['שם משפחה'],
+            contactPerson: family['איש קשר'],
+            phoneNumber: family['טלפון'],
+            address: family['כתובת']
+        }));
+        populateContactsList(); // Populate contacts list on load
+
+        populateFamilySelect();
+        populateQuickFamilyButtons();
+        populateProductDatalist();
+        addProductSelection(); // Add the first product selection row
 
     } catch (error) {
         console.error('Error fetching initial data:', error);
@@ -139,7 +204,37 @@ async function fetchDataFromGoogleSheets() {
     }
 }
 
-// Removed populateFamilySelect() and populateQuickFamilyButtons() as they are no longer needed.
+function populateFamilySelect() {
+    const familySelect = document.getElementById('familySelect');
+    // Clear existing options except the first one
+    while (familySelect.options.length > 1) {
+        familySelect.remove(1);
+    }
+    for (const familyName in familiesData) {
+        const option = document.createElement('option');
+        option.value = familyName;
+        option.textContent = familyName;
+        familySelect.appendChild(option);
+    }
+}
+
+function populateQuickFamilyButtons() {
+    const quickFamilyButtonsContainer = document.getElementById('quickFamilyButtons');
+    // Clear existing buttons, keep the instruction paragraph
+    const existingButtons = quickFamilyButtonsContainer.querySelectorAll('button');
+    existingButtons.forEach(button => button.remove());
+
+    for (const familyName in familiesData) {
+        const button = document.createElement('button');
+        button.className = 'bg-gray-200 px-4 py-2 rounded-full hover:bg-blue-100 transition-all duration-200 shadow-sm';
+        button.textContent = familyName;
+        button.onclick = () => {
+            document.getElementById('familySelect').value = familyName;
+            document.getElementById('familySelect').dispatchEvent(new Event('change')); // Trigger change event
+        };
+        quickFamilyButtonsContainer.appendChild(button);
+    }
+}
 
 function populateProductDatalist() {
     const productOptions = document.getElementById('productOptions');
@@ -158,7 +253,7 @@ function populateProductDatalist() {
 
 let productRowCounter = 0; // To keep track of multiple product selection rows
 
-function addProductSelection() {
+function addProductSelection(productToPrepopulate = null) {
     const productsContainer = document.getElementById('productsContainer');
     const currentIndex = productRowCounter++; // Increment counter for unique IDs
 
@@ -181,7 +276,7 @@ function addProductSelection() {
     `;
     productsContainer.appendChild(newProductDiv);
 
-    // Add event listeners for the new product row
+    // Get references to the newly created elements
     const productSearchInput = document.getElementById(`productSearch_${currentIndex}`);
     const freeTextProductInput = document.getElementById(`freeTextProduct_${currentIndex}`);
     const quantityInput = document.getElementById(`quantityInput_${currentIndex}`);
@@ -189,6 +284,28 @@ function addProductSelection() {
     const productInfoDiv = document.getElementById(`productInfo_${currentIndex}`);
     const productHistoryInfoDiv = document.getElementById(`productHistoryInfo_${currentIndex}`);
     const deleteRowBtn = document.querySelector(`.delete-product-row-btn[data-index="${currentIndex}"]`);
+
+    // Pre-populate if productToPrepopulate is provided (e.g., from history)
+    if (productToPrepopulate) {
+        if (productsCatalog.some(p => p.name === productToPrepopulate.name)) {
+            productSearchInput.value = productToPrepopulate.name;
+            productSearchInput.dispatchEvent(new Event('input')); // Trigger to update info/history
+        } else {
+            freeTextProductInput.value = productToPrepopulate.name;
+            freeTextProductInput.dispatchEvent(new Event('input')); // Trigger to update info/history
+        }
+        quantityInput.value = productToPrepopulate.quantity || 1;
+        productNoteInput.value = productToPrepopulate.note || '';
+        // Manually update the internal array for this new row
+        addOrUpdateCurrentOrderProduct({
+            name: productToPrepopulate.name,
+            sku: productToPrepopulate.sku || 'N/A',
+            imageUrl: productToPrepopulate.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+            quantity: parseInt(quantityInput.value, 10),
+            note: productNoteInput.value.trim()
+        }, currentIndex);
+    }
+
 
     // Event listener for product search input (datalist)
     productSearchInput.addEventListener('input', (event) => {
@@ -300,7 +417,7 @@ function updateFamilyHistoryDisplay(familyName) {
     historyDisplay.innerHTML = ''; // Clear existing history
 
     if (!familyName.trim()) {
-        historyDisplay.innerHTML = '<p class="text-gray-500">הקלד שם משפחה כדי לראות היסטוריה.</p>';
+        historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
         return;
     }
 
@@ -335,8 +452,8 @@ function updateFamilyHistoryDisplay(familyName) {
                     name: prodName,
                     sku: productFromCatalog ? productFromCatalog.sku : 'N/A',
                     imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
-                    quantity: item.totalQty,
-                    note: ''
+                    quantity: item.totalQty, // This is the total historical quantity, not current order quantity
+                    note: '' // No note from history display
                 });
             });
             historyDisplay.appendChild(p);
@@ -348,7 +465,7 @@ function updateFamilyHistoryDisplay(familyName) {
 
 
 function updateProductHistoryDisplay(productName, displayDiv) {
-    const selectedFamilyName = document.getElementById('familyNameInput').value; // Get from new input field
+    const selectedFamilyName = document.getElementById('familyNameDisplay').value; // Get from display field
     if (!selectedFamilyName.trim()) {
         displayDiv.innerHTML = '';
         return;
@@ -404,22 +521,13 @@ function addHistoricalProductToOrderForm() {
         const sku = product ? product.sku : 'N/A';
         const imageUrl = product ? product.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg';
 
-        addProductSelection();
-        const lastIndex = productRowCounter - 1;
-
-        const productSearchInput = document.getElementById(`productSearch_${lastIndex}`);
-        const freeTextProductInput = document.getElementById(`freeTextProduct_${lastIndex}`);
-        const quantityInput = document.getElementById(`quantityInput_${lastIndex}`);
-
-        if (product) {
-            productSearchInput.value = selectedHistoricalProductName;
-            productSearchInput.dispatchEvent(new Event('input')); // Trigger input event to update display and array
-        } else {
-            freeTextProductInput.value = selectedHistoricalProductName;
-            freeTextProductInput.dispatchEvent(new Event('input')); // Trigger input event
-        }
-        quantityInput.value = quantity;
-        quantityInput.dispatchEvent(new Event('input')); // Trigger input event to update quantity in array
+        addProductSelection({
+            name: selectedHistoricalProductName,
+            sku: sku,
+            imageUrl: imageUrl,
+            quantity: quantity,
+            note: ''
+        });
 
         showToast('success', 'נוסף בהצלחה', `'${selectedHistoricalProductName}' בכמות ${quantity} נוסף להזמנה.`);
         closeQuantitySelectionModal();
@@ -430,15 +538,40 @@ function addHistoricalProductToOrderForm() {
 
 function addOrUpdateCurrentOrderProduct(productData, formIndex) {
     if (formIndex === undefined) {
-        console.warn("addOrUpdateCurrentOrderProduct called without formIndex.");
+        console.warn("addOrUpdateCurrentOrderProduct called without formIndex. This should ideally come from addHistoricalProductToOrderForm or addProductSelection.");
         return;
     }
 
     const existingIndex = currentOrderProducts.findIndex(p => p.formIndex === formIndex);
 
+    // Check if the product is already in the current order (by name, ignoring formIndex)
+    const isProductAlreadyInOrder = currentOrderProducts.some(p =>
+        p.name === productData.name && p.formIndex !== formIndex
+    );
+
+    if (isProductAlreadyInOrder) {
+        // Show the interactive pop-up
+        document.getElementById('productExistsMessage').innerText = `המוצר '${productData.name}' כבר קיים בהזמנה. האם תרצה להוסיף אותו שוב?`;
+        document.getElementById('productExistsConfirmationModal').classList.remove('hidden');
+        document.getElementById('productExistsConfirmationModal').classList.add('active');
+
+        // Store the productData and formIndex temporarily for the pop-up's action
+        document.getElementById('productExistsConfirmationModal').dataset.tempProductData = JSON.stringify(productData);
+        document.getElementById('productExistsConfirmationModal').dataset.tempFormIndex = formIndex;
+
+        // Prevent adding the product to currentOrderProducts until confirmed
+        if (existingIndex > -1) {
+            currentOrderProducts.splice(existingIndex, 1); // Remove the duplicate if it was added by mistake
+        }
+        renderCurrentOrderProducts();
+        return; // Stop further processing until user confirms
+    }
+
+
+    // Filter out invalid products (empty name or zero/negative quantity)
     if (!productData.name.trim() || productData.quantity <= 0) {
         if (existingIndex > -1) {
-            currentOrderProducts.splice(existingIndex, 1);
+            currentOrderProducts.splice(existingIndex, 1); // Remove invalid product
         }
     } else {
         if (existingIndex > -1) {
@@ -447,21 +580,55 @@ function addOrUpdateCurrentOrderProduct(productData, formIndex) {
             currentOrderProducts.push({ ...productData, formIndex });
         }
     }
-    renderCurrentOrderProducts();
+    renderCurrentOrderProducts(); // Re-render the display list
 }
 
+// Function to handle confirmation from the "Product Exists" modal
+function handleProductExistsConfirmation(confirm) {
+    const modal = document.getElementById('productExistsConfirmationModal');
+    modal.classList.remove('active');
+    modal.classList.add('hidden');
+
+    const productData = JSON.parse(modal.dataset.tempProductData);
+    const formIndex = parseInt(modal.dataset.tempFormIndex, 10);
+
+    if (confirm) {
+        // User confirmed, add the product
+        const existingIndex = currentOrderProducts.findIndex(p => p.formIndex === formIndex);
+        if (existingIndex > -1) {
+            currentOrderProducts[existingIndex] = { ...productData, formIndex };
+        } else {
+            currentOrderProducts.push({ ...productData, formIndex });
+        }
+        showToast('info', 'המוצר נוסף', `'${productData.name}' נוסף שוב להזמנה.`);
+    } else {
+        // User cancelled, remove the product row from the form
+        const productDivToRemove = document.querySelector(`.product-selection input[id="productSearch_${formIndex}"]`)?.closest('.product-selection') ||
+                                 document.querySelector(`.product-selection input[id="freeTextProduct_${formIndex}"]`)?.closest('.product-selection');
+        if (productDivToRemove) {
+            productDivToRemove.remove();
+        }
+        // Ensure it's removed from the internal array too (already handled by removeCurrentOrderProduct if it was added)
+        showToast('info', 'הפעולה בוטלה', `'${productData.name}' לא נוסף שוב להזמנה.`);
+    }
+    renderCurrentOrderProducts(); // Re-render the display list
+}
+
+
+// Function to remove a product from currentOrderProducts
 function removeCurrentOrderProduct(formIndex) {
     currentOrderProducts = currentOrderProducts.filter(p => p.formIndex !== formIndex);
-    renderCurrentOrderProducts();
+    renderCurrentOrderProducts(); // Re-render the display list
     showToast('info', 'המוצר הוסר', 'שורת המוצר הוסרה מרשימת ההזמנה.');
 }
 
+// Function to render the current order products list (the "table")
 function renderCurrentOrderProducts() {
     const listContainer = document.getElementById('currentOrderProductsList');
     const filterInput = document.getElementById('productFilterInput');
     const filterText = filterInput.value.trim().toLowerCase();
 
-    listContainer.innerHTML = '';
+    listContainer.innerHTML = ''; // Clear existing list
 
     if (currentOrderProducts.length === 0) {
         listContainer.innerHTML = '<p class="text-gray-500 text-center">אין מוצרים בהזמנה זו עדיין.</p>';
@@ -477,6 +644,7 @@ function renderCurrentOrderProducts() {
         return;
     }
 
+    // Sort products alphabetically by name for consistent display
     filteredProducts.sort((a, b) => a.name.localeCompare(b.name, 'he'));
 
     filteredProducts.forEach(product => {
@@ -499,18 +667,22 @@ function renderCurrentOrderProducts() {
         `;
         listContainer.appendChild(itemDiv);
 
+        // Add event listeners for quantity change and delete button
         const qtyInput = itemDiv.querySelector(`#qty_item_${product.formIndex}`);
         if (qtyInput) {
             qtyInput.addEventListener('input', (event) => {
                 const newQuantity = parseInt(event.target.value, 10);
+                // Find the original product in currentOrderProducts by formIndex
                 const productToUpdate = currentOrderProducts.find(p => p.formIndex === product.formIndex);
                 if (productToUpdate) {
                     if (newQuantity > 0) {
                         productToUpdate.quantity = newQuantity;
-                    } else {
+                    } else { // If quantity becomes 0 or less, remove it
                         removeCurrentOrderProduct(product.formIndex);
                     }
                 }
+                // No need to call renderCurrentOrderProducts here, as the input value itself updates.
+                // The array is updated, which is sufficient for submission.
             });
         }
 
@@ -522,6 +694,7 @@ function renderCurrentOrderProducts() {
         }
     });
 }
+
 
 // Image Preview Modal Functions
 function showImagePreviewModal(imageUrl) {
@@ -549,7 +722,7 @@ function showProductDetailsModal(product) {
     const historyInModal = document.getElementById('productHistoryInModal');
     historyInModal.innerHTML = '<p class="text-gray-500">טוען היסטוריה...</p>';
 
-    const selectedFamilyName = document.getElementById('familyNameInput').value; // Get from new input field
+    const selectedFamilyName = document.getElementById('familyNameDisplay').value; // Get from display field
     if (selectedFamilyName.trim()) {
         const productSpecificHistory = previousOrdersHistory.filter(order =>
             order['שם משפחה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === product.name
@@ -585,7 +758,7 @@ function showProductDetailsModal(product) {
             historyInModal.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות למוצר זה על ידי משפחה זו.</p>';
         }
     } else {
-        historyInModal.innerHTML = '<p class="text-gray-500">הקלד שם משפחה כדי לראות היסטוריית הזמנות למוצר.</p>';
+        historyInModal.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריית הזמנות למוצר.</p>';
     }
 
     modal.classList.remove('hidden');
@@ -645,7 +818,7 @@ async function handleSaveAndShare() {
     closeConfirmationModal();
     showLoading('שולח הזמנה ושומר...');
 
-    const familyName = document.getElementById('familyNameInput').value;
+    const familyName = document.getElementById('familyNameDisplay').value; // Get from display field
     const address = document.getElementById('addressInput').value;
     const contact = document.getElementById('contactInput').value;
     const phone = document.getElementById('phoneInput').value;
@@ -722,19 +895,10 @@ async function handleSaveAndShare() {
             const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
             window.open(whatsappUrl, '_blank');
 
-            // Clear form after successful submission
-            document.getElementById('familyNameInput').value = '';
-            document.getElementById('addressInput').value = '';
-            document.getElementById('contactInput').value = '';
-            document.getElementById('phoneInput').value = '';
-            document.getElementById('deliveryType').value = '';
-            document.getElementById('historyDisplay').innerHTML = '<p class="text-gray-500">הקלד שם משפחה כדי לראות היסטוריה.</p>';
-            document.getElementById('productsContainer').innerHTML = '';
-            productRowCounter = 0;
-            currentOrderProducts = [];
-            addProductSelection();
-            renderCurrentOrderProducts();
-            document.getElementById('productImage').value = '';
+            // Clear form after successful submission and reset to family selection
+            resetOrderForm();
+            showContent('step1Content'); // Go back to family selection
+            updateProgressBar(1); // Reset progress bar to step 1
 
             // Re-fetch data to update history for next order
             fetchDataFromGoogleSheets();
@@ -752,6 +916,107 @@ async function handleSaveAndShare() {
     }
 }
 
+// Function to reset the order form fields
+function resetOrderForm() {
+    document.getElementById('familySelect').value = ''; // Reset family select dropdown
+    document.getElementById('familyNameDisplay').value = ''; // Clear display field
+    document.getElementById('addressInput').value = '';
+    document.getElementById('contactInput').value = '';
+    document.getElementById('phoneInput').value = '';
+    document.getElementById('deliveryType').value = '';
+    document.getElementById('historyDisplay').innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
+    document.getElementById('productsContainer').innerHTML = '';
+    productRowCounter = 0;
+    currentOrderProducts = [];
+    addProductSelection(); // Add initial product row
+    renderCurrentOrderProducts();
+    document.getElementById('productImage').value = '';
+}
+
+// Function to populate contacts list for the "Contacts" screen
+function populateContactsList() {
+    const contactsListContainer = document.getElementById('contactsList');
+    const contactFilterInput = document.getElementById('contactFilterInput');
+    const filterText = contactFilterInput.value.trim().toLowerCase();
+
+    contactsListContainer.innerHTML = ''; // Clear existing list
+
+    if (allContactsData.length === 0) {
+        contactsListContainer.innerHTML = '<p class="text-gray-500 text-center">אין אנשי קשר זמינים.</p>';
+        return;
+    }
+
+    const filteredContacts = allContactsData.filter(contact =>
+        (contact.familyName && contact.familyName.toLowerCase().includes(filterText)) ||
+        (contact.contactPerson && contact.contactPerson.toLowerCase().includes(filterText)) ||
+        (contact.phoneNumber && contact.phoneNumber.includes(filterText))
+    );
+
+    if (filteredContacts.length === 0 && filterText !== '') {
+        contactsListContainer.innerHTML = '<p class="text-gray-500 text-center">לא נמצאו אנשי קשר תואמים לחיפוש.</p>';
+        return;
+    }
+
+    filteredContacts.sort((a, b) => (a.contactPerson || a.familyName).localeCompare(b.contactPerson || b.familyName, 'he'));
+
+    filteredContacts.forEach(contact => {
+        const contactDiv = document.createElement('div');
+        contactDiv.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-2 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors duration-200';
+        contactDiv.innerHTML = `
+            <div>
+                <p class="font-semibold text-dark-blue">${contact.contactPerson || contact.familyName}</p>
+                <p class="text-sm text-gray-600">${contact.familyName ? `משפחה: ${contact.familyName}` : ''} ${contact.phoneNumber ? `| טלפון: ${contact.phoneNumber}` : ''}</p>
+                <p class="text-sm text-gray-600">${contact.address ? `כתובת: ${contact.address}` : ''}</p>
+            </div>
+            <button class="btn-secondary px-3 py-1 text-sm glass-button" data-family-name="${contact.familyName}">
+                <i class="fas fa-eye mr-1"></i> הצג הזמנות
+            </button>
+        `;
+        contactsListContainer.appendChild(contactDiv);
+
+        // Add event listener to the "Show Orders" button
+        contactDiv.querySelector('button').addEventListener('click', (event) => {
+            const familyName = event.target.dataset.familyName;
+            if (familyName) {
+                // Navigate to order form and pre-fill family data
+                showContent('orderFormContent');
+                document.getElementById('familySelect').value = familyName; // Set dropdown value (if it were visible)
+                document.getElementById('familySelect').dispatchEvent(new Event('change')); // Trigger change event
+                // Manually set the familyNameDisplay as the select is hidden on this screen
+                document.getElementById('familyNameDisplay').value = familyName;
+                const familyDetails = familiesData[familyName];
+                if (familyDetails) {
+                    document.getElementById('addressInput').value = familyDetails.address || '';
+                    document.getElementById('contactInput').value = familyDetails.contact || '';
+                    document.getElementById('phoneInput').value = familyDetails.phone || '';
+                }
+                updateFamilyHistoryDisplay(familyName); // Update history for this family
+                updateProgressBar(2); // Move to order form step
+                showToast('info', 'פרטי משפחה נטענו', `פרטי משפחת ${familyName} נטענו לטופס ההזמנה.`);
+            }
+        });
+    });
+}
+
+// Function to send chat message to WhatsApp
+function sendChatMessageToWhatsApp(message) {
+    if (!message.trim()) {
+        showToast('warning', 'הודעה ריקה', 'אנא הקלד הודעה לשליחה.');
+        return;
+    }
+    const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    showToast('success', 'הודעה נשלחה', 'ההודעה נשלחה בהצלחה לווטסאפ.');
+    document.getElementById('chatInput').value = ''; // Clear input after sending
+    // Add message to chat history display (client-side only for now)
+    const chatMessagesContainer = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'bg-blue-100 p-3 rounded-lg mb-2 self-end max-w-[80%]'; // Style for sent message
+    messageDiv.innerText = message;
+    chatMessagesContainer.appendChild(messageDiv);
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Scroll to bottom
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize live date and time
@@ -763,23 +1028,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fetchDataFromGoogleSheets(); // Load initial data
 
-    const familyNameInput = document.getElementById('familyNameInput'); // New input field
+    // Initial view: Login screen
+    showContent('loginContent');
+
+    // Get elements
+    const loginBtn = document.getElementById('loginBtn');
+    const familySelect = document.getElementById('familySelect');
+    const dynamicFamilyHeading = document.getElementById('dynamicFamilyHeading');
+    const familyDetailsForm = document.getElementById('familyDetailsForm');
+    const familyNameDisplay = document.getElementById('familyNameDisplay'); // New display field
+    const addressInput = document.getElementById('addressInput');
+    const contactInput = document.getElementById('contactInput');
+    const phoneInput = document.getElementById('phoneInput');
+    const historyDisplay = document.getElementById('historyDisplay');
     const addProductBtn = document.getElementById('addProductBtn');
     const submitOrderBtn = document.getElementById('submitOrderBtn');
+    const deliveryTypeSelect = document.getElementById('deliveryType');
     const addHistoricalProductButton = document.getElementById('addHistoricalProductBtn');
     const productFilterInput = document.getElementById('productFilterInput');
     const saveAndShareButton = document.querySelector('#orderConfirmationModal .btn-primary');
+    const confirmAddProductBtn = document.getElementById('confirmAddProductBtn');
+    const cancelAddProductBtn = document.getElementById('cancelAddProductBtn');
+    const contactFilterInput = document.getElementById('contactFilterInput');
+    const sendChatBtn = document.getElementById('sendChatBtn');
+    const chatInput = document.getElementById('chatInput');
+    const emojiButtons = document.querySelectorAll('.emoji-btn');
 
-    // Event listener for family name input to update history display
-    if (familyNameInput) {
-        familyNameInput.addEventListener('input', (event) => {
-            updateFamilyHistoryDisplay(event.target.value);
+
+    // Event listeners for navigation buttons
+    document.querySelectorAll('.nav-button').forEach(button => {
+        button.addEventListener('click', () => {
+            const targetView = button.dataset.targetView;
+            if (targetView === 'families') {
+                showContent('step1Content');
+                updateProgressBar(1); // Set progress to step 1
+            } else if (targetView === 'login') {
+                showContent('loginContent');
+                updateProgressBar(0); // Reset progress
+            } else if (targetView === 'contacts') {
+                showContent('contactsContent');
+                populateContactsList(); // Re-populate contacts list on view
+                updateProgressBar(0); // Reset progress
+            } else if (targetView === 'chat') {
+                showContent('chatContent');
+                updateProgressBar(0); // Reset progress
+            }
+        });
+    });
+
+
+    // Login Button (basic for now)
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            const username = document.getElementById('usernameInput').value;
+            const password = document.getElementById('passwordInput').value;
+
+            // Simple mock login for demonstration
+            if (username === 'user' && password === 'pass') {
+                showToast('success', 'התחברת בהצלחה', `שלום ${username}, ברוך הבא למערכת ההזמנות!`);
+                showContent('step1Content'); // Go to family selection after login
+                updateProgressBar(1); // Set progress to step 1
+            } else {
+                showToast('error', 'שגיאת התחברות', 'שם משתמש או סיסמה שגויים.');
+            }
         });
     }
+
 
     // Event listener for adding historical product from modal
     if (addHistoricalProductButton) {
         addHistoricalProductButton.addEventListener('click', addHistoricalProductToOrderForm);
+    }
+
+    // Event listeners for product exists confirmation modal
+    if (confirmAddProductBtn) {
+        confirmAddProductBtn.addEventListener('click', () => handleProductExistsConfirmation(true));
+    }
+    if (cancelAddProductBtn) {
+        cancelAddProductBtn.addEventListener('click', () => handleProductExistsConfirmation(false));
     }
 
     // Event listener for product filter in the current order list
@@ -787,19 +1113,67 @@ document.addEventListener('DOMContentLoaded', () => {
         productFilterInput.addEventListener('input', renderCurrentOrderProducts);
     }
 
+    // Event listener for contact filter in the contacts list
+    if (contactFilterInput) {
+        contactFilterInput.addEventListener('input', populateContactsList);
+    }
+
     // Attach the single event listener for the modal's primary button
     if (saveAndShareButton) {
         saveAndShareButton.addEventListener('click', handleSaveAndShare);
     }
 
-    addProductBtn.addEventListener('click', addProductSelection);
+
+    familySelect.addEventListener('change', (event) => {
+        const selectedFamilyName = event.target.value;
+        if (selectedFamilyName && familiesData[selectedFamilyName]) {
+            showContent('orderFormContent'); // Show order form content
+            updateProgressBar(2); // Move to Step 2 (Order Details)
+
+            const data = familiesData[selectedFamilyName];
+            dynamicFamilyHeading.textContent = `הזמנה עבור משפחת ${selectedFamilyName}`;
+            familyNameDisplay.value = selectedFamilyName; // Populate the display field
+
+            // Make fields editable and populate
+            addressInput.value = data.address || '';
+            addressInput.removeAttribute('readonly'); // Make editable
+            contactInput.value = data.contact || '';
+            contactInput.removeAttribute('readonly'); // Make editable
+            phoneInput.value = data.phone || '';
+            phoneInput.removeAttribute('readonly'); // Make editable
+
+            // Show welcome message
+            showToast('info', 'ברוך הבא!', `שלום ${data.contact || selectedFamilyName}, ברוך הבא למערכת ההזמנות!`);
+
+            // Populate history display
+            updateFamilyHistoryDisplay(selectedFamilyName);
+
+            // Clear existing product selections and add a fresh one
+            document.getElementById('productsContainer').innerHTML = '';
+            productRowCounter = 0; // Reset counter
+            currentOrderProducts = []; // Clear current order products when family changes
+            addProductSelection(); // Add initial product row
+            renderCurrentOrderProducts(); // Render the empty or updated current order list
+
+        } else {
+            // If no family selected or invalid, reset form and go back to family selection
+            resetOrderForm();
+            showContent('step1Content');
+            updateProgressBar(1);
+        }
+    });
+
+    addProductBtn.addEventListener('click', () => {
+        addProductSelection();
+        updateProgressBar(3); // Move to Step 3 (Product Selection)
+    });
 
     submitOrderBtn.addEventListener('click', async () => {
-        const familyName = document.getElementById('familyNameInput').value;
-        const address = document.getElementById('addressInput').value;
-        const contact = document.getElementById('contactInput').value;
-        const phone = document.getElementById('phoneInput').value;
-        const deliveryType = document.getElementById('deliveryType').value;
+        const familyName = familyNameDisplay.value; // Get from display field
+        const address = addressInput.value;
+        const contact = contactInput.value;
+        const phone = phoneInput.value;
+        const deliveryType = deliveryTypeSelect.value;
 
         if (!familyName.trim() || !address.trim() || !contact.trim() || !phone.trim()) {
             showToast('error', 'שגיאה', 'אנא מלא את כל פרטי המשפחה, הכתובת, איש הקשר והטלפון.');
@@ -830,11 +1204,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 quantity: p.quantity,
                 note: p.note
             })),
-            imageData: null,
-            imageFileName: null,
+            imageData: null, // Placeholder, will be populated in handleSaveAndShare
+            imageFileName: null, // Placeholder
             deliveryType
         };
 
+        updateProgressBar(4); // Move to Step 4 (Summary)
         showConfirmationModal(orderSummaryData);
     });
+
+    // Chat functionality
+    if (sendChatBtn) {
+        sendChatBtn.addEventListener('click', () => {
+            sendChatMessageToWhatsApp(chatInput.value);
+        });
+    }
+
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessageToWhatsApp(chatInput.value);
+            }
+        });
+    }
+
+    if (emojiButtons) {
+        emojiButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                chatInput.value += button.dataset.emoji;
+                chatInput.focus(); // Keep focus on input after adding emoji
+            });
+        });
+    }
 });
