@@ -218,15 +218,19 @@ function populateQuickFamilyButtons() {
     const existingButtons = quickFamilyButtonsContainer.querySelectorAll('button');
     existingButtons.forEach(button => button.remove());
 
+    const colorClasses = ['color-red', 'color-blue', 'color-yellow', 'color-purple'];
+    let index = 0;
+
     for (const familyName in familiesData) {
         const button = document.createElement('button');
-        button.className = 'quick-family-button'; // Use new class for styling
+        button.className = 'quick-family-button ' + colorClasses[index % colorClasses.length]; // Use new class for styling and assign color
         button.textContent = familyName;
         button.onclick = () => {
             document.getElementById('familySelect').value = familyName;
             document.getElementById('familySelect').dispatchEvent(new Event('change')); // Trigger change event
         };
         quickFamilyButtonsContainer.appendChild(button);
+        index++;
     }
 }
 
@@ -548,6 +552,7 @@ function addHistoricalProductToOrderForm() {
 
         showToast('success', 'נוסף בהצלחה', `'${selectedHistoricalProductName}' בכמות ${quantity} נוסף להזמנה.`);
         closeQuantitySelectionModal();
+        closeProductDetailsModal(); // Close the product details modal after adding a product from it
     } else {
         showToast('error', 'שגיאה', 'אנא בחר כמות חוקית.');
     }
@@ -1104,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('passwordInput').value;
 
             // Simple mock login for demonstration
-            if (username === 'סבן' && password === '1234') {
+            if (username === 'סבן' && password === '1234') { // Updated username and password
                 showToast('success', 'התחברת בהצלחה', `שלום ${username}, ברוך הבא למערכת ההזמנות!`);
                 showContent('step1Content'); // Go to family selection after login
                 updateProgressBar(1); // Set progress to step 1
