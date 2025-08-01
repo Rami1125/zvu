@@ -39,14 +39,14 @@ body {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-2xl */
     padding: 2rem; /* p-8 */
     width: 100%;
-    max-width: 48rem; /* max-w-4xl */
+    max-width: 48rem; /* max-w-4xl, increased from previous */
+    height: calc(100vh - 8rem); /* Take more vertical space */
     border: 1px solid #bfdbfe; /* border-blue-200 */
     transform: scale(0.95);
     transition: all 0.5s ease-in-out;
     display: flex;
     flex-direction: column;
     flex-grow: 1; /* Allow container to grow */
-    max-height: calc(100vh - 8rem); /* Adjust based on header/footer height */
 }
 
 .app-container:hover {
@@ -528,6 +528,11 @@ body {
     justify-content: space-around;
     align-items: center;
     border-top: 1px solid #bfdbfe;
+    /* Added frame for navigation buttons */
+    border: 2px solid #a0aec0; /* Example border color */
+    border-radius: 1.5rem; /* Rounded corners for the frame */
+    background-color: #e0f2fe; /* Light blue background for the frame */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect for the frame */
 }
 
 .nav-button {
@@ -574,6 +579,36 @@ body {
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
 }
 
+/* Quick Family Buttons */
+.quick-family-button {
+    background: linear-gradient(to right, #bfdbfe, #fdbf6b); /* Light blue to orange gradient */
+    color: #2d3748; /* Dark text for contrast */
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Regular shadow */
+    border: none;
+    cursor: pointer;
+    flex-grow: 1; /* Allow buttons to grow */
+    max-width: 150px; /* Max width for buttons */
+    text-align: center;
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Add ellipsis for long names */
+}
+
+.quick-family-button:hover {
+    box-shadow: 0 8px 10px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+    transform: translateY(-2px);
+}
+
+.quick-family-button:active {
+    transform: translateY(0);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
+}
+
+
 /* Chat Interface Specifics */
 .chat-input-area {
     display: flex;
@@ -600,7 +635,8 @@ body {
 @media (max-width: 768px) {
     .app-container {
         padding: 1.5rem;
-        max-height: calc(100vh - 6rem); /* Adjust for smaller screens */
+        max-width: 100%; /* Full width on small screens */
+        height: calc(100vh - 6rem); /* Adjust for smaller screens */
     }
 
     .grid-cols-1.md\:grid-cols-2 {
@@ -618,6 +654,7 @@ body {
 
     .bottom-nav-bar {
         padding: 0.75rem 0.5rem;
+        border-radius: 1rem; /* Slightly less rounded on small screens */
     }
 
     .nav-button {
@@ -630,5 +667,11 @@ body {
 
     .nav-button span {
         font-size: 0.7rem;
+    }
+
+    .quick-family-button {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.9rem;
+        max-width: 120px; /* Adjust max width for quick buttons */
     }
 }
