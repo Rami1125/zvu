@@ -41,7 +41,7 @@ let currentOrderProducts = []; // Stores products currently added to the order f
 let allContactsData = []; // Stores all contact data from Google Sheet for Contacts screen
 
 // Google Apps Script Web App URL
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzyEb1lsAbvm79TWiN7fFaleQwi4H8cEKf-bfMldyGVPAmXfxlMviWRAo6FNt4mM_r-FQ/exec'; // This URL needs to be updated by the user!
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzOjjBNd3ziRd66OrIcSw7Qx9-7_0nSUHMvYskSkGv_8UPS4BYhdvV0zVlvE1dM4ny/exec'; // This URL needs to be updated by the user!
 // Company WhatsApp Number
 const COMPANY_WHATSAPP_NUMBER = '972508860896';
 
@@ -64,7 +64,8 @@ function updateDateTime() {
     document.getElementById('currentDateTime').textContent = formattedDateTime;
 }
 
-// Function for typing effect
+// Function for typing effect (runs once)
+let typingEffectPlayed = false;
 function typeWriter(text, i, fnCallback) {
     const typingElement = document.getElementById('typingEffectText');
     if (i < text.length) {
@@ -74,26 +75,19 @@ function typeWriter(text, i, fnCallback) {
         }, 50); // Typing speed
     } else if (typeof fnCallback == 'function') {
         typingElement.innerHTML = text; // Remove blinking cursor
-        setTimeout(fnCallback, 1000); // Pause before next action
+        // No loop, just call callback if provided
+        if (fnCallback) fnCallback();
     }
 }
 
-// Function to start the typing animation
+// Function to start the typing animation (runs once)
 function startTypingAnimation() {
-    const phrases = [
-        "למשפחות זבולון עדירן ברוכים הבאים למערכת ההזמנות המתקדמת!",
-        "מייעלים את תהליך ההזמנות שלכם.",
-        "הזמינו בקלות ובמהירות!"
-    ];
-    let phraseIndex = 0;
-
-    function nextPhrase() {
-        typeWriter(phrases[phraseIndex], 0, function() {
-            phraseIndex = (phraseIndex + 1) % phrases.length;
-            setTimeout(nextPhrase, 2000); // Wait 2 seconds before typing next phrase
+    if (!typingEffectPlayed) {
+        const phrase = "למשפחות זבולון עדירן ברוכים הבאים למערכת ההזמנות!";
+        typeWriter(phrase, 0, () => {
+            typingEffectPlayed = true;
         });
     }
-    nextPhrase();
 }
 
 // Function to update the progress bar and step labels
@@ -113,7 +107,7 @@ function updateProgressBar(step) {
         case 2: progressWidth = 50; break;
         case 3: progressWidth = 75; break;
         case 4: progressWidth = 100; break;
-        default: progressWidth = 0;
+        default: progressWidth = 0; // For login/other screens
     }
     progressBar.style.width = `${progressWidth}%`;
 
@@ -226,7 +220,7 @@ function populateQuickFamilyButtons() {
 
     for (const familyName in familiesData) {
         const button = document.createElement('button');
-        button.className = 'bg-gray-200 px-4 py-2 rounded-full hover:bg-blue-100 transition-all duration-200 shadow-sm';
+        button.className = 'quick-family-button'; // Use new class for styling
         button.textContent = familyName;
         button.onclick = () => {
             document.getElementById('familySelect').value = familyName;
@@ -503,6 +497,7 @@ let selectedHistoricalProductName = '';
 function showQuantitySelectionModal(productName) {
     selectedHistoricalProductName = productName;
     document.getElementById('modalProductName').innerText = `הוסף: ${productName}`;
+    document.getElementById('modalQuantitySelect').value = '1'; // Reset quantity
     document.getElementById('quantitySelectionModal').classList.remove('hidden');
     document.getElementById('quantitySelectionModal').classList.add('active');
 }
@@ -511,7 +506,6 @@ function closeQuantitySelectionModal() {
     document.getElementById('quantitySelectionModal').classList.remove('active');
     document.getElementById('quantitySelectionModal').classList.add('hidden');
     selectedHistoricalProductName = '';
-    document.getElementById('modalQuantitySelect').value = '1';
 }
 
 function addHistoricalProductToOrderForm() {
@@ -520,6 +514,29 @@ function addHistoricalProductToOrderForm() {
         const product = productsCatalog.find(p => p.name === selectedHistoricalProductName);
         const sku = product ? product.sku : 'N/A';
         const imageUrl = product ? product.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg';
+
+        // Check if the product is already in the current order before adding
+        const isProductAlreadyInOrder = currentOrderProducts.some(p => p.name === selectedHistoricalProductName);
+
+        if (isProductAlreadyInOrder) {
+            // Show the interactive pop-up for duplicate product
+            document.getElementById('productExistsMessage').innerText = `המוצר '${selectedHistoricalProductName}' כבר קיים בהזמנה. האם תרצה להוסיף אותו שוב?`;
+            document.getElementById('productExistsConfirmationModal').classList.remove('hidden');
+            document.getElementById('productExistsConfirmationModal').classList.add('active');
+
+            // Store the product data and a flag indicating it's from history for the pop-up's action
+            document.getElementById('productExistsConfirmationModal').dataset.tempProductData = JSON.stringify({
+                name: selectedHistoricalProductName,
+                sku: sku,
+                imageUrl: imageUrl,
+                quantity: quantity,
+                note: ''
+            });
+            document.getElementById('productExistsConfirmationModal').dataset.fromHistory = 'true';
+
+            closeQuantitySelectionModal(); // Close the quantity selection modal
+            return; // Stop further processing until user confirms
+        }
 
         addProductSelection({
             name: selectedHistoricalProductName,
@@ -544,36 +561,36 @@ function addOrUpdateCurrentOrderProduct(productData, formIndex) {
 
     const existingIndex = currentOrderProducts.findIndex(p => p.formIndex === formIndex);
 
-    // Check if the product is already in the current order (by name, ignoring formIndex)
-    const isProductAlreadyInOrder = currentOrderProducts.some(p =>
-        p.name === productData.name && p.formIndex !== formIndex
-    );
-
-    if (isProductAlreadyInOrder) {
-        // Show the interactive pop-up
-        document.getElementById('productExistsMessage').innerText = `המוצר '${productData.name}' כבר קיים בהזמנה. האם תרצה להוסיף אותו שוב?`;
-        document.getElementById('productExistsConfirmationModal').classList.remove('hidden');
-        document.getElementById('productExistsConfirmationModal').classList.add('active');
-
-        // Store the productData and formIndex temporarily for the pop-up's action
-        document.getElementById('productExistsConfirmationModal').dataset.tempProductData = JSON.stringify(productData);
-        document.getElementById('productExistsConfirmationModal').dataset.tempFormIndex = formIndex;
-
-        // Prevent adding the product to currentOrderProducts until confirmed
-        if (existingIndex > -1) {
-            currentOrderProducts.splice(existingIndex, 1); // Remove the duplicate if it was added by mistake
-        }
-        renderCurrentOrderProducts();
-        return; // Stop further processing until user confirms
-    }
-
-
     // Filter out invalid products (empty name or zero/negative quantity)
     if (!productData.name.trim() || productData.quantity <= 0) {
         if (existingIndex > -1) {
             currentOrderProducts.splice(existingIndex, 1); // Remove invalid product
         }
     } else {
+        // Check for duplicate product names, excluding the current row being edited
+        const isProductAlreadyInOrder = currentOrderProducts.some(p =>
+            p.name === productData.name && p.formIndex !== formIndex
+        );
+
+        if (isProductAlreadyInOrder) {
+            // Show the interactive pop-up
+            document.getElementById('productExistsMessage').innerText = `המוצר '${productData.name}' כבר קיים בהזמנה. האם תרצה להוסיף אותו שוב?`;
+            document.getElementById('productExistsConfirmationModal').classList.remove('hidden');
+            document.getElementById('productExistsConfirmationModal').classList.add('active');
+
+            // Store the productData and formIndex temporarily for the pop-up's action
+            document.getElementById('productExistsConfirmationModal').dataset.tempProductData = JSON.stringify(productData);
+            document.getElementById('productExistsConfirmationModal').dataset.tempFormIndex = formIndex;
+            document.getElementById('productExistsConfirmationModal').dataset.fromHistory = 'false'; // Not from history button
+
+            // Remove the product from currentOrderProducts if it was just added by mistake
+            if (existingIndex > -1) {
+                currentOrderProducts.splice(existingIndex, 1);
+            }
+            renderCurrentOrderProducts(); // Re-render to reflect removal
+            return; // Stop further processing until user confirms
+        }
+
         if (existingIndex > -1) {
             currentOrderProducts[existingIndex] = { ...productData, formIndex };
         } else {
@@ -591,6 +608,7 @@ function handleProductExistsConfirmation(confirm) {
 
     const productData = JSON.parse(modal.dataset.tempProductData);
     const formIndex = parseInt(modal.dataset.tempFormIndex, 10);
+    const fromHistory = modal.dataset.fromHistory === 'true';
 
     if (confirm) {
         // User confirmed, add the product
@@ -608,7 +626,10 @@ function handleProductExistsConfirmation(confirm) {
         if (productDivToRemove) {
             productDivToRemove.remove();
         }
-        // Ensure it's removed from the internal array too (already handled by removeCurrentOrderProduct if it was added)
+        // If it was from history, also clear the temporary data
+        if (fromHistory) {
+            selectedHistoricalProductName = '';
+        }
         showToast('info', 'הפעולה בוטלה', `'${productData.name}' לא נוסף שוב להזמנה.`);
     }
     renderCurrentOrderProducts(); // Re-render the display list
@@ -981,7 +1002,7 @@ function populateContactsList() {
                 // Navigate to order form and pre-fill family data
                 showContent('orderFormContent');
                 document.getElementById('familySelect').value = familyName; // Set dropdown value (if it were visible)
-                document.getElementById('familySelect').dispatchEvent(new Event('change')); // Trigger change event
+                // document.getElementById('familySelect').dispatchEvent(new Event('change')); // Trigger change event
                 // Manually set the familyNameDisplay as the select is hidden on this screen
                 document.getElementById('familyNameDisplay').value = familyName;
                 const familyDetails = familiesData[familyName];
@@ -1023,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDateTime();
     setInterval(updateDateTime, 1000);
 
-    // Start typing animation
+    // Start typing animation (runs once on load)
     startTypingAnimation();
 
     fetchDataFromGoogleSheets(); // Load initial data
@@ -1035,7 +1056,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('loginBtn');
     const familySelect = document.getElementById('familySelect');
     const dynamicFamilyHeading = document.getElementById('dynamicFamilyHeading');
-    const familyDetailsForm = document.getElementById('familyDetailsForm');
     const familyNameDisplay = document.getElementById('familyNameDisplay'); // New display field
     const addressInput = document.getElementById('addressInput');
     const contactInput = document.getElementById('contactInput');
