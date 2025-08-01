@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת הזמנות מהירה</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- SweetAlert2 for toasts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            direction: rtl;
+            text-align: right;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for longer content */
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #334155; /* Slate-700 */
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .input-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #475569; /* Slate-600 */
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1; /* Slate-300 */
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            color: #334155;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #6366f1; /* Indigo-500 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* Indigo-600 */
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* Indigo-700 */
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-secondary {
+            background-color: #e2e8f0; /* Slate-200 */
+            color: #475569; /* Slate-600 */
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .btn-secondary:hover {
+            background-color: #cbd5e1; /* Slate-300 */
+        }
+        .product-item {
+            background-color: #f8fafc; /* Slate-50 */
+            border: 1px solid #e2e8f0; /* Slate-200 */
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .product-item .form-control {
+            margin-bottom: 0; /* Override default form-group margin */
+        }
+        .delete-product-btn {
+            background-color: #ef4444; /* Red-500 */
+            color: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .delete-product-btn:hover {
+            background-color: #dc2626; /* Red-600 */
+        }
+        .whatsapp-button {
+            background-color: #25d366; /* WhatsApp Green */
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 25px;
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+        }
+        .whatsapp-button:hover {
+            background-color: #1da851; /* Darker Green */
+            transform: translateY(-2px);
+        }
+        .whatsapp-button:active {
+            transform: translateY(0);
+        }
+        .whatsapp-button i {
+            font-size: 1.5rem;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .loading-overlay p {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            color: #475569;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .product-image-upload {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease-in-out;
+        }
+        .product-image-upload:hover {
+            border-color: #6366f1;
+        }
+        .product-image-upload input {
+            display: none;
+        }
+        .image-preview {
+            margin-top: 15px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+        }
+        .receipt-section {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .receipt-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+        .receipt-section li {
+            padding: 5px 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .receipt-section li:last-child {
+            border-bottom: none;
+        }
+        .receipt-section strong {
+            color: #334155;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="text-3xl font-bold mb-2">מערכת הזמנות מהירה</h1>
+            <p class="text-gray-600" id="currentDateTime"></p>
+        </div>
+
+        <form id="orderForm">
+            <div class="form-group">
+                <label for="familyNameInput" class="input-label">שם משפחה:</label>
+                <input type="text" id="familyNameInput" class="form-control" placeholder="הקלד שם משפחה" required>
+            </div>
+
+            <div class="form-group">
+                <label for="contactInput" class="input-label">שם איש קשר מזמין:</label>
+                <input type="text" id="contactInput" class="form-control" placeholder="הקלד שם איש קשר" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phoneInput" class="input-label">טלפון:</label>
+                <input type="tel" id="phoneInput" class="form-control" placeholder="הקלד מספר טלפון" required>
+            </div>
+
+            <div class="form-group">
+                <label for="addressInput" class="input-label">כתובת:</label>
+                <input type="text" id="addressInput" class="form-control" placeholder="הקלד כתובת" required>
+            </div>
+
+            <div class="form-group">
+                <label for="deliveryType" class="input-label">סוג הובלה:</label>
+                <select id="deliveryType" class="form-control" required>
+                    <option value="">בחר סוג הובלה</option>
+                    <option value="איסוף עצמי">איסוף עצמי</option>
+                    <option value="משלוח רגיל">משלוח רגיל</option>
+                    <option value="משלוח מהיר">משלוח מהיר</option>
+                </select>
+            </div>
+
+            <h3 class="text-xl font-semibold text-gray-700 mb-3 mt-5">פרטי מוצרים:</h3>
+            <div id="productsContainer">
+                <!-- Product input rows will be added here by JavaScript -->
+            </div>
+            <button type="button" id="addProductBtn" class="btn-secondary w-full mt-3">
+                <i class="fas fa-plus-circle ml-2"></i> הוסף מוצר נוסף
+            </button>
+
+            <div class="form-group mt-5">
+                <label class="input-label">תמונת מוצר (אופציונלי):</label>
+                <div class="product-image-upload" id="imageUploadArea">
+                    <input type="file" id="productImage" accept="image/*">
+                    <i class="fas fa-camera text-4xl text-gray-400 mb-2"></i>
+                    <p class="text-gray-600">לחץ להעלאת תמונה</p>
+                </div>
+                <img id="imagePreview" class="image-preview mt-3" src="#" alt="תצוגה מקדימה של תמונה">
+                <button type="button" id="removeImageBtn" class="btn-secondary w-full mt-2 hidden">
+                    <i class="fas fa-trash ml-2"></i> הסר תמונה
+                </button>
+            </div>
+
+            <button type="submit" id="submitOrderBtn" class="btn-primary w-full mt-6">
+                <i class="fas fa-save ml-2"></i> שלח הזמנה לגיליון
+            </button>
+        </form>
+
+        <button type="button" id="whatsappShareBtn" class="whatsapp-button w-full mt-6">
+            <i class="fab fa-whatsapp"></i> שלח הזמנה למחלקת הזמנות דרך וואטסאפ
+        </button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <i class="fas fa-spinner fa-spin text-5xl text-indigo-600"></i>
+        <p>טוען...</p>
+    </div>
+
+    <script>
+        // Google Apps Script Web App URL (THIS MUST BE UPDATED BY THE USER AFTER DEPLOYMENT)
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxvBPHFmT9trPCTGGzrhcKAxik28Pzco7OAhnY0gWLFKDHzfFyHpllheCt9ac78RMH-ZA/exec'; // עדכן ל-URL של הפריסה שלך ב-Apps Script
+        // Company WhatsApp Number
+        const COMPANY_WHATSAPP_NUMBER = '972508860896';
+
+        let productRowCounter = 0; // To keep track of multiple product selection rows
+
+        // Function to show SweetAlert2 toasts
+        function showToast(icon, title, text) {
+            const duration = text.length > 19 ? 5000 : 3000;
+            Swal.fire({
+                icon: icon,
+                title: title,
+                text: text,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: duration,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        }
+
+        // Function to show loading overlay
+        function showLoading(message = 'טוען נתונים...') {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.querySelector('p').innerText = message;
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.style.opacity = '1';
+            loadingOverlay.style.visibility = 'visible';
+        }
+
+        // Function to hide loading overlay
+        function hideLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.opacity = '0';
+            loadingOverlay.style.visibility = 'hidden';
+        }
+
+        // Function to update live date and time in the header
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false // 24-hour format
+            };
+            const formattedDateTime = now.toLocaleString('he-IL', options).replace(/\./g, '/').replace(',', '');
+            document.getElementById('currentDateTime').textContent = formattedDateTime;
+        }
+
+        // Function to add a product input row
+        function addProductInputRow(initialProductName = '', initialQuantity = 1, initialNote = '') {
+            const productsContainer = document.getElementById('productsContainer');
+            const currentIndex = productRowCounter++;
+
+            const productDiv = document.createElement('div');
+            productDiv.className = 'product-item';
+            productDiv.dataset.index = currentIndex; // Store index for easy removal
+
+            productDiv.innerHTML = `
+                <div class="form-group">
+                    <label for="productName_${currentIndex}" class="input-label">שם מוצר:</label>
+                    <input type="text" id="productName_${currentIndex}" class="form-control" placeholder="שם המוצר" value="${initialProductName}" required>
+                </div>
+                <div class="form-group">
+                    <label for="quantity_${currentIndex}" class="input-label">כמות:</label>
+                    <input type="number" id="quantity_${currentIndex}" class="form-control" value="${initialQuantity}" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="note_${currentIndex}" class="input-label">הערה (אופציונלי):</label>
+                    <input type="text" id="note_${currentIndex}" class="form-control" placeholder="הערה למוצר" value="${initialNote}">
+                </div>
+                <button type="button" class="delete-product-btn" onclick="removeProductRow(${currentIndex})">
+                    <i class="fas fa-trash"></i> הסר מוצר
+                </button>
+            `;
+            productsContainer.appendChild(productDiv);
+        }
+
+        // Function to remove a product input row
+        function removeProductRow(index) {
+            const productDiv = document.querySelector(`.product-item[data-index="${index}"]`);
+            if (productDiv) {
+                productDiv.remove();
+                showToast('info', 'הוסר', 'המוצר הוסר מהרשימה.');
+            }
+        }
+
+        // Function to gather all order data from the form
+        async function getOrderData() {
+            const familyName = document.getElementById('familyNameInput').value.trim();
+            const contact = document.getElementById('contactInput').value.trim();
+            const phone = document.getElementById('phoneInput').value.trim();
+            const address = document.getElementById('addressInput').value.trim();
+            const deliveryType = document.getElementById('deliveryType').value;
+            const productImageFile = document.getElementById('productImage').files[0];
+
+            if (!familyName || !contact || !phone || !address || !deliveryType) {
+                showToast('error', 'שגיאה', 'אנא מלא את כל השדות החובה.');
+                return null;
+            }
+
+            const products = [];
+            const productRows = document.querySelectorAll('.product-item');
+            let hasValidProduct = false;
+
+            productRows.forEach(row => {
+                const index = row.dataset.index;
+                const productName = document.getElementById(`productName_${index}`).value.trim();
+                const quantity = parseInt(document.getElementById(`quantity_${index}`).value, 10);
+                const note = document.getElementById(`note_${index}`).value.trim();
+
+                if (productName && quantity > 0) {
+                    products.push({ name: productName, quantity: quantity, note: note });
+                    hasValidProduct = true;
+                }
+            });
+
+            if (!hasValidProduct) {
+                showToast('error', 'שגיאה', 'אנא הוסף לפחות מוצר אחד עם כמות חוקית.');
+                return null;
+            }
+
+            let base64Image = null;
+            let imageFileName = null;
+            if (productImageFile) {
+                showLoading('מכין תמונה לשליחה...');
+                try {
+                    base64Image = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(productImageFile);
+                    });
+                    imageFileName = productImageFile.name;
+                } catch (error) {
+                    console.error('Error converting image to base64:', error);
+                    showToast('error', 'שגיאה', 'אירעה שגיאה בהמרת התמונה. נסה שוב.');
+                    hideLoading();
+                    return null;
+                } finally {
+                    hideLoading();
+                }
+            }
+
+            return {
+                timestamp: new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }),
+                familyName,
+                contact,
+                phone,
+                address,
+                deliveryType,
+                products,
+                imageData: base64Image,
+                imageFileName: imageFileName
+            };
+        }
+
+        // Function to send order to Google Apps Script
+        async function sendOrderToSheet(orderData) {
+            showLoading('שולח הזמנה לגיליון...');
+            const formData = new FormData();
+            formData.append('action', 'submitOrder');
+            formData.append('timestamp', orderData.timestamp);
+            formData.append('familyName', orderData.familyName);
+            formData.append('contact', orderData.contact);
+            formData.append('phone', orderData.phone);
+            formData.append('address', orderData.address);
+            formData.append('deliveryType', orderData.deliveryType);
+            formData.append('products', JSON.stringify(orderData.products)); // Stringify complex object
+
+            if (orderData.imageData) {
+                formData.append('imageData', orderData.imageData);
+                formData.append('imageFileName', orderData.imageFileName);
+            }
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: formData // No 'Content-Type' header needed for FormData
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('success', 'הזמנה נשמרה', result.message);
+                } else {
+                    showToast('error', 'שגיאה בשמירה', result.message || 'אירעה שגיאה בשמירת ההזמנה לגיליון.');
+                }
+                return result.success;
+            } catch (error) {
+                console.error('Error sending order to sheet:', error);
+                showToast('error', 'שגיאה', `שגיאה בשליחה לגיליון: ${error.message}`);
+                return false;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Function to send order details via WhatsApp
+        function sendToWhatsApp(orderData) {
+            let whatsappMessage = `📦 *הזמנה חדשה מבית סבן*\n\n`;
+            whatsappMessage += `*משפחה:* ${orderData.familyName}\n`;
+            whatsappMessage += `*איש קשר:* ${orderData.contact}\n`;
+            whatsappMessage += `*טלפון:* ${orderData.phone}\n`;
+            whatsappMessage += `*כתובת:* ${orderData.address}\n`;
+            whatsappMessage += `*סוג הובלה:* ${orderData.deliveryType}\n`;
+            whatsappMessage += `\n🧾 *פרטי מוצרים:*\n`;
+            orderData.products.forEach(p => {
+                whatsappMessage += `• ${p.name} × ${p.quantity}`;
+                if (p.note) {
+                    whatsappMessage += ` (הערה: ${p.note})`;
+                }
+                whatsappMessage += `\n`;
+            });
+            whatsappMessage += `\n📅 *תאריך ושעה:* ${orderData.timestamp}\n`;
+            if (orderData.imageData) {
+                whatsappMessage += `\n📸 *צורפה תמונת מוצר מהשטח.*`;
+            }
+            whatsappMessage += `\n\n_הזמנה זו נשלחה דרך מערכת ההזמנות המהירה._`;
+
+            const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // Event listener for form submission (to Google Sheets)
+        document.getElementById('orderForm').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent default form submission
+            const orderData = await getOrderData();
+            if (orderData) {
+                const success = await sendOrderToSheet(orderData);
+                if (success) {
+                    // Optionally clear form after successful submission to sheet
+                    document.getElementById('orderForm').reset();
+                    document.getElementById('productsContainer').innerHTML = '';
+                    productRowCounter = 0;
+                    addProductInputRow(); // Add initial empty row
+                    document.getElementById('imagePreview').style.display = 'none';
+                    document.getElementById('removeImageBtn').classList.add('hidden');
+                }
+            }
+        });
+
+        // Event listener for WhatsApp share button
+        document.getElementById('whatsappShareBtn').addEventListener('click', async () => {
+            const orderData = await getOrderData();
+            if (orderData) {
+                sendToWhatsApp(orderData);
+            }
+        });
+
+        // Event listener for adding more product rows
+        document.getElementById('addProductBtn').addEventListener('click', () => {
+            addProductInputRow();
+        });
+
+        // Event listener for image upload preview
+        document.getElementById('productImage').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            const imagePreview = document.getElementById('imagePreview');
+            const removeImageBtn = document.getElementById('removeImageBtn');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    removeImageBtn.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.src = '#';
+                imagePreview.style.display = 'none';
+                removeImageBtn.classList.add('hidden');
+            }
+        });
+
+        // Event listener for removing image
+        document.getElementById('removeImageBtn').addEventListener('click', () => {
+            document.getElementById('productImage').value = ''; // Clear file input
+            document.getElementById('imagePreview').src = '#';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('removeImageBtn').classList.add('hidden');
+            showToast('info', 'הוסרה', 'התמונה הוסרה.');
+        });
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDateTime();
+            setInterval(updateDateTime, 1000); // Update time every second
+            addProductInputRow(); // Add the first product input row when the page loads
+        });
+    </script>
+</body>
+</html>
