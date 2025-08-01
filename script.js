@@ -354,46 +354,54 @@ function addProductSelection(productToPrepopulate = null) {
 
     // Event listener for product search input (datalist)
     productSearchInput.addEventListener('input', (event) => {
-        const typedValue = event.target.value;
+        const typedValue = event.target.value.trim(); // Trim whitespace
         
         productInfoDiv.innerHTML = '';
         productHistoryInfoDiv.innerHTML = '';
-        
-        // Clear free text input if datalist input is being used
-        if (typedValue.trim() !== '') {
-            freeTextProductInput.value = ''; 
-        }
+        freeTextProductInput.value = ''; // Always clear free text if search is active
 
-        const selectedProduct = productsCatalog.find(p => p.name === typedValue); // Find exact match
-        
-        if (selectedProduct) {
-            // If a catalog product is selected/typed
-            productInfoDiv.innerHTML = `
-                <div class="product-item-display">
-                    <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${selectedProduct.imageUrl}')">
+        let selectedProduct = null;
+
+        // The native datalist dropdown will appear based on browser behavior.
+        // We control when the *application's display and internal state* updates.
+        if (typedValue.length >= 3) { // Only process for suggestions if 3 or more characters
+            selectedProduct = productsCatalog.find(p => p.name === typedValue); // Find exact match
+            
+            if (selectedProduct) {
+                // If a catalog product is selected/typed
+                productInfoDiv.innerHTML = `
+                    <div class="product-item-display">
+                        <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${selectedProduct.imageUrl}')">
+                    </div>
                     <div class="product-details-display">
                         <p class="product-name-display">${selectedProduct.name}</p>
                         <p class="product-sku-display">מק"ט: ${selectedProduct.sku}</p>
                     </div>
-                </div>
-            `;
-            updateProductHistoryDisplay(selectedProduct.name, productHistoryInfoDiv);
-            addOrUpdateCurrentOrderProduct({
-                name: selectedProduct.name,
-                sku: selectedProduct.sku,
-                imageUrl: selectedProduct.imageUrl,
-                quantity: parseInt(quantityInput.value, 10),
-                note: productNoteInput.value.trim()
-            }, currentIndex);
-        } else {
-            // If no exact catalog product match, treat it as a potential free text entry
-            addOrUpdateCurrentOrderProduct({
-                name: typedValue.trim(), // Pass whatever was typed
-                sku: 'N/A', // No SKU if not from catalog
-                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
-                quantity: parseInt(quantityInput.value, 10),
-                note: productNoteInput.value.trim()
-            }, currentIndex);
+                `;
+                updateProductHistoryDisplay(selectedProduct.name, productHistoryInfoDiv);
+                addOrUpdateCurrentOrderProduct({
+                    name: selectedProduct.name,
+                    sku: selectedProduct.sku,
+                    imageUrl: selectedProduct.imageUrl,
+                    quantity: parseInt(quantityInput.value, 10),
+                    note: productNoteInput.value.trim()
+                }, currentIndex);
+            } else {
+                // If no exact catalog product match, but typedValue is >= 3 chars, treat as potential free text
+                addOrUpdateCurrentOrderProduct({
+                    name: typedValue,
+                    sku: 'N/A',
+                    imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                    quantity: parseInt(quantityInput.value, 10),
+                    note: productNoteInput.value.trim()
+                }, currentIndex);
+            }
+        } else if (typedValue.length > 0 && typedValue.length < 3) {
+            // If less than 3 characters, clear product info and remove from current order
+            removeCurrentOrderProduct(currentIndex); // Remove if previously added by mistake
+            productInfoDiv.innerHTML = `<p class="text-gray-500">הקלד לפחות 3 אותיות לחיפוש מוצר.</p>`;
+        } else { // typedValue is empty
+            removeCurrentOrderProduct(currentIndex);
         }
     });
 
@@ -1018,7 +1026,7 @@ async function sendOrderAndShare() {
             });
             lastOrderSummaryData.imageFileName = productImageFile.name;
         } catch (error) {
-            console.error('Error converting image to base64 for submission:', error);
+                console.error('Error converting image to base64 for submission:', error);
             showToast('error', 'שגיאה', 'אירעה שגיאה בהמרת התמונה לשליחה. נסה שוב.');
             whatsappShareBtn.disabled = false;
             whatsappShareBtn.innerHTML = '<i class="fab fa-whatsapp mr-2"></i> שלח לוואטסאפ';
