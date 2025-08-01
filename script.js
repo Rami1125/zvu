@@ -40,6 +40,7 @@ let previousOrdersHistory = []; // Stores previous orders for smart history from
 let currentOrderProducts = []; // Stores products currently added to the order for display/editing
 let allContactsData = []; // Stores all contact data from Google Sheet for Contacts screen
 let lastOrderSummaryData = null; // Stores the last order summary data for WhatsApp sharing
+let currentChatContact = null; // Stores the name of the contact whose chat is currently open
 
 // Google Apps Script Web App URL
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxvBPHFmT9trPCTGGzrhcKAxik28Pzco7OAhnY0gWLFKDHzfFyHpllheCt9ac78RMH-ZA/exec'; // Updated URL based on console error
@@ -1126,8 +1127,8 @@ function populateContactsList() {
     }
 
     const filteredContacts = allContactsData.filter(contact =>
-        (contact.familyName && contact.familyName.toLowerCase().includes(filterText)) ||
         (contact.contactPerson && contact.contactPerson.toLowerCase().includes(filterText)) ||
+        (contact.familyName && contact.familyName.toLowerCase().includes(filterText)) ||
         (contact.phoneNumber && contact.phoneNumber.includes(filterText))
     );
 
@@ -1147,20 +1148,24 @@ function populateContactsList() {
                 <p class="text-sm text-gray-600">${contact.familyName ? `משפחה: ${contact.familyName}` : ''} ${contact.phoneNumber ? `| טלפון: ${contact.phoneNumber}` : ''}</p>
                 <p class="text-sm text-gray-600">${contact.address ? `כתובת: ${contact.address}` : ''}</p>
             </div>
-            <button class="btn-secondary px-3 py-1 text-sm glass-button" data-family-name="${contact.familyName}">
-                <i class="fas fa-eye mr-1"></i> הצג הזמנות
-            </button>
+            <div class="flex gap-2">
+                <button class="btn-secondary px-3 py-1 text-sm glass-button show-orders-btn" data-family-name="${contact.familyName}">
+                    <i class="fas fa-eye mr-1"></i> הצג הזמנות
+                </button>
+                <button class="btn-primary px-3 py-1 text-sm glass-button show-chat-btn" data-contact-person="${contact.contactPerson || contact.familyName}">
+                    <i class="fas fa-comments mr-1"></i> פתח צ'אט
+                </button>
+            </div>
         `;
         contactsListContainer.appendChild(contactDiv);
 
         // Add event listener to the "Show Orders" button
-        contactDiv.querySelector('button').addEventListener('click', (event) => {
+        contactDiv.querySelector('.show-orders-btn').addEventListener('click', (event) => {
             const familyName = event.target.dataset.familyName;
             if (familyName) {
                 // Navigate to order form and pre-fill family data
                 showContent('orderFormContent');
                 document.getElementById('familySelect').value = familyName; // Set dropdown value (if it were visible)
-                // document.getElementById('familySelect').dispatchEvent(new Event('change')); // Trigger change event
                 // Manually set the familyNameDisplay as the select is hidden on this screen
                 document.getElementById('familyNameDisplay').value = familyName;
                 const familyDetails = familiesData[familyName];
@@ -1174,26 +1179,141 @@ function populateContactsList() {
                 showToast('info', 'פרטי משפחה נטענו', `פרטי משפחת ${familyName} נטענו לטופס ההזמנה.`);
             }
         });
+
+        // Add event listener to the "Show Chat" button
+        contactDiv.querySelector('.show-chat-btn').addEventListener('click', (event) => {
+            const contactPerson = event.target.dataset.contactPerson;
+            if (contactPerson) {
+                currentChatContact = contactPerson; // Set the current chat contact
+                document.getElementById('chatContactNameHeader').innerText = `צ'אט עם ${contactPerson}`;
+                showContent('chatContent');
+                updateProgressBar(0); // Reset progress
+                fetchChatHistory(contactPerson); // Fetch and display chat history for this contact
+            }
+        });
     });
 }
 
-// Function to send chat message to WhatsApp
-function sendChatMessageToWhatsApp(message) {
+/**
+ * Fetches chat history for a given contact from Google Apps Script.
+ * @param {string} contactName The name of the contact to fetch chat history for.
+ */
+async function fetchChatHistory(contactName) {
+    showLoading(`טוען היסטוריית צ'אט עבור ${contactName}...`);
+    const chatMessagesContainer = document.getElementById('chatMessages');
+    chatMessagesContainer.innerHTML = ''; // Clear existing messages
+
+    try {
+        const response = await fetch(`${WEB_APP_URL}?action=getChatHistory&contactName=${encodeURIComponent(contactName)}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}. Response: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Chat history data:', data);
+
+        if (data.success && Array.isArray(data.chatHistory) && data.chatHistory.length > 0) {
+            data.chatHistory.sort((a, b) => {
+                // Assuming 'תאריך ושעה' is in 'DD.MM.YYYY, HH:MM:SS' format
+                const parseDateTime = (dtStr) => {
+                    const [datePart, timePart] = dtStr.split(', ');
+                    const [day, month, year] = datePart.split('.').map(Number);
+                    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                    return new Date(year, month - 1, day, hours, minutes, seconds);
+                };
+                return parseDateTime(a['תאריך ושעה']).getTime() - parseDateTime(b['תאריך ושעה']).getTime();
+            });
+
+            data.chatHistory.forEach(message => {
+                if (message['הודעת משתמש']) {
+                    appendChatMessage(message['הודעת משתמש'], message['תאריך ושעה'], 'user');
+                }
+                if (message['תשובת מנהל מערכת']) {
+                    appendChatMessage(message['תשובת מנהל מערכת'], message['תאריך ושעה'], 'admin');
+                }
+            });
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Scroll to bottom
+        } else {
+            chatMessagesContainer.innerHTML = '<p class="text-gray-500 text-center">אין היסטוריית צ\'אט עבור איש קשר זה.</p>';
+        }
+    } catch (error) {
+        console.error('Error fetching chat history:', error);
+        showToast('error', 'שגיאה', `אירעה שגיאה בטעינת היסטוריית הצ'אט: ${error.message}`);
+        chatMessagesContainer.innerHTML = '<p class="text-red-500 text-center">שגיאה בטעינת היסטוריית צ\'אט.</p>';
+    } finally {
+        hideLoading();
+    }
+}
+
+/**
+ * Appends a chat message to the display.
+ * @param {string} messageText The text of the message.
+ * @param {string} timestamp The timestamp of the message.
+ * @param {'user'|'admin'} senderType The type of sender ('user' or 'admin').
+ */
+function appendChatMessage(messageText, timestamp, senderType) {
+    const chatMessagesContainer = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${senderType}-message`;
+    messageDiv.innerHTML = `
+        <p>${messageText}</p>
+        <span class="message-timestamp">${timestamp.split(',')[0]} ${timestamp.split(',')[1]}</span>
+    `;
+    chatMessagesContainer.appendChild(messageDiv);
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Scroll to bottom
+}
+
+
+/**
+ * Sends a chat message (saves to sheet and sends to WhatsApp).
+ * @param {string} message The message to send.
+ */
+async function sendChatMessage(message) {
     if (!message.trim()) {
         showToast('warning', 'הודעה ריקה', 'אנא הקלד הודעה לשליחה.');
         return;
     }
-    const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-    showToast('success', 'הודעה נשלחה', 'ההודעה נשלחה בהצלחה לווטסאפ.');
-    document.getElementById('chatInput').value = ''; // Clear input after sending
-    // Add message to chat history display (client-side only for now)
-    const chatMessagesContainer = document.getElementById('chatMessages');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'bg-blue-100 p-3 rounded-lg mb-2 self-end max-w-[80%]'; // Style for sent message
-    messageDiv.innerText = message;
-    chatMessagesContainer.appendChild(messageDiv);
-    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Scroll to bottom
+    if (!currentChatContact) {
+        showToast('error', 'שגיאה', 'אנא בחר איש קשר לפני שליחת הודעה.');
+        return;
+    }
+
+    showLoading('שולח הודעה ושומר היסטוריה...');
+    const currentTimestamp = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'saveChatMessage');
+        formData.append('contactName', currentChatContact);
+        formData.append('timestamp', currentTimestamp);
+        formData.append('userMessage', message); // User's message
+
+        const response = await fetch(`${WEB_APP_URL}`, {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            appendChatMessage(message, currentTimestamp, 'user'); // Add to local display immediately
+            document.getElementById('chatInput').value = ''; // Clear input
+            showToast('success', 'הודעה נשלחה', 'ההודעה נשלחה ונשמרה בהיסטוריה.');
+
+            // Now, send to WhatsApp externally
+            const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(`הודעה מ${currentChatContact}:\n${message}`)}`;
+            window.open(whatsappUrl, '_blank');
+
+            // Re-fetch chat history to get potential admin response (polling)
+            setTimeout(() => fetchChatHistory(currentChatContact), 1000); // Fetch after a short delay
+        } else {
+            showToast('error', 'שגיאה', result.message || 'אירעה שגיאה בשמירת ההודעה.');
+        }
+    } catch (error) {
+        console.error('Error sending chat message:', error);
+        showToast('error', 'שגיאה', `אירעה שגיאה בשליחת ההודעה: ${error.message}`);
+    } finally {
+        hideLoading();
+    }
 }
 
 
@@ -1250,6 +1370,14 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (targetView === 'chat') {
                 showContent('chatContent');
                 updateProgressBar(0); // Reset progress
+                // If a chat contact is already selected, load its history
+                if (currentChatContact) {
+                    document.getElementById('chatContactNameHeader').innerText = `צ'אט עם ${currentChatContact}`;
+                    fetchChatHistory(currentChatContact);
+                } else {
+                    document.getElementById('chatContactNameHeader').innerText = `צ'אט וואטסאפ`;
+                    document.getElementById('chatMessages').innerHTML = '<p class="text-gray-500 text-center">אנא בחר איש קשר כדי להתחיל צ\'אט.</p>';
+                }
             }
         });
     });
@@ -1429,14 +1557,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Chat functionality
     if (sendChatBtn) {
         sendChatBtn.addEventListener('click', () => {
-            sendChatMessageToWhatsApp(chatInput.value);
+            sendChatMessage(chatInput.value); // Use the new sendChatMessage function
         });
     }
 
     if (chatInput) {
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                sendChatMessageToWhatsApp(chatInput.value);
+                sendChatMessage(chatInput.value); // Use the new sendChatMessage function
             }
         });
     }
