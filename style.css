@@ -3,14 +3,15 @@ body {
     font-family: 'Inter', sans-serif;
     direction: rtl; /* Right-to-left for Hebrew */
     text-align: right; /* Align text to the right */
-    /* Background with horizontal stripes */
-    background: linear-gradient(to bottom, #000000 0%, #000000 20%, #e0f2fe 20%, #e0f2fe 100%); /* Black top, light blue bottom */
+    /* Background with subtle gradient and texture */
+    background: linear-gradient(to bottom, #e0f2fe 0%, #ffffff 100%); /* Light blue to white gradient */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between; /* Pushes header/footer to edges */
     padding: 1rem;
+    overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 /* Custom Scrollbar */
@@ -35,22 +36,25 @@ body {
 /* App Container */
 .app-container {
     background-color: #ffffff;
-    border-radius: 1.5rem; /* rounded-3xl */
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-2xl */
-    padding: 2rem; /* p-8 */
+    border-radius: 2rem; /* More rounded corners for luxury */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* Deeper shadow */
+    padding: 2.5rem; /* Increased padding */
     width: 100%;
-    max-width: 48rem; /* max-w-4xl, increased from previous */
+    max-width: 52rem; /* Wider container for more content */
     height: calc(100vh - 8rem); /* Take more vertical space */
     border: 1px solid #bfdbfe; /* border-blue-200 */
-    transform: scale(0.95);
-    transition: all 0.5s ease-in-out;
+    transform: scale(0.98);
+    transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smoother transition */
     display: flex;
     flex-direction: column;
     flex-grow: 1; /* Allow container to grow */
+    position: relative;
+    overflow: hidden; /* Ensure no overflow from inner elements */
 }
 
 .app-container:hover {
     transform: scale(1);
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3), 0 15px 15px -7px rgba(0, 0, 0, 0.08); /* Even deeper shadow on hover */
 }
 
 /* Typography */
@@ -60,34 +64,36 @@ body {
 
 /* Form Elements */
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem; /* Increased margin */
 }
 
 .input-label {
     display: block;
     font-weight: 600; /* font-semibold */
-    color: #4a5568; /* gray-700 */
-    margin-bottom: 0.5rem;
+    color: #2d3748; /* Darker gray for labels */
+    margin-bottom: 0.6rem; /* Slightly more space */
+    font-size: 1.05rem; /* Slightly larger font */
 }
 
 .form-control {
     display: block;
     width: 100%;
-    padding: 0.75rem 1rem; /* py-3 px-4 */
-    font-size: 1rem;
+    padding: 0.85rem 1.25rem; /* More padding for input fields */
+    font-size: 1.05rem;
     line-height: 1.5;
     color: #4a5568;
-    background-color: #edf2f7; /* Recessed background */
+    background-color: #f8fafc; /* Lighter recessed background */
     background-clip: padding-box;
     border: 2px solid #a0aec0; /* Bold border */
-    border-radius: 0.5rem; /* rounded-lg */
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.1); /* Inset shadow for recessed look */
+    border-radius: 0.75rem; /* More rounded corners */
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08); /* Deeper inset shadow */
 }
 
 .form-control:focus {
     border-color: #667eea; /* indigo-500 */
-    box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(102, 110, 234, 0.5); /* ring-3 */
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08), 0 0 0 4px rgba(102, 110, 234, 0.3); /* Stronger ring */
+    background-color: #ffffff; /* White background on focus */
     outline: none;
 }
 
@@ -99,157 +105,159 @@ body {
 
 .form-control-file {
     /* Basic styling for file input */
-    padding: 0.5rem;
+    padding: 0.75rem;
     border: 1px solid #cbd5e0;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     background-color: #ffffff;
     cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 /* Buttons */
 .btn-primary {
-    background-color: #4f46e5; /* indigo-600 */
+    background: linear-gradient(to right, #4f46e5, #6b46e5); /* Indigo gradient */
     color: #ffffff;
-    padding: 0.75rem 1.5rem; /* py-3 px-6 */
-    border-radius: 0.75rem; /* rounded-xl */
+    padding: 1rem 2rem; /* More padding for larger buttons */
+    border-radius: 1rem; /* More rounded */
     font-weight: 700; /* font-bold */
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smoother transition */
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); /* Deeper shadow */
     cursor: pointer;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.1rem; /* Larger font size */
+    letter-spacing: 0.025em; /* Slight letter spacing */
 }
 
 .btn-primary:hover {
-    background-color: #4338ca; /* indigo-700 */
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    background: linear-gradient(to right, #4338ca, #5a38ca); /* Darker indigo gradient on hover */
+    transform: translateY(-3px); /* More pronounced lift */
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3); /* Even deeper shadow */
 }
 
 .btn-primary:active {
     transform: translateY(0);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.2); /* Stronger sunken effect */
 }
 
 .btn-secondary {
-    background-color: #e2e8f0; /* gray-200 */
-    color: #2d3748; /* gray-800 */
-    padding: 0.75rem 1.5rem; /* py-3 px-6 */
-    border-radius: 0.75rem; /* rounded-xl */
+    background: linear-gradient(to right, #e2e8f0, #cbd5e0); /* Gray gradient */
+    color: #2d3748; /* Darker gray text */
+    padding: 1rem 2rem; /* More padding */
+    border-radius: 1rem; /* More rounded */
     font-weight: 700; /* font-bold */
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smoother transition */
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); /* Deeper shadow */
     cursor: pointer;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.1rem; /* Larger font size */
+    letter-spacing: 0.025em; /* Slight letter spacing */
 }
 
 .btn-secondary:hover {
-    background-color: #cbd5e0; /* gray-300 */
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    background: linear-gradient(to right, #cbd5e0, #a0aec0); /* Darker gray gradient on hover */
+    transform: translateY(-3px); /* More pronounced lift */
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15); /* Even deeper shadow */
 }
 
 .btn-secondary:active {
     transform: translateY(0);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.15); /* Stronger sunken effect */
 }
-
-/* Glassmorphism effect for buttons */
-.glass-button {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    color: #2d3748;
-    transition: all 0.3s ease;
-}
-.glass-button:hover {
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-}
-
 
 /* Progress Bar */
 .progress-bar-container {
     width: 100%;
     background-color: #e2e8f0;
     border-radius: 9999px;
-    height: 0.625rem;
+    height: 0.75rem; /* Thicker progress bar */
     margin-top: 1.5rem;
     position: relative;
     overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Inset shadow for depth */
 }
 
 #progressBar {
     height: 100%;
     border-radius: 9999px;
-    transition: width 0.5s ease-in-out;
+    transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smoother transition */
 }
 
 .progress-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 0.75rem;
+    font-size: 0.85rem; /* Slightly larger font */
     font-weight: 500;
     color: #718096;
-    margin-top: 0.5rem;
+    margin-top: 0.75rem; /* More space */
 }
 
 .progress-labels span {
     flex: 1;
     text-align: center;
-    transition: color 0.3s ease;
+    transition: color 0.3s ease, font-weight 0.3s ease;
 }
 
 .progress-labels .active-step {
-    color: #667eea; /* Highlight active step */
+    color: #4f46e5; /* Highlight active step with primary color */
     font-weight: 700;
+    text-shadow: 0 0 5px rgba(79, 70, 229, 0.2); /* Subtle glow */
 }
 
 
 /* Dynamic Content Sections */
 .content-section {
     width: 100%;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease, transform 0.4s ease; /* Added transform transition */
+    transform: translateY(10px); /* Initial slight offset */
 }
 
 .content-section.hidden {
     display: none;
     opacity: 0;
+    transform: translateY(0); /* Reset transform for hidden */
 }
 
 /* Product Selection */
 .product-selection {
-    background-color: #f7fafc; /* gray-100 */
-    padding: 1.5rem;
-    border-radius: 0.75rem;
-    margin-bottom: 1rem;
-    box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+    background-color: #fdfefe; /* Very light background */
+    padding: 1.75rem; /* More padding */
+    border-radius: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08); /* Deeper inset shadow */
     border: 1px solid #e2e8f0; /* gray-200 */
 }
 
 .product-item-display {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem; /* More space */
     background-color: #ffffff;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
+    padding: 1rem; /* More padding */
+    border-radius: 0.75rem;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* More prominent shadow */
+    transition: all 0.2s ease;
+}
+
+.product-item-display:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .product-item-display img {
-    width: 70px;
-    height: 70px;
+    width: 80px; /* Larger image */
+    height: 80px;
     object-fit: contain;
-    border-radius: 0.25rem;
+    border-radius: 0.5rem;
     cursor: zoom-in; /* Indicate clickable for preview */
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .product-details-display {
@@ -259,43 +267,46 @@ body {
 .product-name-display {
     font-weight: 600;
     color: #2d3748;
+    font-size: 1.1rem;
 }
 
 .product-sku-display {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     color: #718096;
 }
 
 .product-history-info {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     color: #4a5568;
-    margin-top: 0.5rem;
-    padding: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.6rem;
     background-color: #e6fffa; /* teal-100 */
-    border-radius: 0.375rem;
+    border-radius: 0.5rem;
     border: 1px solid #b2f5ea; /* teal-200 */
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .history-item {
     background-color: #ebf8ff; /* blue-100 */
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    margin-bottom: 0.5rem;
+    padding: 0.85rem; /* More padding */
+    border-radius: 0.6rem;
+    margin-bottom: 0.6rem;
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.6rem;
     border: 1px solid #bee3f8; /* blue-200 */
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
 }
 
 .history-item:hover {
     background-color: #cce5ff; /* blue-200 */
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
 
@@ -303,13 +314,19 @@ body {
 .current-order-product-item {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
     background-color: #ffffff;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    margin-bottom: 0.5rem;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 0.75rem;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+    transition: all 0.2s ease;
+}
+
+.current-order-product-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .current-order-product-item:last-child {
@@ -317,11 +334,12 @@ body {
 }
 
 .product-image-thumb {
-    width: 40px;
-    height: 40px;
+    width: 50px; /* Larger thumb */
+    height: 50px;
     object-fit: contain;
-    border-radius: 0.25rem;
+    border-radius: 0.375rem;
     cursor: zoom-in;
+    border: 1px solid #e2e8f0;
 }
 
 .product-details-summary {
@@ -333,52 +351,59 @@ body {
 .product-details-summary strong {
     font-weight: 600;
     color: #2d3748;
+    font-size: 1rem;
 }
 
 .product-details-summary span {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     color: #718096;
 }
 
 .product-note-display {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: #5a67d8; /* indigo-500 */
     font-style: italic;
+    margin-top: 0.25rem;
 }
 
 .product-quantity-controls {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 .quantity-input-small {
-    width: 60px;
-    padding: 0.25rem 0.5rem;
+    width: 70px; /* Wider input */
+    padding: 0.35rem 0.6rem;
     border: 1px solid #cbd5e0;
-    border-radius: 0.375rem;
+    border-radius: 0.5rem;
     text-align: center;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
+    background-color: #fdfefe;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .action-buttons {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.6rem;
 }
 
 .delete-btn {
     background-color: #ef4444; /* red-500 */
     color: #ffffff;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    transition: background-color 0.2s ease;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.6rem;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease, transform 0.1s ease;
     border: none;
     cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .delete-btn:hover {
     background-color: #dc2626; /* red-600 */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 
@@ -389,14 +414,14 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 9999; /* Higher z-index to ensure it's on top */
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
 }
 
 .modal-overlay.active {
@@ -406,14 +431,15 @@ body {
 
 .modal-content {
     background-color: #ffffff;
-    padding: 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    padding: 2.5rem; /* More padding */
+    border-radius: 1.5rem; /* More rounded */
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3); /* Deeper shadow */
     position: relative;
     width: 90%;
-    max-width: 500px;
-    transform: translateY(-20px);
-    transition: transform 0.3s ease;
+    max-width: 550px; /* Wider modal */
+    transform: translateY(-30px); /* More pronounced initial offset */
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border: 1px solid #e2e8f0;
 }
 
 .modal-overlay.active .modal-content {
@@ -426,22 +452,25 @@ body {
     left: 1rem;
     background: none;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1.75rem; /* Larger close button */
     color: #718096; /* gray-500 */
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: color 0.2s ease, transform 0.1s ease;
 }
 
 .modal-close-btn:hover {
     color: #4a5568; /* gray-700 */
+    transform: scale(1.1);
 }
 
 .modal-title {
-    font-size: 1.75rem;
+    font-size: 2rem; /* Larger title */
     font-weight: 700;
     color: #1a202c;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem; /* More space */
     text-align: center;
+    border-bottom: 2px solid #e2e8f0; /* Subtle separator */
+    padding-bottom: 0.75rem;
 }
 
 .receipt-content ul {
@@ -451,8 +480,11 @@ body {
 }
 
 .receipt-content li {
-    padding: 0.25rem 0;
+    padding: 0.4rem 0;
     border-bottom: 1px dashed #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .receipt-content li:last-child {
@@ -462,12 +494,14 @@ body {
 .product-receipt-name {
     font-weight: 500;
     color: #2d3748;
+    flex-grow: 1;
 }
 
 .product-receipt-qty {
-    float: left; /* Align quantity to the left */
     font-weight: 500;
     color: #4a5568;
+    min-width: 40px; /* Ensure quantity has enough space */
+    text-align: left;
 }
 
 /* Typing Effect */
@@ -506,7 +540,7 @@ body {
 
 /* Loading Spinner */
 .loader {
-    border-top-color: #3498db; /* Blue */
+    border-top-color: #4f46e5; /* Primary blue for loader */
     animation: spin 1s linear infinite;
 }
 
@@ -518,22 +552,21 @@ body {
 /* Bottom Navigation Bar */
 .bottom-nav-bar {
     background-color: #ffffff;
-    border-top-left-radius: 1.5rem;
-    border-top-right-radius: 1.5rem;
-    box-shadow: 0 -10px 20px -5px rgba(0, 0, 0, 0.1);
-    padding: 1rem;
+    border-top-left-radius: 2rem;
+    border-top-right-radius: 2rem;
+    box-shadow: 0 -15px 30px -5px rgba(0, 0, 0, 0.15); /* Deeper shadow upwards */
+    padding: 1.25rem; /* More padding */
     width: 100%;
-    max-width: 48rem;
+    max-width: 52rem; /* Wider to match app container */
     display: flex;
     justify-content: space-around;
     align-items: center;
     border-top: 1px solid #bfdbfe;
-    /* Added frame for navigation buttons */
     border: 2px solid #a0aec0; /* Example border color */
-    border-radius: 1.5rem; /* Rounded corners for the frame */
+    border-radius: 2rem; /* Rounded corners for the frame */
     background-color: #e0f2fe; /* Light blue background for the frame */
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect for the frame */
-    gap: 0.75rem; /* Added gap between buttons */
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.15); /* Stronger sunken effect for the frame */
+    gap: 1rem; /* Increased gap between buttons */
 }
 
 .nav-button {
@@ -541,62 +574,89 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 0.5rem;
-    border-radius: 0.75rem;
+    padding: 0.85rem 0.6rem; /* More padding */
+    border-radius: 1rem; /* More rounded */
     background-color: transparent;
     border: none;
     color: #6b7280; /* gray-500 */
     font-weight: 600;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smoother transition */
     cursor: pointer;
     flex: 1; /* Distribute space evenly */
-    max-width: 100px; /* Limit button width */
+    max-width: 120px; /* Limit button width */
+    position: relative;
+    overflow: hidden; /* For sparkle effect */
 }
 
 .nav-button i {
-    font-size: 1.8rem; /* Larger icons */
-    margin-bottom: 0.25rem;
+    font-size: 2rem; /* Even larger icons */
+    margin-bottom: 0.35rem;
+    position: relative;
+    z-index: 1;
 }
 
 .nav-button span {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    position: relative;
+    z-index: 1;
+}
+
+.nav-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease, opacity 0.4s ease;
+}
+
+.nav-button:hover::before {
+    width: 150px;
+    height: 150px;
+    opacity: 1;
 }
 
 .nav-button:hover {
     background-color: #eff6ff; /* blue-50 */
     color: #3b82f6; /* blue-500 */
-    transform: translateY(-2px);
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); /* Enhanced sparkle effect */
+    transform: translateY(-3px); /* More pronounced lift */
+    box-shadow: 0 5px 20px rgba(59, 130, 246, 0.3); /* Enhanced sparkle effect */
 }
 
 .nav-button.active {
     background-color: #dbeafe; /* blue-100 */
     color: #2563eb; /* blue-600 */
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.15); /* Stronger sunken effect */
     transform: translateY(0);
 }
 
 .nav-button:active {
     transform: translateY(0);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.15); /* Stronger sunken effect */
 }
 
 /* Quick Family Buttons */
 .quick-family-button {
-    color: #2d3748; /* Dark text for contrast */
-    padding: 0.75rem 1.25rem;
-    border-radius: 0.75rem;
+    color: #ffffff; /* White text for contrast on gradients */
+    padding: 0.85rem 1.5rem;
+    border-radius: 1rem;
     font-weight: 700;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Regular shadow */
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Deeper shadow */
     border: none;
     cursor: pointer;
-    flex-grow: 1; /* Allow buttons to grow */
-    max-width: 150px; /* Max width for buttons */
+    flex-grow: 1;
+    max-width: 180px; /* Increased max width for quick buttons */
     text-align: center;
-    white-space: nowrap; /* Prevent text wrapping */
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Add ellipsis for long names */
+    text-overflow: ellipsis;
+    font-size: 1rem;
 }
 
 /* Specific colors for quick family buttons */
@@ -612,46 +672,65 @@ body {
 .quick-family-button.color-purple {
     background: linear-gradient(to right, #d8b4fe, #a855f7); /* Purple gradient */
 }
+.quick-family-button.color-green {
+    background: linear-gradient(to right, #a7f3d0, #10b981); /* Green gradient */
+}
+.quick-family-button.color-orange {
+    background: linear-gradient(to right, #fed7aa, #f97316); /* Orange gradient */
+}
+
 
 .quick-family-button:hover {
-    box-shadow: 0 8px 10px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
-    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25); /* Even deeper shadow on hover */
+    transform: translateY(-4px); /* More pronounced lift */
 }
 
 .quick-family-button:active {
     transform: translateY(0);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.2); /* Stronger sunken effect */
 }
 
 
 /* Chat Interface Specifics */
 .chat-input-area {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem; /* More space */
     align-items: center;
 }
 
 .emoji-btn {
     background-color: #e2e8f0;
     border: none;
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 1.25rem;
+    border-radius: 0.75rem; /* More rounded */
+    padding: 0.6rem 0.9rem; /* More padding */
+    font-size: 1.4rem; /* Larger emoji */
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .emoji-btn:hover {
     background-color: #cbd5e0;
+    transform: translateY(-1px);
+}
+
+.emoji-btn:active {
+    transform: translateY(0);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
+    body {
+        padding: 0.5rem;
+    }
+
     .app-container {
         padding: 1.5rem;
         max-width: 100%; /* Full width on small screens */
-        height: calc(100vh - 6rem); /* Adjust for smaller screens */
+        height: calc(100vh - 4rem); /* Adjust for smaller screens */
+        border-radius: 1.5rem;
     }
 
     .grid-cols-1.md\:grid-cols-2 {
@@ -659,17 +738,25 @@ body {
     }
 
     .btn-primary, .btn-secondary {
-        padding: 0.6rem 1rem;
-        font-size: 0.9rem;
+        padding: 0.75rem 1.25rem;
+        font-size: 1rem;
+        border-radius: 0.75rem;
     }
 
     .modal-content {
         padding: 1.5rem;
+        border-radius: 1rem;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
     }
 
     .bottom-nav-bar {
         padding: 0.75rem 0.5rem;
-        border-radius: 1rem; /* Slightly less rounded on small screens */
+        border-radius: 1.5rem; /* Slightly less rounded on small screens */
+        max-width: 100%;
     }
 
     .nav-button {
@@ -685,8 +772,55 @@ body {
     }
 
     .quick-family-button {
-        padding: 0.6rem 0.8rem;
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+        max-width: 140px; /* Adjust max width for quick buttons */
+        border-radius: 0.75rem;
+    }
+
+    .form-control {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        border-radius: 0.6rem;
+    }
+
+    .input-label {
+        font-size: 0.95rem;
+    }
+
+    .product-item-display img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .product-name-display {
+        font-size: 1rem;
+    }
+
+    .product-sku-display {
+        font-size: 0.8rem;
+    }
+
+    .current-order-product-item .product-image-thumb {
+        width: 35px;
+        height: 35px;
+    }
+
+    .product-details-summary strong {
         font-size: 0.9rem;
-        max-width: 120px; /* Adjust max width for quick buttons */
+    }
+
+    .product-details-summary span {
+        font-size: 0.8rem;
+    }
+
+    .quantity-input-small {
+        width: 50px;
+        font-size: 0.8rem;
+    }
+
+    .delete-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
     }
 }
