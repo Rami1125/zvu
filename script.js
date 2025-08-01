@@ -215,7 +215,7 @@ async function fetchDataFromGoogleSheets() {
 
         populateFamilySelect();
         populateQuickFamilyButtons();
-        populateProductDatalist();
+        populateProductDatalist(); // Ensure this is called once to populate the global datalist
         addProductSelection(); // Add the first product selection row
 
     } catch (error) {
@@ -279,6 +279,8 @@ function populateQuickFamilyButtons() {
     }
 }
 
+// This function populates the GLOBAL datalist with ALL products.
+// The browser's native datalist filtering will then provide suggestions.
 function populateProductDatalist() {
     const productOptions = document.getElementById('productOptions');
     if (productOptions) {
@@ -332,10 +334,10 @@ function addProductSelection(productToPrepopulate = null) {
     if (productToPrepopulate) {
         if (productsCatalog.some(p => p.name === productToPrepopulate.name)) {
             productSearchInput.value = productToPrepopulate.name;
-            productSearchInput.dispatchEvent(new Event('input')); // Trigger to update info/history
+            // No need to dispatch input event here, as addOrUpdateCurrentOrderProduct will be called directly
         } else {
             freeTextProductInput.value = productToPrepopulate.name;
-            freeTextProductInput.dispatchEvent(new Event('input')); // Trigger to update info/history
+            // No need to dispatch input event here
         }
         quantityInput.value = productToPrepopulate.quantity || 1;
         productNoteInput.value = productToPrepopulate.note || '';
@@ -353,28 +355,17 @@ function addProductSelection(productToPrepopulate = null) {
     // Event listener for product search input (datalist)
     productSearchInput.addEventListener('input', (event) => {
         const typedValue = event.target.value;
-        const productOptionsDatalist = document.getElementById('productOptions');
-        productOptionsDatalist.innerHTML = ''; // Clear previous options in the datalist
-
-        if (typedValue.length >= 2) {
-            const filteredProducts = productsCatalog.filter(p =>
-                p.name.toLowerCase().includes(typedValue.toLowerCase()) ||
-                (p.sku && p.sku.toLowerCase().includes(typedValue.toLowerCase()))
-            );
-            filteredProducts.forEach(product => {
-                const option = document.createElement('option');
-                option.value = product.name;
-                option.setAttribute('data-sku', product.sku);
-                productOptionsDatalist.appendChild(option);
-            });
+        
+        productInfoDiv.innerHTML = '';
+        productHistoryInfoDiv.innerHTML = '';
+        
+        // Clear free text input if datalist input is being used
+        if (typedValue.trim() !== '') {
+            freeTextProductInput.value = ''; 
         }
 
         const selectedProduct = productsCatalog.find(p => p.name === typedValue); // Find exact match
-
-        productInfoDiv.innerHTML = '';
-        productHistoryInfoDiv.innerHTML = '';
-        freeTextProductInput.value = ''; // Clear free text input if datalist is used or attempted
-
+        
         if (selectedProduct) {
             // If a catalog product is selected/typed
             productInfoDiv.innerHTML = `
@@ -396,8 +387,6 @@ function addProductSelection(productToPrepopulate = null) {
             }, currentIndex);
         } else {
             // If no exact catalog product match, treat it as a potential free text entry
-            // This will allow the user to continue typing or use the free text field.
-            // addOrUpdateCurrentOrderProduct will handle if it's an empty/invalid name.
             addOrUpdateCurrentOrderProduct({
                 name: typedValue.trim(), // Pass whatever was typed
                 sku: 'N/A', // No SKU if not from catalog
@@ -414,8 +403,12 @@ function addProductSelection(productToPrepopulate = null) {
         productInfoDiv.innerHTML = ''; // Always clear info if free text is used
         productHistoryInfoDiv.innerHTML = ''; // Always clear history if free text is used
 
+        // Clear datalist input if free text is being used
         if (freeTextValue !== '') {
-            productSearchInput.value = ''; // Clear datalist input if free text is used
+            productSearchInput.value = ''; 
+        }
+
+        if (freeTextValue !== '') {
             addOrUpdateCurrentOrderProduct({
                 name: freeTextValue,
                 sku: 'N/A',
@@ -973,10 +966,8 @@ async function sendOrder(orderData) {
  * @param {Object} orderData The structured order data.
  */
 function sendOrderToWhatsApp(orderData) {
-    let whatsappMessage = `📦 הזמנה חדשה מבית סבן\n\n`;
-    whatsappMessage += `*משפחה:* ${orderData.familyName}\n`;
+    let whatsappMessage = `*📦 הזמנה חדשה - ${orderData.contact} ממשפחת ${orderData.familyName}*\n\n`; // Updated title
     whatsappMessage += `*כתובת:* ${orderData.address}\n`;
-    whatsappMessage += `*איש קשר:* ${orderData.contact}\n`;
     whatsappMessage += `*טלפון:* ${orderData.phone}\n`;
     whatsappMessage += `*סוג הובלה:* ${orderData.deliveryType || 'לא נבחר'}\n`;
     whatsappMessage += `\n🧾 *מוצרים:*\n`;
@@ -1039,7 +1030,8 @@ async function sendOrderAndShare() {
         const result = await sendOrder(lastOrderSummaryData); // Call the new sendOrder function
 
         if (result.success) {
-            showToast('success', 'הזמנה נשלחה', result.message);
+            // Updated success message
+            showToast('success', 'הזמנה נשלחה בהצלחה!', `שלום ${lastOrderSummaryData.contact}, ההזמנה שלך בוצעה ותועבר למחלקת הזמנות. ניצור איתך קשר למועד אספקה.`);
             sendOrderToWhatsApp(lastOrderSummaryData); // Call the new sendOrderToWhatsApp function
             
             // Clear form after successful submission and reset to family selection
