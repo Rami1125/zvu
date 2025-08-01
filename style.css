@@ -3,7 +3,14 @@ body {
     font-family: 'Inter', sans-serif;
     direction: rtl; /* Right-to-left for Hebrew */
     text-align: right; /* Align text to the right */
-    background-color: #f0f4f8; /* Light background for the app */
+    /* Background with horizontal stripes */
+    background: linear-gradient(to bottom, #000000 0%, #000000 20%, #e0f2fe 20%, #e0f2fe 100%); /* Black top, light blue bottom */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between; /* Pushes header/footer to edges */
+    padding: 1rem;
 }
 
 /* Custom Scrollbar */
@@ -36,6 +43,10 @@ body {
     border: 1px solid #bfdbfe; /* border-blue-200 */
     transform: scale(0.95);
     transition: all 0.5s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Allow container to grow */
+    max-height: calc(100vh - 8rem); /* Adjust based on header/footer height */
 }
 
 .app-container:hover {
@@ -66,23 +77,24 @@ body {
     font-size: 1rem;
     line-height: 1.5;
     color: #4a5568;
-    background-color: #ffffff;
+    background-color: #edf2f7; /* Recessed background */
     background-clip: padding-box;
-    border: 1px solid #cbd5e0; /* border-gray-300 */
+    border: 2px solid #a0aec0; /* Bold border */
     border-radius: 0.5rem; /* rounded-lg */
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+    box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.1); /* Inset shadow for recessed look */
 }
 
 .form-control:focus {
     border-color: #667eea; /* indigo-500 */
-    box-shadow: 0 0 0 3px rgba(102, 110, 234, 0.5); /* ring-3 */
+    box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(102, 110, 234, 0.5); /* ring-3 */
     outline: none;
 }
 
 .form-control[readonly] {
-    background-color: #edf2f7; /* gray-200 */
+    background-color: #e2e8f0; /* Slightly darker recessed for readonly */
     cursor: not-allowed;
+    box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.08);
 }
 
 .form-control-file {
@@ -118,7 +130,7 @@ body {
 
 .btn-primary:active {
     transform: translateY(0);
-    box-shadow: none;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
 }
 
 .btn-secondary {
@@ -144,7 +156,7 @@ body {
 
 .btn-secondary:active {
     transform: translateY(0);
-    box-shadow: none;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
 }
 
 /* Glassmorphism effect for buttons */
@@ -165,31 +177,50 @@ body {
 /* Progress Bar */
 .progress-bar-container {
     width: 100%;
-    background-color: #e0e0e0;
-    border-radius: 5px;
+    background-color: #e2e8f0;
+    border-radius: 9999px;
+    height: 0.625rem;
+    margin-top: 1.5rem;
+    position: relative;
     overflow: hidden;
 }
 
-.progress-bar {
-    height: 10px;
-    background-color: #4CAF50; /* Green */
-    width: 0%;
+#progressBar {
+    height: 100%;
+    border-radius: 9999px;
     transition: width 0.5s ease-in-out;
-    border-radius: 5px;
 }
 
-.step-labels span {
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #718096;
+    margin-top: 0.5rem;
+}
+
+.progress-labels span {
+    flex: 1;
+    text-align: center;
     transition: color 0.3s ease;
 }
 
-.active-step {
-    color: #4f46e5; /* Tailwind indigo-600 */
-    font-weight: bold;
+.progress-labels .active-step {
+    color: #667eea; /* Highlight active step */
+    font-weight: 700;
 }
 
-/* Step Content Hiding */
-.step-content.hidden {
+
+/* Dynamic Content Sections */
+.content-section {
+    width: 100%;
+    transition: opacity 0.3s ease;
+}
+
+.content-section.hidden {
     display: none;
+    opacity: 0;
 }
 
 /* Product Selection */
@@ -484,10 +515,92 @@ body {
     100% { transform: rotate(360deg); }
 }
 
+/* Bottom Navigation Bar */
+.bottom-nav-bar {
+    background-color: #ffffff;
+    border-top-left-radius: 1.5rem;
+    border-top-right-radius: 1.5rem;
+    box-shadow: 0 -10px 20px -5px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    width: 100%;
+    max-width: 48rem;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #bfdbfe;
+}
+
+.nav-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 0.5rem;
+    border-radius: 0.75rem;
+    background-color: transparent;
+    border: none;
+    color: #6b7280; /* gray-500 */
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    flex: 1; /* Distribute space evenly */
+    max-width: 100px; /* Limit button width */
+}
+
+.nav-button i {
+    font-size: 1.8rem; /* Larger icons */
+    margin-bottom: 0.25rem;
+}
+
+.nav-button span {
+    font-size: 0.8rem;
+}
+
+.nav-button:hover {
+    background-color: #eff6ff; /* blue-50 */
+    color: #3b82f6; /* blue-500 */
+    transform: translateY(-2px);
+}
+
+.nav-button.active {
+    background-color: #dbeafe; /* blue-100 */
+    color: #2563eb; /* blue-600 */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
+    transform: translateY(0);
+}
+
+.nav-button:active {
+    transform: translateY(0);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
+}
+
+/* Chat Interface Specifics */
+.chat-input-area {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.emoji-btn {
+    background-color: #e2e8f0;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.emoji-btn:hover {
+    background-color: #cbd5e0;
+}
+
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     .app-container {
         padding: 1.5rem;
+        max-height: calc(100vh - 6rem); /* Adjust for smaller screens */
     }
 
     .grid-cols-1.md\:grid-cols-2 {
@@ -501,5 +614,21 @@ body {
 
     .modal-content {
         padding: 1.5rem;
+    }
+
+    .bottom-nav-bar {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .nav-button {
+        padding: 0.5rem 0.25rem;
+    }
+
+    .nav-button i {
+        font-size: 1.5rem;
+    }
+
+    .nav-button span {
+        font-size: 0.7rem;
     }
 }
