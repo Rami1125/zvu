@@ -44,11 +44,8 @@ let currentOrderProducts = []; // Stores products currently added to the order f
 // Google Apps Script Web App URL
 // IMPORTANT: Replace this with your actual deployed Google Apps Script Web App URL
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzOjjBNd3ziRd66OrIcSw7Q0x9-7_0nSUHMvYskSkGv_8UPS4BYhdvV0zVlvE1dM4ny/exec'; // This URL needs to be updated by the user!
-// Company WhatsApp Number (Using the full number provided previously)
-const COMPANY_WHATSAPP_NUMBER = '972508860896'; // User provided 97250886, assuming this is the full correct number.
-
-// Current step in the order process
-let currentStep = 1;
+// Company WhatsApp Number
+const COMPANY_WHATSAPP_NUMBER = '972508860896';
 
 // Function to update live date and time in the header
 function updateDateTime() {
@@ -84,7 +81,7 @@ function typeWriter(text, i, fnCallback) {
 // Function to start the typing animation
 function startTypingAnimation() {
     const phrases = [
-        "ברוכים הבאים למערכת ההזמנות המתקדמת!",
+        "למשפחות זבולון עדירן ברוכים הבאים למערכת ההזמנות המתקדמת!",
         "מייעלים את תהליך ההזמנות שלכם.",
         "הזמינו בקלות ובמהירות!"
     ];
@@ -99,45 +96,9 @@ function startTypingAnimation() {
     nextPhrase();
 }
 
-
-// Function to update the progress bar and step labels
-function updateProgressBar(step) {
-    currentStep = step;
-    const progressBar = document.getElementById('progressBar');
-    const stepLabels = [
-        document.getElementById('step1Label'),
-        document.getElementById('step2Label'),
-        document.getElementById('step3Label'),
-        document.getElementById('step4Label')
-    ];
-
-    let progressWidth = 0;
-    switch (step) {
-        case 1: progressWidth = 25; break;
-        case 2: progressWidth = 50; break;
-        case 3: progressWidth = 75; break;
-        case 4: progressWidth = 100; break;
-        default: progressWidth = 0;
-    }
-    progressBar.style.width = `${progressWidth}%`;
-
-    stepLabels.forEach((label, index) => {
-        if (index + 1 <= step) {
-            label.classList.add('active-step');
-        } else {
-            label.classList.remove('active-step');
-        }
-    });
-
-    // Toggle content visibility based on step
-    document.getElementById('step1Content').classList.toggle('hidden', step !== 1);
-    document.getElementById('step2Content').classList.toggle('hidden', step === 1);
-}
-
-
 // Function to fetch data from Google Apps Script
 async function fetchDataFromGoogleSheets() {
-    showLoading('טוען נתוני משפחות ומוצרים...');
+    showLoading('טוען נתוני מוצרים והיסטוריית הזמנות...');
     try {
         const response = await fetch(`${WEB_APP_URL}?action=getInitialData`);
         if (!response.ok) {
@@ -149,8 +110,8 @@ async function fetchDataFromGoogleSheets() {
             throw new Error(data.message || 'Failed to fetch initial data from Google Sheets.');
         }
 
-        // Populate global data stores
-        familiesData = {};
+        // Populate global data stores (familiesData is still populated for internal lookups for history)
+        familiesData = {}; // This will now be populated but not used for a dropdown
         data.families.forEach(family => {
             familiesData[family['שם משפחה']] = {
                 address: family['כתובת'] || 'לא ידוע',
@@ -167,8 +128,6 @@ async function fetchDataFromGoogleSheets() {
 
         previousOrdersHistory = data.previousOrders;
 
-        populateFamilySelect();
-        populateQuickFamilyButtons(); // Populate quick select buttons
         populateProductDatalist(); // Populate the datalist for product search
         addProductSelection(); // Add the first product selection row (no index needed for initial call)
 
@@ -180,49 +139,16 @@ async function fetchDataFromGoogleSheets() {
     }
 }
 
-function populateFamilySelect() {
-    const familySelect = document.getElementById('familySelect');
-    // Clear existing options except the first one
-    while (familySelect.options.length > 1) {
-        familySelect.remove(1);
-    }
-    for (const familyName in familiesData) {
-        const option = document.createElement('option');
-        option.value = familyName;
-        option.textContent = familyName;
-        familySelect.appendChild(option);
-    }
-}
-
-function populateQuickFamilyButtons() {
-    const quickFamilyButtonsContainer = document.getElementById('quickFamilyButtons');
-    // Clear existing buttons, keep the instruction paragraph
-    const existingButtons = quickFamilyButtonsContainer.querySelectorAll('button');
-    existingButtons.forEach(button => button.remove());
-
-    for (const familyName in familiesData) {
-        const button = document.createElement('button');
-        button.className = 'bg-gray-200 px-4 py-2 rounded-full hover:bg-blue-100 transition-all duration-200 shadow-sm';
-        button.textContent = familyName;
-        button.onclick = () => {
-            document.getElementById('familySelect').value = familyName;
-            document.getElementById('familySelect').dispatchEvent(new Event('change')); // Trigger change event
-        };
-        quickFamilyButtonsContainer.appendChild(button);
-    }
-}
-
+// Removed populateFamilySelect() and populateQuickFamilyButtons() as they are no longer needed.
 
 function populateProductDatalist() {
     const productOptions = document.getElementById('productOptions');
-    // Check if productOptions element exists before trying to modify it
     if (productOptions) {
         productOptions.innerHTML = ''; // Clear existing options
-
         productsCatalog.forEach(product => {
             const option = document.createElement('option');
-            option.value = product.name; // Display product name in datalist
-            option.setAttribute('data-sku', product.sku); // Store SKU for later use
+            option.value = product.name;
+            option.setAttribute('data-sku', product.sku);
             productOptions.appendChild(option);
         });
     } else {
@@ -241,7 +167,6 @@ function addProductSelection() {
     newProductDiv.innerHTML = `
         <label for="productSearch_${currentIndex}" class="input-label">שם מוצר / מק"ט:</label>
         <input type="text" id="productSearch_${currentIndex}" list="productOptions" class="form-control product-search-input" placeholder="הקלד לחיפוש מוצר או בחר מהרשימה">
-        <!-- The datalist is now global, no need to create it here again -->
 
         <input type="text" id="freeTextProduct_${currentIndex}" class="form-control free-text-product-input mt-2" placeholder="הקלד שם מוצר ידנית (לא חובה)">
 
@@ -265,16 +190,13 @@ function addProductSelection() {
     const productHistoryInfoDiv = document.getElementById(`productHistoryInfo_${currentIndex}`);
     const deleteRowBtn = document.querySelector(`.delete-product-row-btn[data-index="${currentIndex}"]`);
 
-
     // Event listener for product search input (datalist)
-    // This input allows typing and filters suggestions from the product catalog.
-    // If a product is selected or typed and matches a catalog item, its info is displayed.
     productSearchInput.addEventListener('input', (event) => {
         const typedValue = event.target.value;
         const productOptionsDatalist = document.getElementById('productOptions');
         productOptionsDatalist.innerHTML = ''; // Clear previous options in the datalist
 
-        if (typedValue.length >= 2) { // Start filtering after 2 characters for performance
+        if (typedValue.length >= 2) {
             const filteredProducts = productsCatalog.filter(p =>
                 p.name.toLowerCase().includes(typedValue.toLowerCase()) ||
                 (p.sku && p.sku.toLowerCase().includes(typedValue.toLowerCase()))
@@ -287,12 +209,12 @@ function addProductSelection() {
             });
         }
 
-        const selectedProductName = typedValue; // Use the typed value for lookup
+        const selectedProductName = typedValue;
         const selectedProduct = productsCatalog.find(p => p.name === selectedProductName);
 
-        productInfoDiv.innerHTML = ''; // Clear previous info
-        productHistoryInfoDiv.innerHTML = ''; // Clear history info
-        freeTextProductInput.value = ''; // Clear free text input if datalist is used (exclusive behavior)
+        productInfoDiv.innerHTML = '';
+        productHistoryInfoDiv.innerHTML = '';
+        freeTextProductInput.value = ''; // Clear free text input if datalist is used
 
         if (selectedProduct) {
             productInfoDiv.innerHTML = `
@@ -305,7 +227,6 @@ function addProductSelection() {
                 </div>
             `;
             updateProductHistoryDisplay(selectedProductName, productHistoryInfoDiv);
-            // Add or update product in currentOrderProducts array
             addOrUpdateCurrentOrderProduct({
                 name: selectedProductName,
                 sku: selectedProduct.sku,
@@ -314,36 +235,29 @@ function addProductSelection() {
                 note: productNoteInput.value.trim()
             }, currentIndex);
         } else {
-            // If no product is selected from datalist or typed value doesn't match catalog,
-            // ensure it's removed from currentOrderProducts if it was there previously.
-            removeCurrentOrderProduct(currentIndex); // Remove if no valid product found
+            removeCurrentOrderProduct(currentIndex);
         }
     });
 
     // Event listener for free text product input
-    // This input is for manually entering product names not in the catalog.
-    // It clears the product search input for exclusive use.
     freeTextProductInput.addEventListener('input', (event) => {
         if (event.target.value.trim() !== '') {
-            productSearchInput.value = ''; // Clear datalist input (exclusive behavior)
-            productInfoDiv.innerHTML = ''; // Clear product info display
-            productHistoryInfoDiv.innerHTML = ''; // Clear history info (no history for free text)
-            // Add or update product in currentOrderProducts array
+            productSearchInput.value = ''; // Clear datalist input
+            productInfoDiv.innerHTML = '';
+            productHistoryInfoDiv.innerHTML = '';
             addOrUpdateCurrentOrderProduct({
                 name: event.target.value.trim(),
-                sku: 'N/A', // SKU is N/A for free text products
-                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg', // Generic image for free text
+                sku: 'N/A',
+                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
                 quantity: parseInt(quantityInput.value, 10),
                 note: productNoteInput.value.trim()
             }, currentIndex);
         } else {
-            // If free text is cleared, remove its entry from currentOrderProducts
             removeCurrentOrderProduct(currentIndex);
         }
     });
 
     // Event listeners for quantity and note changes to update currentOrderProducts
-    // These ensure the data in the internal array is always up-to-date with form inputs.
     quantityInput.addEventListener('input', () => {
         const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
         if (selectedProductName) {
@@ -373,30 +287,80 @@ function addProductSelection() {
     // Event listener for deleting the product row from the form
     if (deleteRowBtn) {
         deleteRowBtn.addEventListener('click', () => {
-            newProductDiv.remove(); // Remove the entire product selection div from the DOM
-            removeCurrentOrderProduct(currentIndex); // Remove from the current order array
+            newProductDiv.remove();
+            removeCurrentOrderProduct(currentIndex);
             showToast('info', 'המוצר הוסר', 'שורת המוצר הוסרה מהטופס.');
         });
     }
 }
 
+// Function to update the history display based on the family name input
+function updateFamilyHistoryDisplay(familyName) {
+    const historyDisplay = document.getElementById('historyDisplay');
+    historyDisplay.innerHTML = ''; // Clear existing history
+
+    if (!familyName.trim()) {
+        historyDisplay.innerHTML = '<p class="text-gray-500">הקלד שם משפחה כדי לראות היסטוריה.</p>';
+        return;
+    }
+
+    const familyHistory = previousOrdersHistory.filter(order =>
+        order['שם משפחה'] && order['שם משפחה'].toLowerCase() === familyName.toLowerCase()
+    );
+
+    if (familyHistory.length > 0) {
+        const aggregatedHistory = {};
+        familyHistory.forEach(order => {
+            const productName = order['שם מוצר'];
+            const quantity = parseInt(order['כמות']) || 0;
+            const orderDate = order['תאריך ושעה'];
+
+            if (!aggregatedHistory[productName]) {
+                aggregatedHistory[productName] = { totalQty: 0, lastDate: '' };
+            }
+            aggregatedHistory[productName].totalQty += quantity;
+            if (orderDate > aggregatedHistory[productName].lastDate) {
+                aggregatedHistory[productName].lastDate = orderDate;
+            }
+        });
+
+        for (const prodName in aggregatedHistory) {
+            const item = aggregatedHistory[prodName];
+            const p = document.createElement('p');
+            p.className = 'history-item';
+            p.innerHTML = `<i class="fas fa-box"></i> ${prodName} (סה"כ: ${item.totalQty}, אחרונה: ${item.lastDate.split(',')[0]})`;
+            p.addEventListener('click', () => {
+                const productFromCatalog = productsCatalog.find(p => p.name === prodName);
+                showProductDetailsModal({
+                    name: prodName,
+                    sku: productFromCatalog ? productFromCatalog.sku : 'N/A',
+                    imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                    quantity: item.totalQty,
+                    note: ''
+                });
+            });
+            historyDisplay.appendChild(p);
+        }
+    } else {
+        historyDisplay.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות זמינה למשפחה זו.</p>';
+    }
+}
+
+
 function updateProductHistoryDisplay(productName, displayDiv) {
-    const selectedFamilyName = document.getElementById('familySelect').value;
-    if (!selectedFamilyName) {
+    const selectedFamilyName = document.getElementById('familyNameInput').value; // Get from new input field
+    if (!selectedFamilyName.trim()) {
         displayDiv.innerHTML = '';
         return;
     }
 
-    // Filter history for the selected family and product
     const familyProductOrders = previousOrdersHistory.filter(order =>
-        order['שם משפחה'] === selectedFamilyName && order['שם מוצר'] === productName
+        order['שם משפחה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === productName
     );
 
     if (familyProductOrders.length > 0) {
         const totalQuantity = familyProductOrders.reduce((sum, order) => sum + (parseInt(order['כמות']) || 0), 0);
-        // Sort by date to get the last order date
         familyProductOrders.sort((a, b) => {
-            // Convert "DD.MM.YYYY,HH:MM:SS" to a comparable Date object
             const parseDateString = (dateStr) => {
                 const [datePart, timePart] = dateStr.split(',');
                 const [day, month, year] = datePart.split('.').map(Number);
@@ -405,9 +369,9 @@ function updateProductHistoryDisplay(productName, displayDiv) {
             };
             const dateA = parseDateString(a['תאריך ושעה']);
             const dateB = parseDateString(b['תאריך ושעה']);
-            return dateB.getTime() - dateA.getTime(); // Latest date first
+            return dateB.getTime() - dateA.getTime();
         });
-        const lastOrderDate = familyProductOrders[0]['תאריך ושעה'].split(',')[0]; // Just the date part
+        const lastOrderDate = familyProductOrders[0]['תאריך ושעה'].split(',')[0];
 
         displayDiv.innerHTML = `
             <i class="fas fa-history"></i> המוצר '${productName}' הוזמן ${totalQuantity} פעמים (אחרונה: ${lastOrderDate})
@@ -417,25 +381,22 @@ function updateProductHistoryDisplay(productName, displayDiv) {
     }
 }
 
-// Global variable to store the product name clicked in history for the modal
 let selectedHistoricalProductName = '';
 
-// Functions for Quantity Selection Modal
 function showQuantitySelectionModal(productName) {
     selectedHistoricalProductName = productName;
     document.getElementById('modalProductName').innerText = `הוסף: ${productName}`;
-    document.getElementById('quantitySelectionModal').classList.remove('hidden'); // Ensure it's not hidden
+    document.getElementById('quantitySelectionModal').classList.remove('hidden');
     document.getElementById('quantitySelectionModal').classList.add('active');
 }
 
 function closeQuantitySelectionModal() {
     document.getElementById('quantitySelectionModal').classList.remove('active');
-    document.getElementById('quantitySelectionModal').classList.add('hidden'); // Hide it again
-    selectedHistoricalProductName = ''; // Clear selected product
-    document.getElementById('modalQuantitySelect').value = '1'; // Reset quantity
+    document.getElementById('quantitySelectionModal').classList.add('hidden');
+    selectedHistoricalProductName = '';
+    document.getElementById('modalQuantitySelect').value = '1';
 }
 
-// FIX: This function was updated to create a new product input row and populate it.
 function addHistoricalProductToOrderForm() {
     const quantity = parseInt(document.getElementById('modalQuantitySelect').value, 10);
     if (selectedHistoricalProductName && quantity > 0) {
@@ -443,42 +404,22 @@ function addHistoricalProductToOrderForm() {
         const sku = product ? product.sku : 'N/A';
         const imageUrl = product ? product.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg';
 
-        // 1. Create a new, empty product selection row in the form
-        addProductSelection(); // This increments productRowCounter and adds a new div to productsContainer
-
-        // 2. Get the index of the *last* added row (which is the one we just created)
+        addProductSelection();
         const lastIndex = productRowCounter - 1;
 
-        // 3. Find the inputs for this newly created row
         const productSearchInput = document.getElementById(`productSearch_${lastIndex}`);
         const freeTextProductInput = document.getElementById(`freeTextProduct_${lastIndex}`);
         const quantityInput = document.getElementById(`quantityInput_${lastIndex}`);
-        const productNoteInput = document.getElementById(`productNote_${lastIndex}`);
-        // No need to get productInfoDiv/productHistoryInfoDiv here, as they will be updated by input event
 
-        // 4. Populate the inputs with the historical product data
-        if (product) { // If it's a known product from the catalog
+        if (product) {
             productSearchInput.value = selectedHistoricalProductName;
-            // Manually trigger input event on productSearchInput to update its display and currentOrderProducts
-            productSearchInput.dispatchEvent(new Event('input'));
-        } else { // If it's a free text product from history (less common, but handled)
+            productSearchInput.dispatchEvent(new Event('input')); // Trigger input event to update display and array
+        } else {
             freeTextProductInput.value = selectedHistoricalProductName;
-            // Manually trigger input event on freeTextProductInput
-            freeTextProductInput.dispatchEvent(new Event('input'));
+            freeTextProductInput.dispatchEvent(new Event('input')); // Trigger input event
         }
         quantityInput.value = quantity;
-        productNoteInput.value = ''; // Note is empty when adding from history by default
-
-        // The input event dispatching above should handle calling addOrUpdateCurrentOrderProduct.
-        // We ensure it is called here explicitly just in case, though it should be redundant.
-        addOrUpdateCurrentOrderProduct({
-            name: selectedHistoricalProductName,
-            sku: sku,
-            imageUrl: imageUrl,
-            quantity: quantity,
-            note: '' // Note is empty when adding from history
-        }, lastIndex);
-
+        quantityInput.dispatchEvent(new Event('input')); // Trigger input event to update quantity in array
 
         showToast('success', 'נוסף בהצלחה', `'${selectedHistoricalProductName}' בכמות ${quantity} נוסף להזמנה.`);
         closeQuantitySelectionModal();
@@ -487,22 +428,17 @@ function addHistoricalProductToOrderForm() {
     }
 }
 
-
-// Function to add or update a product in the currentOrderProducts array
-// This function is called by the input change listeners in addProductSelection
 function addOrUpdateCurrentOrderProduct(productData, formIndex) {
-    // Ensure productData has a formIndex
     if (formIndex === undefined) {
-        console.warn("addOrUpdateCurrentOrderProduct called without formIndex. This should ideally come from addHistoricalProductToOrderForm or addProductSelection.");
+        console.warn("addOrUpdateCurrentOrderProduct called without formIndex.");
         return;
     }
 
     const existingIndex = currentOrderProducts.findIndex(p => p.formIndex === formIndex);
 
-    // Filter out invalid products (empty name or zero/negative quantity)
     if (!productData.name.trim() || productData.quantity <= 0) {
         if (existingIndex > -1) {
-            currentOrderProducts.splice(existingIndex, 1); // Remove invalid product
+            currentOrderProducts.splice(existingIndex, 1);
         }
     } else {
         if (existingIndex > -1) {
@@ -511,25 +447,21 @@ function addOrUpdateCurrentOrderProduct(productData, formIndex) {
             currentOrderProducts.push({ ...productData, formIndex });
         }
     }
-    renderCurrentOrderProducts(); // Re-render the display list
+    renderCurrentOrderProducts();
 }
 
-
-// Function to remove a product from currentOrderProducts
 function removeCurrentOrderProduct(formIndex) {
     currentOrderProducts = currentOrderProducts.filter(p => p.formIndex !== formIndex);
-    // The corresponding product selection row from the form is removed by its own delete button
-    renderCurrentOrderProducts(); // Re-render the display list
-    showToast('info', 'המוצר הוסר', 'המוצר הוסר מרשימת ההזמנה.');
+    renderCurrentOrderProducts();
+    showToast('info', 'המוצר הוסר', 'שורת המוצר הוסרה מרשימת ההזמנה.');
 }
 
-// Function to render the current order products list (the "table")
 function renderCurrentOrderProducts() {
     const listContainer = document.getElementById('currentOrderProductsList');
     const filterInput = document.getElementById('productFilterInput');
     const filterText = filterInput.value.trim().toLowerCase();
 
-    listContainer.innerHTML = ''; // Clear existing list
+    listContainer.innerHTML = '';
 
     if (currentOrderProducts.length === 0) {
         listContainer.innerHTML = '<p class="text-gray-500 text-center">אין מוצרים בהזמנה זו עדיין.</p>';
@@ -545,7 +477,6 @@ function renderCurrentOrderProducts() {
         return;
     }
 
-    // Sort products alphabetically by name for consistent display
     filteredProducts.sort((a, b) => a.name.localeCompare(b.name, 'he'));
 
     filteredProducts.forEach(product => {
@@ -568,22 +499,18 @@ function renderCurrentOrderProducts() {
         `;
         listContainer.appendChild(itemDiv);
 
-        // Add event listeners for quantity change and delete button
         const qtyInput = itemDiv.querySelector(`#qty_item_${product.formIndex}`);
         if (qtyInput) {
             qtyInput.addEventListener('input', (event) => {
                 const newQuantity = parseInt(event.target.value, 10);
-                // Find the original product in currentOrderProducts by formIndex
                 const productToUpdate = currentOrderProducts.find(p => p.formIndex === product.formIndex);
                 if (productToUpdate) {
                     if (newQuantity > 0) {
                         productToUpdate.quantity = newQuantity;
-                    } else { // If quantity becomes 0 or less, remove it
+                    } else {
                         removeCurrentOrderProduct(product.formIndex);
                     }
                 }
-                // No need to call renderCurrentOrderProducts here, as the input value itself updates.
-                // The array is updated, which is sufficient for submission.
             });
         }
 
@@ -596,18 +523,17 @@ function renderCurrentOrderProducts() {
     });
 }
 
-
 // Image Preview Modal Functions
 function showImagePreviewModal(imageUrl) {
     document.getElementById('previewImage').src = imageUrl;
-    document.getElementById('imagePreviewModal').classList.remove('hidden'); // Ensure it's not hidden
+    document.getElementById('imagePreviewModal').classList.remove('hidden');
     document.getElementById('imagePreviewModal').classList.add('active');
 }
 
 function closeImagePreviewModal() {
     document.getElementById('imagePreviewModal').classList.remove('active');
-    document.getElementById('imagePreviewModal').classList.add('hidden'); // Hide it again
-    document.getElementById('previewImage').src = ''; // Clear image source
+    document.getElementById('imagePreviewModal').classList.add('hidden');
+    document.getElementById('previewImage').src = '';
 }
 
 // Product Details/History Modal Functions
@@ -623,12 +549,11 @@ function showProductDetailsModal(product) {
     const historyInModal = document.getElementById('productHistoryInModal');
     historyInModal.innerHTML = '<p class="text-gray-500">טוען היסטוריה...</p>';
 
-    const selectedFamilyName = document.getElementById('familySelect').value;
-    if (selectedFamilyName) {
+    const selectedFamilyName = document.getElementById('familyNameInput').value; // Get from new input field
+    if (selectedFamilyName.trim()) {
         const productSpecificHistory = previousOrdersHistory.filter(order =>
-            order['שם מוצר'] === product.name
+            order['שם משפחה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === product.name
         ).sort((a, b) => {
-            // Sort by date descending
             const parseDateString = (dateStr) => {
                 const [datePart, timePart] = dateStr.split(',');
                 const [day, month, year] = datePart.split('.').map(Number);
@@ -641,7 +566,7 @@ function showProductDetailsModal(product) {
         });
 
         if (productSpecificHistory.length > 0) {
-            historyInModal.innerHTML = ''; // Clear loading message
+            historyInModal.innerHTML = '';
             const ul = document.createElement('ul');
             ul.className = 'list-none p-0';
             productSpecificHistory.forEach(order => {
@@ -657,29 +582,26 @@ function showProductDetailsModal(product) {
             });
             historyInModal.appendChild(ul);
         } else {
-            historyInModal.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות למוצר זה.</p>';
+            historyInModal.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות למוצר זה על ידי משפחה זו.</p>';
         }
     } else {
-        historyInModal.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריית הזמנות.</p>';
+        historyInModal.innerHTML = '<p class="text-gray-500">הקלד שם משפחה כדי לראות היסטוריית הזמנות למוצר.</p>';
     }
 
-    modal.classList.remove('hidden'); // Ensure it's not hidden
+    modal.classList.remove('hidden');
     modal.classList.add('active');
 }
 
 function closeProductDetailsModal() {
     document.getElementById('productDetailsModal').classList.remove('active');
-    document.getElementById('productDetailsModal').classList.add('hidden'); // Hide it again
+    document.getElementById('productDetailsModal').classList.add('hidden');
 }
-
 
 // Modal functions for order confirmation
 function showConfirmationModal(orderSummary) {
-    console.log('Confirmation modal attempting to show.'); // Added log
     const modal = document.getElementById('orderConfirmationModal');
     const receiptContent = document.getElementById('receiptContent');
 
-    // Format the products for the receipt
     let productsHtml = '<ul>';
     orderSummary.products.forEach(p => {
         productsHtml += `<li><span class="product-receipt-name">${p.name}</span> <span class="product-receipt-qty">× ${p.quantity}</span></li>`;
@@ -706,26 +628,24 @@ function showConfirmationModal(orderSummary) {
         </p>
     `;
 
-    // CRITICAL FIX: Ensure the 'hidden' class is removed before adding 'active'
     modal.classList.remove('hidden');
     modal.classList.add('active');
 }
 
 function closeConfirmationModal() {
     document.getElementById('orderConfirmationModal').classList.remove('active');
-    // It's good practice to also add 'hidden' back when closing if it's used for display control
     document.getElementById('orderConfirmationModal').classList.add('hidden');
 }
 
 async function handleSaveAndShare() {
     const orderConfirmationModalButton = document.querySelector('#orderConfirmationModal .btn-primary');
-    orderConfirmationModalButton.disabled = true; // Disable button to prevent double click
+    orderConfirmationModalButton.disabled = true;
     orderConfirmationModalButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שולח...';
 
-    closeConfirmationModal(); // Close modal first
+    closeConfirmationModal();
     showLoading('שולח הזמנה ושומר...');
 
-    const familyName = document.getElementById('familySelect').value;
+    const familyName = document.getElementById('familyNameInput').value;
     const address = document.getElementById('addressInput').value;
     const contact = document.getElementById('contactInput').value;
     const phone = document.getElementById('phoneInput').value;
@@ -752,7 +672,7 @@ async function handleSaveAndShare() {
     }
 
     const orderData = {
-        action: 'submitOrder', // Added action to the JSON body
+        action: 'submitOrder',
         timestamp: new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }),
         familyName,
         address,
@@ -770,7 +690,7 @@ async function handleSaveAndShare() {
     };
 
     try {
-        const response = await fetch(`${WEB_APP_URL}`, { // Removed ?action=submitOrder from URL
+        const response = await fetch(`${WEB_APP_URL}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(orderData)
@@ -803,18 +723,12 @@ async function handleSaveAndShare() {
             window.open(whatsappUrl, '_blank');
 
             // Clear form after successful submission
-            document.getElementById('familySelect').value = '';
-            updateProgressBar(1); // Reset to Step 1
-            document.getElementById('dynamicFamilyHeading').classList.add('hidden');
-            document.getElementById('familyDetailsForm').classList.add('hidden');
+            document.getElementById('familyNameInput').value = '';
             document.getElementById('addressInput').value = '';
-            document.getElementById('addressInput').setAttribute('readonly', true);
             document.getElementById('contactInput').value = '';
-            document.getElementById('contactInput').setAttribute('readonly', true);
             document.getElementById('phoneInput').value = '';
-            document.getElementById('phoneInput').setAttribute('readonly', true);
             document.getElementById('deliveryType').value = '';
-            document.getElementById('historyDisplay').innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
+            document.getElementById('historyDisplay').innerHTML = '<p class="text-gray-500">הקלד שם משפחה כדי לראות היסטוריה.</p>';
             document.getElementById('productsContainer').innerHTML = '';
             productRowCounter = 0;
             currentOrderProducts = [];
@@ -842,27 +756,26 @@ async function handleSaveAndShare() {
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize live date and time
     updateDateTime();
-    setInterval(updateDateTime, 1000); // Update every second
+    setInterval(updateDateTime, 1000);
 
     // Start typing animation
     startTypingAnimation();
 
     fetchDataFromGoogleSheets(); // Load initial data
 
-    const familySelect = document.getElementById('familySelect');
-    const dynamicFamilyHeading = document.getElementById('dynamicFamilyHeading');
-    const familyDetailsForm = document.getElementById('familyDetailsForm');
-    const addressInput = document.getElementById('addressInput');
-    const contactInput = document.getElementById('contactInput');
-    const phoneInput = document.getElementById('phoneInput');
-    const historyDisplay = document.getElementById('historyDisplay');
+    const familyNameInput = document.getElementById('familyNameInput'); // New input field
     const addProductBtn = document.getElementById('addProductBtn');
     const submitOrderBtn = document.getElementById('submitOrderBtn');
-    const deliveryTypeSelect = document.getElementById('deliveryType');
     const addHistoricalProductButton = document.getElementById('addHistoricalProductBtn');
     const productFilterInput = document.getElementById('productFilterInput');
     const saveAndShareButton = document.querySelector('#orderConfirmationModal .btn-primary');
 
+    // Event listener for family name input to update history display
+    if (familyNameInput) {
+        familyNameInput.addEventListener('input', (event) => {
+            updateFamilyHistoryDisplay(event.target.value);
+        });
+    }
 
     // Event listener for adding historical product from modal
     if (addHistoricalProductButton) {
@@ -879,146 +792,32 @@ document.addEventListener('DOMContentLoaded', () => {
         saveAndShareButton.addEventListener('click', handleSaveAndShare);
     }
 
-
-    familySelect.addEventListener('change', (event) => {
-        const selectedFamilyName = event.target.value;
-        if (selectedFamilyName && familiesData[selectedFamilyName]) {
-            updateProgressBar(2); // Move to Step 2
-            const data = familiesData[selectedFamilyName];
-            dynamicFamilyHeading.textContent = `הזמנה עבור משפחת ${selectedFamilyName}`;
-            dynamicFamilyHeading.classList.remove('hidden');
-            familyDetailsForm.classList.remove('hidden');
-
-            // Make fields editable and populate
-            addressInput.value = data.address || '';
-            addressInput.removeAttribute('readonly'); // Make editable
-            contactInput.value = data.contact || '';
-            contactInput.removeAttribute('readonly'); // Make editable
-            phoneInput.value = data.phone || '';
-            phoneInput.removeAttribute('readonly'); // Make editable
-
-            // Show welcome message
-            showToast('info', 'ברוך הבא!', `שלום ${data.contact || selectedFamilyName}, ברוך הבא למערכת ההזמנות!`);
-
-
-            // Populate history display
-            historyDisplay.innerHTML = '';
-            const familyHistory = previousOrdersHistory.filter(order => order['שם משפחה'] === selectedFamilyName);
-            if (familyHistory.length > 0) {
-                // Aggregate history for display (e.g., unique products and last order date)
-                const aggregatedHistory = {};
-                familyHistory.forEach(order => {
-                    const productName = order['שם מוצר'];
-                    const quantity = parseInt(order['כמות']) || 0;
-                    const orderDate = order['תאריך ושעה'];
-
-                    if (!aggregatedHistory[productName]) {
-                        aggregatedHistory[productName] = { totalQty: 0, lastDate: '' };
-                    }
-                    aggregatedHistory[productName].totalQty += quantity;
-                    // Keep the latest date
-                    if (orderDate > aggregatedHistory[productName].lastDate) {
-                        aggregatedHistory[productName].lastDate = orderDate;
-                    }
-                });
-
-                for (const prodName in aggregatedHistory) {
-                    const item = aggregatedHistory[prodName];
-                    const p = document.createElement('p');
-                    p.className = 'history-item';
-                    p.innerHTML = `<i class="fas fa-box"></i> ${prodName} (סה"כ: ${item.totalQty}, אחרונה: ${item.lastDate.split(',')[0]})`;
-                    // Add click listener to open quantity selection modal
-                    p.addEventListener('click', () => {
-                        // When clicking a history item, show product details and then allow adding to current order
-                        const productFromCatalog = productsCatalog.find(p => p.name === prodName);
-                        showProductDetailsModal({
-                            name: prodName,
-                            sku: productFromCatalog ? productFromCatalog.sku : 'N/A',
-                            imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
-                            quantity: item.totalQty, // This is the total historical quantity, not current order quantity
-                            note: '' // No note from history display
-                        });
-                    });
-                    historyDisplay.appendChild(p);
-                }
-            } else {
-                historyDisplay.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות זמינה למשפחה זו.</p>';
-            }
-
-            // Clear existing product selections and add a fresh one
-            document.getElementById('productsContainer').innerHTML = '';
-            productRowCounter = 0; // Reset counter
-            currentOrderProducts = []; // Clear current order products when family changes
-            addProductSelection(); // Add initial product row
-            renderCurrentOrderProducts(); // Render the empty or updated current order list
-
-        } else {
-            updateProgressBar(1); // Reset to Step 1
-            dynamicFamilyHeading.classList.add('hidden');
-            familyDetailsForm.classList.add('hidden');
-            addressInput.value = '';
-            addressInput.setAttribute('readonly', true); // Make readonly again
-            contactInput.value = '';
-            contactInput.setAttribute('readonly', true); // Make readonly again
-            phoneInput.value = '';
-            phoneInput.setAttribute('readonly', true); // Make readonly again
-            deliveryTypeSelect.value = ''; // Clear delivery type
-            historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
-            document.getElementById('productsContainer').innerHTML = '';
-            productRowCounter = 0;
-            currentOrderProducts = [];
-            addProductSelection();
-            renderCurrentOrderProducts();
-        }
-    });
-
     addProductBtn.addEventListener('click', addProductSelection);
 
     submitOrderBtn.addEventListener('click', async () => {
-        // --- Debugging logs for validation ---
-        console.log('Submit button clicked!');
-        const familyName = familySelect.value;
-        const address = addressInput.value;
-        const contact = contactInput.value;
-        const phone = phoneInput.value;
-        const deliveryType = deliveryTypeSelect.value;
+        const familyName = document.getElementById('familyNameInput').value;
+        const address = document.getElementById('addressInput').value;
+        const contact = document.getElementById('contactInput').value;
+        const phone = document.getElementById('phoneInput').value;
+        const deliveryType = document.getElementById('deliveryType').value;
 
-        console.log('Validation Check 1: Family Details');
-        console.log(`Family Name: "${familyName}" (Valid: ${!!familyName})`);
-        console.log(`Address: "${address}" (Valid: ${!!address})`);
-        console.log(`Contact: "${contact}" (Valid: ${!!contact})`);
-        console.log(`Phone: "${phone}" (Valid: ${!!phone})`);
-
-        if (!familyName || !address || !contact || !phone) {
+        if (!familyName.trim() || !address.trim() || !contact.trim() || !phone.trim()) {
             showToast('error', 'שגיאה', 'אנא מלא את כל פרטי המשפחה, הכתובת, איש הקשר והטלפון.');
-            console.error('Validation failed: Missing family details.');
             return;
         }
 
-        // Use currentOrderProducts for validation and submission
-        console.log('Validation Check 2: Valid Products in currentOrderProducts');
-        console.log(`Current Order Products Count: ${currentOrderProducts.length}`);
         let hasValidProduct = currentOrderProducts.some(p => p.quantity > 0 && p.name.trim() !== '');
 
         if (!hasValidProduct) {
             showToast('error', 'שגיאה', 'אנא בחר לפחות מוצר אחד להזמנה או הזן שם מוצר ידנית.');
-            console.error('Validation failed: No valid products selected.');
             return;
         }
-
-        console.log('Validation Check 3: Delivery Type');
-        console.log(`Delivery Type: "${deliveryType}" (Valid: ${!!deliveryType})`);
 
         if (!deliveryType) {
             showToast('error', 'שגיאה', 'אנא בחר סוג הובלה.');
-            console.error('Validation failed: No delivery type selected.');
             return;
         }
 
-        console.log('All validations passed. Proceeding with order submission.');
-        // --- End Debugging logs ---
-
-        // Prepare data for the confirmation modal
         const orderSummaryData = {
             timestamp: new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }),
             familyName,
@@ -1031,13 +830,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 quantity: p.quantity,
                 note: p.note
             })),
-            // Image data will be retrieved again in handleSaveAndShare to avoid stale data
-            imageData: null, // Placeholder, will be populated in handleSaveAndShare
-            imageFileName: null, // Placeholder
+            imageData: null,
+            imageFileName: null,
             deliveryType
         };
 
-        updateProgressBar(4); // Move to Step 4 (Summary)
         showConfirmationModal(orderSummaryData);
     });
 });
