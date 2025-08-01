@@ -178,7 +178,7 @@ async function fetchDataFromGoogleSheets() {
         productsCatalog = data.products.map(p => ({
             name: p['שם מוצר'],
             sku: p['מק"ט'],
-            imageUrl: p['תמונה (URL)'] || 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב'
+            imageUrl: p['תמונה (URL)'] || 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001'
         }));
 
         previousOrdersHistory = data.previousOrders;
@@ -317,7 +317,7 @@ function addProductSelection(productToPrepopulate = null) {
         addOrUpdateCurrentOrderProduct({
             name: productToPrepopulate.name,
             sku: productToPrepopulate.sku || 'N/A',
-            imageUrl: productToPrepopulate.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב',
+            imageUrl: productToPrepopulate.imageUrl || 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001',
             quantity: parseInt(quantityInput.value, 10),
             note: productNoteInput.value.trim()
         }, currentIndex);
@@ -382,7 +382,7 @@ function addProductSelection(productToPrepopulate = null) {
             addOrUpdateCurrentOrderProduct({
                 name: event.target.value.trim(),
                 sku: 'N/A',
-                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב',
+                imageUrl: 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001',
                 quantity: parseInt(quantityInput.value, 10),
                 note: productNoteInput.value.trim()
             }, currentIndex);
@@ -398,7 +398,7 @@ function addProductSelection(productToPrepopulate = null) {
             addOrUpdateCurrentOrderProduct({
                 name: selectedProductName,
                 sku: productsCatalog.find(p => p.name === selectedProductName)?.sku || 'N/A',
-                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב',
+                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001',
                 quantity: parseInt(quantityInput.value, 10),
                 note: productNoteInput.value.trim()
             }, currentIndex);
@@ -411,7 +411,7 @@ function addProductSelection(productToPrepopulate = null) {
             addOrUpdateCurrentOrderProduct({
                 name: selectedProductName,
                 sku: productsCatalog.find(p => p.name === selectedProductName)?.sku || 'N/A',
-                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב',
+                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001',
                 quantity: parseInt(quantityInput.value, 10),
                 note: productNoteInput.value.trim()
             }, currentIndex);
@@ -475,7 +475,7 @@ function updateFamilyHistoryDisplay(familyName) {
                 showProductDetailsModal({
                     name: prodName,
                     sku: productFromCatalog ? productFromCatalog.sku : 'N/A',
-                    imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב',
+                    imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001',
                     quantity: item.totalQty, // This is the total historical quantity, not current order quantity
                     note: '' // No note from history display
                 });
@@ -550,7 +550,7 @@ function addHistoricalProductToOrderForm() {
     if (selectedHistoricalProductName && quantity > 0) {
         const product = productsCatalog.find(p => p.name === selectedHistoricalProductName);
         const sku = product ? product.sku : 'N/A';
-        const imageUrl = product ? product.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב';
+        const imageUrl = product ? product.imageUrl : 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001';
 
         // Check if the product is already in the current order before adding
         const isProductAlreadyInOrder = currentOrderProducts.some(p => p.name === selectedHistoricalProductName);
