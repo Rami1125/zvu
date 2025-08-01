@@ -468,6 +468,36 @@ h2 {
     background-color: #cbd5e0;
 }
 
+/* Chat Message Bubbles */
+.chat-message {
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    max-width: 80%;
+    position: relative;
+    font-size: 0.95rem;
+}
+
+.chat-message.user-message {
+    background-color: #e0f2fe; /* Light blue for user messages */
+    align-self: flex-end; /* Align to right */
+    border-bottom-right-radius: 0.25rem; /* Sharper corner on sender side */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.chat-message.admin-message {
+    background-color: #f0fdf4; /* Light green for admin messages */
+    align-self: flex-start; /* Align to left */
+    border-bottom-left-radius: 0.25rem; /* Sharper corner on sender side */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.message-timestamp {
+    font-size: 0.75rem;
+    color: #718096;
+    margin-top: 0.25rem;
+    text-align: left; /* Align timestamp to left within bubble */
+}
+
 /* Modal Overlays */
 .modal-overlay {
     position: fixed;
