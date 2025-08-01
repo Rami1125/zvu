@@ -39,6 +39,7 @@ let productsCatalog = []; // Stores product catalog fetched from Google Sheet "�
 let previousOrdersHistory = []; // Stores previous orders for smart history from "הזמנות קודמות"
 let currentOrderProducts = []; // Stores products currently added to the order for display/editing
 let allContactsData = []; // Stores all contact data from Google Sheet for Contacts screen
+let lastOrderSummaryData = null; // Stores the last order summary data for WhatsApp sharing
 
 // Google Apps Script Web App URL
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxvBPHFmT9trPCTGGzrhcKAxik28Pzco7OAhnY0gWLFKDHzfFyHpllheCt9ac78RMH-ZA/exec'; // Updated URL based on console error
@@ -262,7 +263,7 @@ function populateQuickFamilyButtons() {
     const existingButtons = quickFamilyButtonsContainer.querySelectorAll('button');
     existingButtons.forEach(button => button.remove());
 
-    const colorClasses = ['color-red', 'color-blue', 'color-yellow', 'color-purple'];
+    const colorClasses = ['color-red', 'color-blue', 'color-yellow', 'color-purple', 'color-green', 'color-orange'];
     let index = 0;
 
     for (const familyName in familiesData) {
@@ -553,11 +554,7 @@ function updateProductHistoryDisplay(productName, displayDiv) {
 
     const familyProductOrders = previousOrdersHistory.filter(order =>
         order['שם משפחה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === productName
-    );
-
-    if (familyProductOrders.length > 0) {
-        const totalQuantity = familyProductOrders.reduce((sum, order) => sum + (parseInt(order['כמות']) || 0), 0);
-        familyProductOrders.sort((a, b) => {
+    ).sort((a, b) => {
             const parseDateString = (dateStr) => {
                 const [datePart, timePart] = dateStr.split(',');
                 const [day, month, year] = datePart.split('.').map(Number);
@@ -568,6 +565,10 @@ function updateProductHistoryDisplay(productName, displayDiv) {
             const dateB = parseDateString(b['תאריך ושעה']);
             return dateB.getTime() - dateA.getTime();
         });
+
+    if (familyProductOrders.length > 0) {
+        const totalQuantity = familyProductOrders.reduce((sum, order) => sum + (parseInt(order['כמות']) || 0), 0);
+        
         const lastOrderDate = familyProductOrders[0]['תאריך ושעה'].split(',')[0];
 
         displayDiv.innerHTML = `
@@ -890,6 +891,9 @@ function showConfirmationModal(orderSummary) {
     const modal = document.getElementById('orderConfirmationModal');
     const receiptContent = document.getElementById('receiptContent');
 
+    // Store the orderSummaryData globally for WhatsApp sharing
+    lastOrderSummaryData = orderSummary;
+
     let productsHtml = '<ul>';
     orderSummary.products.forEach(p => {
         productsHtml += `<li><span class="product-receipt-name">${p.name}</span> <span class="product-receipt-qty">× ${p.quantity}</span></li>`;
@@ -968,11 +972,12 @@ async function sendOrder(orderData) {
  * Generates and sends WhatsApp message.
  * @param {Object} orderData The structured order data.
  */
-function sendToWhatsApp(orderData) {
+function sendOrderToWhatsApp(orderData) {
     let whatsappMessage = `📦 הזמנה חדשה מבית סבן\n\n`;
     whatsappMessage += `*משפחה:* ${orderData.familyName}\n`;
     whatsappMessage += `*כתובת:* ${orderData.address}\n`;
-    whatsappMessage += `*איש קשר:* ${orderData.contact} ${orderData.phone}\n`;
+    whatsappMessage += `*איש קשר:* ${orderData.contact}\n`;
+    whatsappMessage += `*טלפון:* ${orderData.phone}\n`;
     whatsappMessage += `*סוג הובלה:* ${orderData.deliveryType || 'לא נבחר'}\n`;
     whatsappMessage += `\n🧾 *מוצרים:*\n`;
     orderData.products.forEach(p => {
@@ -982,7 +987,8 @@ function sendToWhatsApp(orderData) {
         }
         whatsappMessage += `\n`;
     });
-    whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
+    whatsappMessage += `\n🕓 *תאריך:* ${orderData.timestamp.split(',')[0]}\n`;
+    whatsappMessage += `*שעה:* ${orderData.timestamp.split(',')[1]}\n`;
     if (orderData.imageData) { // Check imageData from the orderData object
         whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
     }
@@ -997,62 +1003,44 @@ function sendToWhatsApp(orderData) {
  * This function orchestrates sending the order and then sharing via WhatsApp.
  */
 async function sendOrderAndShare() {
-    const orderConfirmationModalButton = document.querySelector('#orderConfirmationModal .btn-primary');
-    orderConfirmationModalButton.disabled = true;
-    orderConfirmationModalButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שולח...';
+    const whatsappShareBtn = document.getElementById('whatsappShareBtn');
+    whatsappShareBtn.disabled = true;
+    whatsappShareBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שולח...';
 
-    closeConfirmationModal(); // Close the confirmation modal immediately
+    // Ensure lastOrderSummaryData is available
+    if (!lastOrderSummaryData) {
+        showToast('error', 'שגיאה', 'אין נתוני הזמנה לשיתוף. אנא בצע הזמנה תחילה.');
+        whatsappShareBtn.disabled = false;
+        whatsappShareBtn.innerHTML = '<i class="fab fa-whatsapp mr-2"></i> שלח לוואטסאפ';
+        return;
+    }
 
-    const familyName = document.getElementById('familyNameDisplay').value; // Get from display field
-    const address = document.getElementById('addressInput').value;
-    const contact = document.getElementById('contactInput').value;
-    const phone = document.getElementById('phoneInput').value;
-    const deliveryType = document.getElementById('deliveryType').value;
+    // Convert image to base64 if it exists and hasn't been converted yet
     const productImageFile = document.getElementById('productImage').files[0];
-    let base64Image = null;
-
-    if (productImageFile) {
+    if (productImageFile && !lastOrderSummaryData.imageData) {
         try {
-            base64Image = await new Promise((resolve, reject) => {
+            lastOrderSummaryData.imageData = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result.split(',')[1]);
                 reader.onerror = reject;
                 reader.readAsDataURL(productImageFile);
             });
+            lastOrderSummaryData.imageFileName = productImageFile.name;
         } catch (error) {
             console.error('Error converting image to base64 for submission:', error);
             showToast('error', 'שגיאה', 'אירעה שגיאה בהמרת התמונה לשליחה. נסה שוב.');
-            hideLoading();
-            orderConfirmationModalButton.disabled = false;
-            orderConfirmationModalButton.innerHTML = '<i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאף';
+            whatsappShareBtn.disabled = false;
+            whatsappShareBtn.innerHTML = '<i class="fab fa-whatsapp mr-2"></i> שלח לוואטסאפ';
             return;
         }
     }
 
-    const orderData = {
-        action: 'submitOrder',
-        timestamp: new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }),
-        familyName,
-        address,
-        contact,
-        phone,
-        products: currentOrderProducts.map(p => ({
-            name: p.name,
-            sku: p.sku,
-            quantity: p.quantity,
-            note: p.note
-        })),
-        imageData: base64Image,
-        imageFileName: productImageFile ? productImageFile.name : null,
-        deliveryType
-    };
-
     try {
-        const result = await sendOrder(orderData); // Call the new sendOrder function
+        const result = await sendOrder(lastOrderSummaryData); // Call the new sendOrder function
 
         if (result.success) {
             showToast('success', 'הזמנה נשלחה', result.message);
-            sendToWhatsApp(orderData); // Call the new sendToWhatsApp function
+            sendOrderToWhatsApp(lastOrderSummaryData); // Call the new sendOrderToWhatsApp function
             
             // Clear form after successful submission and reset to family selection
             resetOrderForm();
@@ -1069,8 +1057,9 @@ async function sendOrderAndShare() {
         console.error('Error in sendOrderAndShare:', error); // Log the error from sendOrder
         showToast('error', 'שגיאה', `אירעה שגיאה בשליחת ההזמנה: ${error.message}. נסה שוב מאוחר יותר.`);
     } finally {
-        orderConfirmationModalButton.disabled = false;
-        orderConfirmationModalButton.innerHTML = '<i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאף';
+        whatsappShareBtn.disabled = false;
+        whatsappShareBtn.innerHTML = '<i class="fab fa-whatsapp mr-2"></i> שלח לוואטסאפ';
+        closeConfirmationModal(); // Close the confirmation modal
     }
 }
 
@@ -1090,6 +1079,7 @@ function resetOrderForm() {
     addProductSelection(); // Add initial product row
     renderCurrentOrderProducts();
     document.getElementById('productImage').value = '';
+    lastOrderSummaryData = null; // Clear stored order data
 }
 
 // Function to populate contacts list for the "Contacts" screen
@@ -1204,13 +1194,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const deliveryTypeSelect = document.getElementById('deliveryType');
     const addHistoricalProductButton = document.getElementById('addHistoricalProductBtn');
     const productFilterInput = document.getElementById('productFilterInput');
-    const saveAndShareButton = document.querySelector('#orderConfirmationModal .btn-primary');
     const confirmAddProductBtn = document.getElementById('confirmAddProductBtn');
     const cancelAddProductBtn = document.getElementById('cancelAddProductBtn');
     const contactFilterInput = document.getElementById('contactFilterInput');
     const sendChatBtn = document.getElementById('sendChatBtn');
     const chatInput = document.getElementById('chatInput');
     const emojiButtons = document.querySelectorAll('.emoji-btn');
+    const whatsappShareBtn = document.getElementById('whatsappShareBtn'); // New WhatsApp share button
 
 
     // Event listeners for navigation buttons
@@ -1276,9 +1266,15 @@ document.addEventListener('DOMContentLoaded', () => {
         contactFilterInput.addEventListener('input', populateContactsList);
     }
 
-    // Attach the single event listener for the modal's primary button
-    if (saveAndShareButton) {
-        saveAndShareButton.addEventListener('click', sendOrderAndShare); // Changed to call sendOrderAndShare
+    // Attach event listener for the new WhatsApp share button
+    if (whatsappShareBtn) {
+        whatsappShareBtn.addEventListener('click', () => {
+            if (lastOrderSummaryData) {
+                sendOrderToWhatsApp(lastOrderSummaryData);
+            } else {
+                showToast('error', 'שגיאה', 'אין נתוני הזמנה לשיתוף. אנא בצע הזמנה תחילה.');
+            }
+        });
     }
 
 
@@ -1366,6 +1362,25 @@ document.addEventListener('DOMContentLoaded', () => {
             imageFileName: null, // Placeholder
             deliveryType
         };
+
+        // Before showing confirmation modal, convert image to base64 if it exists
+        const productImageFile = document.getElementById('productImage').files[0];
+        if (productImageFile) {
+            try {
+                orderSummaryData.imageData = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(productImageFile);
+                });
+                orderSummaryData.imageFileName = productImageFile.name;
+            } catch (error) {
+                console.error('Error converting image to base64 for display:', error);
+                showToast('error', 'שגיאה', 'אירעה שגיאה בהמרת התמונה לתצוגה. ההזמנה תישלח ללא תמונה.');
+                orderSummaryData.imageData = null;
+                orderSummaryData.imageFileName = null;
+            }
+        }
 
         updateProgressBar(4); // Move to Step 4 (Summary)
         showConfirmationModal(orderSummaryData);
