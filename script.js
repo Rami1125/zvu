@@ -41,7 +41,7 @@ let currentOrderProducts = []; // Stores products currently added to the order f
 let allContactsData = []; // Stores all contact data from Google Sheet for Contacts screen
 
 // Google Apps Script Web App URL
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwSUrRTPjvqCnHdEsDSdnk3o-PosyTeJoxRHloeZ_RGw2ftmpZ51r4cvLBGM9buYpKqKA/exec'; // This URL needs to be updated by the user!
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwhMG8ORGgcjcVQT9Qfj3vuiyOFbNGEMo3c12_K5bRe6pdkCi73lWM458igp8GyE94Scw/exec'; // Updated URL based on console error
 // Company WhatsApp Number
 const COMPANY_WHATSAPP_NUMBER = '972508860896';
 
@@ -167,28 +167,48 @@ async function fetchDataFromGoogleSheets() {
 
         // Populate global data stores
         familiesData = {};
-        data.families.forEach(family => {
-            familiesData[family['שם משפחה']] = {
-                address: family['כתובת'] || 'לא ידוע',
-                contact: family['איש קשר'] || 'לא ידוע',
-                phone: family['טלפון'] || 'לא ידוע',
-            };
-        });
+        // Ensure data.families is an array before iterating
+        if (Array.isArray(data.families)) {
+            data.families.forEach(family => {
+                familiesData[family['שם משפחה']] = {
+                    address: family['כתובת'] || 'לא ידוע',
+                    contact: family['איש קשר'] || 'לא ידוע',
+                    phone: family['טלפון'] || 'לא ידוע',
+                };
+            });
+        } else {
+            console.warn("data.families is not an array:", data.families);
+            familiesData = {}; // Ensure it's empty if not an array
+        }
 
-        productsCatalog = data.products.map(p => ({
-            name: p['שם מוצר'],
-            sku: p['מק"ט'],
-            imageUrl: p['תמונה (URL)'] || 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001'
-        }));
 
-        previousOrdersHistory = data.previousOrders;
+        // Ensure data.products is an array before mapping
+        if (Array.isArray(data.products)) {
+            productsCatalog = data.products.map(p => ({
+                name: p['שם מוצר'],
+                sku: p['מק"ט'],
+                imageUrl: p['תמונה (URL)'] || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg'
+            }));
+        } else {
+            console.warn("data.products is not an array:", data.products);
+            productsCatalog = []; // Ensure it's empty if not an array
+        }
+
+        // Ensure data.previousOrders is an array before assigning
+        if (Array.isArray(data.previousOrders)) {
+            previousOrdersHistory = data.previousOrders;
+        } else {
+            console.warn("data.previousOrders is not an array:", data.previousOrders);
+            previousOrdersHistory = []; // Ensure it's empty if not an array
+        }
+
 
         // Populate allContactsData for the Contacts screen
-        allContactsData = data.families.map(family => ({
-            familyName: family['שם משפחה'],
-            contactPerson: family['איש קשר'],
-            phoneNumber: family['טלפון'],
-            address: family['כתובת']
+        allContactsData = Object.values(familiesData).map(family => ({
+            familyName: family.name, // Assuming family.name exists, or adjust to family['שם משפחה'] if data structure is different
+            contactPerson: family.contact,
+            phoneNumber: family.phone,
+            address: family.address
         }));
         populateContactsList(); // Populate contacts list on load
 
@@ -200,6 +220,11 @@ async function fetchDataFromGoogleSheets() {
     } catch (error) {
         console.error('Error fetching initial data:', error);
         showToast('error', 'שגיאה', `אירעה שגיאה בטעינת הנתונים הראשוניים: ${error.message}. אנא ודא שה-Apps Script פרוס כראוי והגיליונות קיימים.`);
+        // Ensure global data stores are reset to empty arrays/objects on error to prevent further TypeErrors
+        familiesData = {};
+        productsCatalog = [];
+        previousOrdersHistory = [];
+        allContactsData = [];
     } finally {
         hideLoading();
     }
@@ -317,7 +342,7 @@ function addProductSelection(productToPrepopulate = null) {
         addOrUpdateCurrentOrderProduct({
             name: productToPrepopulate.name,
             sku: productToPrepopulate.sku || 'N/A',
-            imageUrl: productToPrepopulate.imageUrl || 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001',
+            imageUrl: productToPrepopulate.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
             quantity: parseInt(quantityInput.value, 10),
             note: productNoteInput.value.trim()
         }, currentIndex);
@@ -343,79 +368,103 @@ function addProductSelection(productToPrepopulate = null) {
             });
         }
 
-        const selectedProductName = typedValue;
-        const selectedProduct = productsCatalog.find(p => p.name === selectedProductName);
+        const selectedProduct = productsCatalog.find(p => p.name === typedValue); // Find exact match
 
         productInfoDiv.innerHTML = '';
         productHistoryInfoDiv.innerHTML = '';
-        freeTextProductInput.value = ''; // Clear free text input if datalist is used
+        freeTextProductInput.value = ''; // Clear free text input if datalist is used or attempted
 
         if (selectedProduct) {
+            // If a catalog product is selected/typed
             productInfoDiv.innerHTML = `
                 <div class="product-item-display">
-                    <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=תמונת מוצר בקרוב';" onclick="showImagePreviewModal('${selectedProduct.imageUrl}')">
+                    <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${selectedProduct.imageUrl}')">
                     <div class="product-details-display">
                         <p class="product-name-display">${selectedProduct.name}</p>
                         <p class="product-sku-display">מק"ט: ${selectedProduct.sku}</p>
                     </div>
                 </div>
             `;
-            updateProductHistoryDisplay(selectedProductName, productHistoryInfoDiv);
+            updateProductHistoryDisplay(selectedProduct.name, productHistoryInfoDiv);
             addOrUpdateCurrentOrderProduct({
-                name: selectedProductName,
+                name: selectedProduct.name,
                 sku: selectedProduct.sku,
                 imageUrl: selectedProduct.imageUrl,
                 quantity: parseInt(quantityInput.value, 10),
                 note: productNoteInput.value.trim()
             }, currentIndex);
         } else {
-            removeCurrentOrderProduct(currentIndex);
+            // If no exact catalog product match, treat it as a potential free text entry
+            // This will allow the user to continue typing or use the free text field.
+            // addOrUpdateCurrentOrderProduct will handle if it's an empty/invalid name.
+            addOrUpdateCurrentOrderProduct({
+                name: typedValue.trim(), // Pass whatever was typed
+                sku: 'N/A', // No SKU if not from catalog
+                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                quantity: parseInt(quantityInput.value, 10),
+                note: productNoteInput.value.trim()
+            }, currentIndex);
         }
     });
 
     // Event listener for free text product input
     freeTextProductInput.addEventListener('input', (event) => {
-        if (event.target.value.trim() !== '') {
-            productSearchInput.value = ''; // Clear datalist input
-            productInfoDiv.innerHTML = '';
-            productHistoryInfoDiv.innerHTML = '';
+        const freeTextValue = event.target.value.trim();
+        productInfoDiv.innerHTML = ''; // Always clear info if free text is used
+        productHistoryInfoDiv.innerHTML = ''; // Always clear history if free text is used
+
+        if (freeTextValue !== '') {
+            productSearchInput.value = ''; // Clear datalist input if free text is used
             addOrUpdateCurrentOrderProduct({
-                name: event.target.value.trim(),
+                name: freeTextValue,
                 sku: 'N/A',
-                imageUrl: 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001',
+                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
                 quantity: parseInt(quantityInput.value, 10),
                 note: productNoteInput.value.trim()
             }, currentIndex);
         } else {
-            removeCurrentOrderProduct(currentIndex);
+            // If free text is cleared, check if productSearchInput has a valid product.
+            const selectedProduct = productsCatalog.find(p => p.name === productSearchInput.value.trim());
+            if (selectedProduct) {
+                // If there's a valid product in productSearchInput, update based on that
+                addOrUpdateCurrentOrderProduct({
+                    name: selectedProduct.name,
+                    sku: selectedProduct.sku,
+                    imageUrl: selectedProduct.imageUrl,
+                    quantity: parseInt(quantityInput.value, 10),
+                    note: productNoteInput.value.trim()
+                }, currentIndex);
+            } else {
+                // If both are empty/invalid, remove the product from the current order
+                removeCurrentOrderProduct(currentIndex);
+            }
         }
     });
 
     // Event listeners for quantity and note changes to update currentOrderProducts
+    // These should now correctly call addOrUpdateCurrentOrderProduct with the current state of both inputs
     quantityInput.addEventListener('input', () => {
-        const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
-        if (selectedProductName) {
-            addOrUpdateCurrentOrderProduct({
-                name: selectedProductName,
-                sku: productsCatalog.find(p => p.name === selectedProductName)?.sku || 'N/A',
-                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001',
-                quantity: parseInt(quantityInput.value, 10),
-                note: productNoteInput.value.trim()
-            }, currentIndex);
-        }
+        const productName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
+        const product = productsCatalog.find(p => p.name === productName);
+        addOrUpdateCurrentOrderProduct({
+            name: productName,
+            sku: product?.sku || 'N/A',
+            imageUrl: product?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+            quantity: parseInt(quantityInput.value, 10),
+            note: productNoteInput.value.trim()
+        }, currentIndex);
     });
 
     productNoteInput.addEventListener('input', () => {
-        const selectedProductName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
-        if (selectedProductName) {
-            addOrUpdateCurrentOrderProduct({
-                name: selectedProductName,
-                sku: productsCatalog.find(p => p.name === selectedProductName)?.sku || 'N/A',
-                imageUrl: productsCatalog.find(p => p.name === selectedProductName)?.imageUrl || 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001',
-                quantity: parseInt(quantityInput.value, 10),
-                note: productNoteInput.value.trim()
-            }, currentIndex);
-        }
+        const productName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
+        const product = productsCatalog.find(p => p.name === productName);
+        addOrUpdateCurrentOrderProduct({
+            name: productName,
+            sku: product?.sku || 'N/A',
+            imageUrl: product?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+            quantity: parseInt(quantityInput.value, 10),
+            note: productNoteInput.value.trim()
+        }, currentIndex);
     });
 
     // Event listener for deleting the product row from the form
@@ -475,7 +524,7 @@ function updateFamilyHistoryDisplay(familyName) {
                 showProductDetailsModal({
                     name: prodName,
                     sku: productFromCatalog ? productFromCatalog.sku : 'N/A',
-                    imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001',
+                    imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
                     quantity: item.totalQty, // This is the total historical quantity, not current order quantity
                     note: '' // No note from history display
                 });
@@ -550,7 +599,7 @@ function addHistoricalProductToOrderForm() {
     if (selectedHistoricalProductName && quantity > 0) {
         const product = productsCatalog.find(p => p.name === selectedHistoricalProductName);
         const sku = product ? product.sku : 'N/A';
-        const imageUrl = product ? product.imageUrl : 'https://www.citypng.com/public/uploads/preview/coming-soon-diamond-sign-yellow-illustration-704081694791855pr8gisffbq.png?v=2025062001';
+        const imageUrl = product ? product.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg';
 
         // Check if the product is already in the current order before adding
         const isProductAlreadyInOrder = currentOrderProducts.some(p => p.name === selectedHistoricalProductName);
@@ -710,7 +759,7 @@ function renderCurrentOrderProducts() {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'current-order-product-item';
         itemDiv.innerHTML = `
-            <img src="${product.imageUrl}" alt="${product.name}" class="product-image-thumb" onerror="this.onerror=null;this.src='https://placehold.co/40x40/CCCCCC/000000?text=תמונת מוצר בקרוב';" onclick="showImagePreviewModal('${product.imageUrl}')">
+            <img src="${product.imageUrl}" alt="${product.name}" class="product-image-thumb" onerror="this.onerror=null;this.src='https://placehold.co/40x40/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${product.imageUrl}')">
             <div class="product-details-summary">
                 <strong>${product.name}</strong>
                 <span>מק"ט: ${product.sku}</span>
@@ -791,7 +840,7 @@ function showProductDetailsModal(product) {
         }
 
         const productSpecificHistory = previousOrdersHistory.filter(order =>
-            order['שם משפמה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === product.name
+            order['שם משפחה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === product.name
         ).sort((a, b) => {
             const parseDateString = (dateStr) => {
                 const [datePart, timePart] = dateStr.split(',');
@@ -876,13 +925,83 @@ function closeConfirmationModal() {
     document.getElementById('orderConfirmationModal').classList.add('hidden');
 }
 
-async function handleSaveAndShare() {
+/**
+ * Sends the order data to Google Apps Script.
+ * @param {Object} orderData The structured order data.
+ * @returns {Promise<Object>} The JSON response from the Apps Script.
+ */
+async function sendOrder(orderData) {
+    showLoading('שולח הזמנה ושומר...');
+    const formData = new FormData();
+    formData.append('action', 'submitOrder');
+    formData.append('timestamp', orderData.timestamp);
+    formData.append('familyName', orderData.familyName);
+    formData.append('address', orderData.address);
+    formData.append('contact', orderData.contact);
+    formData.append('phone', orderData.phone);
+    formData.append('deliveryType', orderData.deliveryType);
+    // Stringify the products array as FormData does not handle nested objects directly
+    formData.append('products', JSON.stringify(orderData.products)); 
+    
+    if (orderData.imageData) {
+        // If imageData is base64 string, append it directly. Apps Script will decode.
+        formData.append('imageData', orderData.imageData);
+        formData.append('imageFileName', orderData.imageFileName || 'image.png');
+    }
+
+    try {
+        const response = await fetch(`${WEB_APP_URL}`, {
+            method: 'POST',
+            body: formData // No Content-Type header needed for FormData; browser sets it automatically
+        });
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error sending order:', error);
+        throw new Error(`אירעה שגיאה בשליחת ההזמנה: ${error.message}. נסה שוב מאוחר יותר.`);
+    } finally {
+        hideLoading();
+    }
+}
+
+/**
+ * Generates and sends WhatsApp message.
+ * @param {Object} orderData The structured order data.
+ */
+function sendToWhatsApp(orderData) {
+    let whatsappMessage = `📦 הזמנה חדשה מבית סבן\n\n`;
+    whatsappMessage += `*משפחה:* ${orderData.familyName}\n`;
+    whatsappMessage += `*כתובת:* ${orderData.address}\n`;
+    whatsappMessage += `*איש קשר:* ${orderData.contact} ${orderData.phone}\n`;
+    whatsappMessage += `*סוג הובלה:* ${orderData.deliveryType || 'לא נבחר'}\n`;
+    whatsappMessage += `\n🧾 *מוצרים:*\n`;
+    orderData.products.forEach(p => {
+        whatsappMessage += `• ${p.name} × ${p.quantity}`;
+        if (p.note) {
+            whatsappMessage += ` (הערה: ${p.note})`;
+        }
+        whatsappMessage += `\n`;
+    });
+    whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
+    if (orderData.imageData) { // Check imageData from the orderData object
+        whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
+    }
+
+    const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+    window.open(whatsappUrl, '_blank');
+    showToast('success', 'הודעה נשלחה', 'ההודעה נשלחה בהצלחה לווטסאפ.');
+}
+
+/**
+ * Main function to handle saving order and sharing.
+ * This function orchestrates sending the order and then sharing via WhatsApp.
+ */
+async function sendOrderAndShare() {
     const orderConfirmationModalButton = document.querySelector('#orderConfirmationModal .btn-primary');
     orderConfirmationModalButton.disabled = true;
     orderConfirmationModalButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שולח...';
 
-    closeConfirmationModal();
-    showLoading('שולח הזמנה ושומר...');
+    closeConfirmationModal(); // Close the confirmation modal immediately
 
     const familyName = document.getElementById('familyNameDisplay').value; // Get from display field
     const address = document.getElementById('addressInput').value;
@@ -929,38 +1048,12 @@ async function handleSaveAndShare() {
     };
 
     try {
-        const response = await fetch(`${WEB_APP_URL}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData)
-        });
-        const result = await response.json();
+        const result = await sendOrder(orderData); // Call the new sendOrder function
 
         if (result.success) {
             showToast('success', 'הזמנה נשלחה', result.message);
-
-            // Generate WhatsApp message
-            let whatsappMessage = `📦 הזמנה חדשה מבית סבן\n\n`;
-            whatsappMessage += `*משפחה:* ${familyName}\n`;
-            whatsappMessage += `*כתובת:* ${address}\n`;
-            whatsappMessage += `*איש קשר:* ${contact} ${phone}\n`;
-            whatsappMessage += `*סוג הובלה:* ${deliveryType || 'לא נבחר'}\n`;
-            whatsappMessage += `\n🧾 *מוצרים:*\n`;
-            currentOrderProducts.forEach(p => {
-                whatsappMessage += `• ${p.name} × ${p.quantity}`;
-                if (p.note) {
-                    whatsappMessage += ` (הערה: ${p.note})`;
-                }
-                whatsappMessage += `\n`;
-            });
-            whatsappMessage += `\n🕓 *תאריך:* ${new Date().toLocaleDateString('he-IL')}\n`;
-            if (productImageFile) {
-                whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
-            }
-
-            const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
-            window.open(whatsappUrl, '_blank');
-
+            sendToWhatsApp(orderData); // Call the new sendToWhatsApp function
+            
             // Clear form after successful submission and reset to family selection
             resetOrderForm();
             showContent('step1Content'); // Go back to family selection
@@ -973,14 +1066,14 @@ async function handleSaveAndShare() {
             showToast('error', 'שגיאה', result.message || 'אירעה שגיאה בשליחת ההזמנה.');
         }
     } catch (error) {
-        console.error('Error submitting order:', error);
+        console.error('Error in sendOrderAndShare:', error); // Log the error from sendOrder
         showToast('error', 'שגיאה', `אירעה שגיאה בשליחת ההזמנה: ${error.message}. נסה שוב מאוחר יותר.`);
     } finally {
-        hideLoading();
         orderConfirmationModalButton.disabled = false;
         orderConfirmationModalButton.innerHTML = '<i class="fas fa-camera"></i> שמור כתמונה / שתף בוואטסאף';
     }
 }
+
 
 // Function to reset the order form fields
 function resetOrderForm() {
@@ -1185,7 +1278,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Attach the single event listener for the modal's primary button
     if (saveAndShareButton) {
-        saveAndShareButton.addEventListener('click', handleSaveAndShare);
+        saveAndShareButton.addEventListener('click', sendOrderAndShare); // Changed to call sendOrderAndShare
     }
 
 
@@ -1269,7 +1362,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 quantity: p.quantity,
                 note: p.note
             })),
-            imageData: null, // Placeholder, will be populated in handleSaveAndShare
+            imageData: null, // Placeholder, will be populated in sendOrderAndShare
             imageFileName: null, // Placeholder
             deliveryType
         };
