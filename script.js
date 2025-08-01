@@ -1084,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('passwordInput').value;
 
             // Simple mock login for demonstration
-            if (username === 'user' && password === 'pass') {
+            if (username === 'סבן' && password === '1234') {
                 showToast('success', 'התחברת בהצלחה', `שלום ${username}, ברוך הבא למערכת ההזמנות!`);
                 showContent('step1Content'); // Go to family selection after login
                 updateProgressBar(1); // Set progress to step 1
