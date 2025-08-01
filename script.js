@@ -187,7 +187,7 @@ async function fetchDataFromGoogleSheets() {
         if (Array.isArray(data.products)) {
             productsCatalog = data.products.map(p => ({
                 name: p['שם מוצר'],
-                sku: p['מק"ט'],
+                sku: p['מק"ט'], // This line correctly maps the SKU
                 imageUrl: p['תמונה (URL)'] || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg'
             }));
         } else {
@@ -334,10 +334,8 @@ function addProductSelection(productToPrepopulate = null) {
     if (productToPrepopulate) {
         if (productsCatalog.some(p => p.name === productToPrepopulate.name)) {
             productSearchInput.value = productToPrepopulate.name;
-            // No need to dispatch input event here, as addOrUpdateCurrentOrderProduct will be called directly
         } else {
             freeTextProductInput.value = productToPrepopulate.name;
-            // No need to dispatch input event here
         }
         quantityInput.value = productToPrepopulate.quantity || 1;
         productNoteInput.value = productToPrepopulate.note || '';
@@ -349,124 +347,28 @@ function addProductSelection(productToPrepopulate = null) {
             quantity: parseInt(quantityInput.value, 10),
             note: productNoteInput.value.trim()
         }, currentIndex);
+        // After pre-populating, trigger the display update
+        updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex);
     }
 
 
     // Event listener for product search input (datalist)
     productSearchInput.addEventListener('input', (event) => {
-        const typedValue = event.target.value.trim(); // Trim whitespace
-        
-        productInfoDiv.innerHTML = '';
-        productHistoryInfoDiv.innerHTML = '';
-        freeTextProductInput.value = ''; // Always clear free text if search is active
-
-        let selectedProduct = null;
-
-        // The native datalist dropdown will appear based on browser behavior.
-        // We control when the *application's display and internal state* updates.
-        if (typedValue.length >= 3) { // Only process for suggestions if 3 or more characters
-            selectedProduct = productsCatalog.find(p => p.name === typedValue); // Find exact match
-            
-            if (selectedProduct) {
-                // If a catalog product is selected/typed
-                productInfoDiv.innerHTML = `
-                    <div class="product-item-display">
-                        <img src="${selectedProduct.imageUrl}" alt="${selectedProduct.name}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${selectedProduct.imageUrl}')">
-                    </div>
-                    <div class="product-details-display">
-                        <p class="product-name-display">${selectedProduct.name}</p>
-                        <p class="product-sku-display">מק"ט: ${selectedProduct.sku}</p>
-                    </div>
-                `;
-                updateProductHistoryDisplay(selectedProduct.name, productHistoryInfoDiv);
-                addOrUpdateCurrentOrderProduct({
-                    name: selectedProduct.name,
-                    sku: selectedProduct.sku,
-                    imageUrl: selectedProduct.imageUrl,
-                    quantity: parseInt(quantityInput.value, 10),
-                    note: productNoteInput.value.trim()
-                }, currentIndex);
-            } else {
-                // If no exact catalog product match, but typedValue is >= 3 chars, treat as potential free text
-                addOrUpdateCurrentOrderProduct({
-                    name: typedValue,
-                    sku: 'N/A',
-                    imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
-                    quantity: parseInt(quantityInput.value, 10),
-                    note: productNoteInput.value.trim()
-                }, currentIndex);
-            }
-        } else if (typedValue.length > 0 && typedValue.length < 3) {
-            // If less than 3 characters, clear product info and remove from current order
-            removeCurrentOrderProduct(currentIndex); // Remove if previously added by mistake
-            productInfoDiv.innerHTML = `<p class="text-gray-500">הקלד לפחות 3 אותיות לחיפוש מוצר.</p>`;
-        } else { // typedValue is empty
-            removeCurrentOrderProduct(currentIndex);
-        }
+        updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex);
     });
 
     // Event listener for free text product input
     freeTextProductInput.addEventListener('input', (event) => {
-        const freeTextValue = event.target.value.trim();
-        productInfoDiv.innerHTML = ''; // Always clear info if free text is used
-        productHistoryInfoDiv.innerHTML = ''; // Always clear history if free text is used
-
-        // Clear datalist input if free text is being used
-        if (freeTextValue !== '') {
-            productSearchInput.value = ''; 
-        }
-
-        if (freeTextValue !== '') {
-            addOrUpdateCurrentOrderProduct({
-                name: freeTextValue,
-                sku: 'N/A',
-                imageUrl: 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
-                quantity: parseInt(quantityInput.value, 10),
-                note: productNoteInput.value.trim()
-            }, currentIndex);
-        } else {
-            // If free text is cleared, check if productSearchInput has a valid product.
-            const selectedProduct = productsCatalog.find(p => p.name === productSearchInput.value.trim());
-            if (selectedProduct) {
-                // If there's a valid product in productSearchInput, update based on that
-                addOrUpdateCurrentOrderProduct({
-                    name: selectedProduct.name,
-                    sku: selectedProduct.sku,
-                    imageUrl: selectedProduct.imageUrl,
-                    quantity: parseInt(quantityInput.value, 10),
-                    note: productNoteInput.value.trim()
-                }, currentIndex);
-            } else {
-                // If both are empty/invalid, remove the product from the current order
-                removeCurrentOrderProduct(currentIndex);
-            }
-        }
+        updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex);
     });
 
     // Event listeners for quantity and note changes to update currentOrderProducts
-    // These should now correctly call addOrUpdateCurrentOrderProduct with the current state of both inputs
     quantityInput.addEventListener('input', () => {
-        const productName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
-        const product = productsCatalog.find(p => p.name === productName);
-        addOrUpdateCurrentOrderProduct({
-            name: productName,
-            sku: product?.sku || 'N/A',
-            imageUrl: product?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
-            quantity: parseInt(quantityInput.value, 10),
-            note: productNoteInput.value.trim()
-        }, currentIndex);
+        updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex);
     });
 
     productNoteInput.addEventListener('input', () => {
-        const productName = freeTextProductInput.value.trim() || productSearchInput.value.trim();
-        const product = productsCatalog.find(p => p.name === productName);
-        addOrUpdateCurrentOrderProduct({
-            name: productName,
-            sku: product?.sku || 'N/A',
-            imageUrl: product?.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
-            quantity: parseInt(quantityInput.value, 10),
-            note: productNoteInput.value.trim()
-        }, currentIndex);
+        updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex);
     });
 
     // Event listener for deleting the product row from the form
@@ -478,6 +380,81 @@ function addProductSelection(productToPrepopulate = null) {
         });
     }
 }
+
+/**
+ * Updates the product display and internal data based on input changes.
+ * This function consolidates the logic for product search/free text, quantity, and notes.
+ * It also handles auto-focusing the next field.
+ */
+function updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex) {
+    const searchInputValue = productSearchInput.value.trim();
+    const freeTextInputValue = freeTextProductInput.value.trim();
+    
+    productInfoDiv.innerHTML = ''; // Clear info display
+    productHistoryInfoDiv.innerHTML = ''; // Clear history display
+
+    let productName = '';
+    let productSku = 'N/A';
+    let productImageUrl = 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg';
+
+    // Determine the active product name and if it's from catalog
+    let selectedProduct = null;
+    if (searchInputValue !== '') {
+        selectedProduct = productsCatalog.find(p => p.name === searchInputValue);
+        if (selectedProduct) {
+            productName = selectedProduct.name;
+            productSku = selectedProduct.sku;
+            productImageUrl = selectedProduct.imageUrl;
+            freeTextProductInput.value = ''; // Clear free text if catalog product is selected
+        } else {
+            productName = searchInputValue; // Treat as free text if no exact match in catalog
+        }
+    } else if (freeTextInputValue !== '') {
+        productName = freeTextInputValue;
+    }
+
+    // Update product info display based on determined product
+    if (productName.length >= 3 || selectedProduct) { // Display info if >= 3 chars or exact match
+        if (selectedProduct) {
+            productInfoDiv.innerHTML = `
+                <div class="product-item-display">
+                    <img src="${productImageUrl}" alt="${productName}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${productImageUrl}')">
+                    <div class="product-details-display">
+                        <p class="product-name-display">${productName}</p>
+                        <p class="product-sku-display">מק"ט: ${productSku}</p>
+                    </div>
+                </div>
+            `;
+            updateProductHistoryDisplay(productName, productHistoryInfoDiv);
+            // Auto-focus to quantity if a product is selected/identified
+            quantityInput.focus();
+        } else if (productName.length >= 3) { // Only show free text info if at least 3 chars
+             productInfoDiv.innerHTML = `
+                <div class="product-item-display">
+                    <img src="${productImageUrl}" alt="${productName}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';">
+                    <div class="product-details-display">
+                        <p class="product-name-display">${productName} (פריט חופשי)</p>
+                        <p class="product-sku-display">מק"ט: N/A</p>
+                    </div>
+                </div>
+            `;
+            productHistoryInfoDiv.innerHTML = `<p class="text-gray-500">אין היסטוריית הזמנות לפריט חופשי.</p>`;
+            quantityInput.focus(); // Auto-focus to quantity for free text too
+        }
+    } else if (productName.length > 0 && productName.length < 3) {
+        productInfoDiv.innerHTML = `<p class="text-gray-500">הקלד לפחות 3 אותיות לחיפוש מוצר.</p>`;
+    }
+
+    // Update the global currentOrderProducts array
+    addOrUpdateCurrentOrderProduct({
+        name: productName,
+        sku: productSku,
+        imageUrl: productImageUrl,
+        quantity: parseInt(quantityInput.value, 10) || 1, // Default to 1 if invalid
+        note: productNoteInput.value.trim()
+    }, currentIndex);
+}
+
 
 // Function to update the history display based on the family name input
 function updateFamilyHistoryDisplay(familyName) {
@@ -765,7 +742,7 @@ function renderCurrentOrderProducts() {
             <div class="product-details-summary">
                 <strong>${product.name}</strong>
                 <span>מק"ט: ${product.sku}</span>
-                ${product.note ? `<span class="product-note-display">הערה: ${product.note}</span>` : ''}
+                <input type="text" class="product-note-input-inline" value="${product.note || ''}" placeholder="הערה" data-form-index="${product.formIndex}">
             </div>
             <div class="product-quantity-controls">
                 <label for="qty_item_${product.formIndex}" class="sr-only">כמות</label>
@@ -782,17 +759,47 @@ function renderCurrentOrderProducts() {
         if (qtyInput) {
             qtyInput.addEventListener('input', (event) => {
                 const newQuantity = parseInt(event.target.value, 10);
-                // Find the original product in currentOrderProducts by formIndex
                 const productToUpdate = currentOrderProducts.find(p => p.formIndex === product.formIndex);
                 if (productToUpdate) {
                     if (newQuantity > 0) {
                         productToUpdate.quantity = newQuantity;
-                    } else { // If quantity becomes 0 or less, remove it
+                    } else { 
                         removeCurrentOrderProduct(product.formIndex);
                     }
                 }
-                // No need to call renderCurrentOrderProducts here, as the input value itself updates.
-                // The array is updated, which is sufficient for submission.
+            });
+            // Add keyboard event listener for Enter key to move to next field
+            qtyInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent form submission
+                    const nextProductRow = itemDiv.nextElementSibling;
+                    if (nextProductRow) {
+                        const nextProductSearchInput = nextProductRow.querySelector('.product-search-input');
+                        if (nextProductSearchInput) {
+                            nextProductSearchInput.focus();
+                        }
+                    } else {
+                        // If this is the last item, add a new row and focus its search input
+                        addProductBtn.click(); // Simulate click to add new product row
+                        // The new row will be added to the DOM; find its productSearchInput and focus it
+                        const newProductSearchInput = productsContainer.lastElementChild.querySelector('.product-search-input');
+                        if (newProductSearchInput) {
+                            newProductSearchInput.focus();
+                        }
+                    }
+                }
+            });
+        }
+
+        // Add event listener for inline note editing
+        const inlineNoteInput = itemDiv.querySelector('.product-note-input-inline');
+        if (inlineNoteInput) {
+            inlineNoteInput.addEventListener('input', (event) => {
+                const updatedNote = event.target.value.trim();
+                const productToUpdate = currentOrderProducts.find(p => p.formIndex === product.formIndex);
+                if (productToUpdate) {
+                    productToUpdate.note = updatedNote;
+                }
             });
         }
 
@@ -807,13 +814,35 @@ function renderCurrentOrderProducts() {
 
 
 // Image Preview Modal Functions
+let imagePreviewTimeout;
 function showImagePreviewModal(imageUrl) {
-    document.getElementById('previewImage').src = imageUrl;
-    document.getElementById('imagePreviewModal').classList.remove('hidden');
-    document.getElementById('imagePreviewModal').classList.add('active');
+    const modal = document.getElementById('imagePreviewModal');
+    const previewImage = document.getElementById('previewImage');
+
+    previewImage.src = imageUrl;
+    previewImage.classList.remove('fade-out'); // Ensure no fade-out class from previous use
+
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+
+    // Clear any existing timeout
+    if (imagePreviewTimeout) {
+        clearTimeout(imagePreviewTimeout);
+    }
+
+    // Set timeout to close modal after 5 seconds with fade effect
+    imagePreviewTimeout = setTimeout(() => {
+        previewImage.classList.add('fade-out'); // Add fade-out class
+        // After animation, hide modal
+        previewImage.addEventListener('animationend', () => {
+            closeImagePreviewModal();
+            previewImage.classList.remove('fade-out'); // Clean up class
+        }, { once: true }); // Ensure listener runs only once
+    }, 5000); // 5 seconds
 }
 
 function closeImagePreviewModal() {
+    clearTimeout(imagePreviewTimeout); // Clear any pending timeout
     document.getElementById('imagePreviewModal').classList.remove('active');
     document.getElementById('imagePreviewModal').classList.add('hidden');
     document.getElementById('previewImage').src = '';
@@ -833,17 +862,21 @@ function showProductDetailsModal(product) {
     historyInModal.innerHTML = '<p class="text-gray-500">טוען היסטוריה...</p>';
 
     const selectedFamilyName = document.getElementById('familyNameDisplay').value; // Get from display field
-    if (selectedFamilyName.trim()) {
-        // Check if previousOrdersHistory is defined before filtering
-        if (!previousOrdersHistory) {
-            console.error("previousOrdersHistory is undefined. Cannot update product history in modal.");
-            historyInModal.innerHTML = '<p class="text-red-500">שגיאה: היסטוריית הזמנות לא נטענה.</p>';
-            return;
-        }
+    if (!selectedFamilyName.trim()) {
+        historyInModal.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
+        return;
+    }
+    
+    // Check if previousOrdersHistory is defined before filtering
+    if (!previousOrdersHistory) {
+        console.error("previousOrdersHistory is undefined. Cannot update product history in modal.");
+        historyInModal.innerHTML = '<p class="text-red-500">שגיאה: היסטוריית הזמנות לא נטענה.</p>';
+        return;
+    }
 
-        const productSpecificHistory = previousOrdersHistory.filter(order =>
-            order['שם משפחה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === product.name
-        ).sort((a, b) => {
+    const productSpecificHistory = previousOrdersHistory.filter(order =>
+        order['שם משפחה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === product.name
+    ).sort((a, b) => {
             const parseDateString = (dateStr) => {
                 const [datePart, timePart] = dateStr.split(',');
                 const [day, month, year] = datePart.split('.').map(Number);
@@ -855,27 +888,24 @@ function showProductDetailsModal(product) {
             return dateB.getTime() - dateA.getTime();
         });
 
-        if (productSpecificHistory.length > 0) {
-            historyInModal.innerHTML = '';
-            const ul = document.createElement('ul');
-            ul.className = 'list-none p-0';
-            productSpecificHistory.forEach(order => {
-                const li = document.createElement('li');
-                li.className = 'bg-white p-2 rounded-md mb-2 shadow-sm border border-gray-200';
-                li.innerHTML = `
-                    <p><strong>משפחה:</strong> ${order['שם משפחה']}</p>
-                    <p><strong>תאריך:</strong> ${order['תאריך ושעה'].split(',')[0]}</p>
-                    <p><strong>שעה:</strong> ${order['תאריך ושעה'].split(',')[1]}</p>
-                    <p><strong>כמות:</strong> ${order['כמות']}</p>
-                `;
-                ul.appendChild(li);
-            });
-            historyInModal.appendChild(ul);
-        } else {
-            historyInModal.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות למוצר זה על ידי משפחה זו.</p>';
-        }
+    if (productSpecificHistory.length > 0) {
+        historyInModal.innerHTML = '';
+        const ul = document.createElement('ul');
+        ul.className = 'list-none p-0';
+        productSpecificHistory.forEach(order => {
+            const li = document.createElement('li');
+            li.className = 'bg-white p-2 rounded-md mb-2 shadow-sm border border-gray-200';
+            li.innerHTML = `
+                <p><strong>משפחה:</strong> ${order['שם משפחה']}</p>
+                <p><strong>תאריך:</strong> ${order['תאריך ושעה'].split(',')[0]}</p>
+                <p><strong>שעה:</strong> ${order['תאריך ושעה'].split(',')[1]}</p>
+                <p><strong>כמות:</strong> ${order['כמות']}</p>
+            `;
+            ul.appendChild(li);
+        });
+        historyInModal.appendChild(ul);
     } else {
-        historyInModal.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריית הזמנות למוצר.</p>';
+        historyInModal.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות למוצר זה על ידי משפחה זו.</p>';
     }
 
     modal.classList.remove('hidden');
@@ -1280,6 +1310,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     familySelect.addEventListener('change', (event) => {
         const selectedFamilyName = event.target.value;
+        // Check if selectedFamilyName is valid before accessing familiesData
         if (selectedFamilyName && familiesData[selectedFamilyName]) {
             showContent('orderFormContent'); // Show order form content
             updateProgressBar(2); // Move to Step 2 (Order Details)
@@ -1314,12 +1345,21 @@ document.addEventListener('DOMContentLoaded', () => {
             resetOrderForm();
             showContent('step1Content');
             updateProgressBar(1);
+            // Show a specific error if family data is missing unexpectedly
+            if (selectedFamilyName && !familiesData[selectedFamilyName]) {
+                showToast('error', 'שגיאה', `פרטי משפחת "${selectedFamilyName}" לא נמצאו. אנא בחר משפחה אחרת או רענן את הדף.`);
+            }
         }
     });
 
     addProductBtn.addEventListener('click', () => {
         addProductSelection();
         updateProgressBar(3); // Move to Step 3 (Product Selection)
+        // Auto-focus the new product search input
+        const newProductSearchInput = document.getElementById(`productSearch_${productRowCounter - 1}`);
+        if (newProductSearchInput) {
+            newProductSearchInput.focus();
+        }
     });
 
     submitOrderBtn.addEventListener('click', async () => {
