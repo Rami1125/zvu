@@ -81,7 +81,7 @@ function typeWriter(text, i, fnCallback) {
 // Function to start the typing animation
 function startTypingAnimation() {
     const phrases = [
-        "למשפחות זבולון עדירן ברוכים הבאים למערכת ההזמנות המתקדמת!",
+        "זבולון-עדירן ברוכים הבאים למערכת ההזמנות המתקדמת!",
         "מייעלים את תהליך ההזמנות שלכם.",
         "הזמינו בקלות ובמהירות!"
     ];
