@@ -41,7 +41,7 @@ let currentOrderProducts = []; // Stores products currently added to the order f
 let allContactsData = []; // Stores all contact data from Google Sheet for Contacts screen
 
 // Google Apps Script Web App URL
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxvBPHFmT9trPCTGGzrhcKAxik28Pzco7OAhnY0gWLFKDHzfFyHpllheCt9ac78RMH-ZA/exec'; // This URL needs to be updated by the user!
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwuz9FzevbfDZB0WLvzOV5Fib6rbvrF4gH0wSijK0oT5NlEbrFi5zJheaLreRuSkRqx9w/exec'; // This URL needs to be updated by the user!
 // Company WhatsApp Number
 const COMPANY_WHATSAPP_NUMBER = '972508860896';
 
