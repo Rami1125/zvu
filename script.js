@@ -171,7 +171,7 @@ async function fetchDataFromGoogleSheets() {
         productsCatalog = data.products.map(p => ({
             name: p['שם מוצר'],
             sku: p['מק"ט'],
-            imageUrl: p['תמונה (URL)'] || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg'
+            imageUrl: p['תמונה (URL)'] || 'https://placehold.co/60x60/CCCCCC/000000?text=תמונת מוצר בקרוב'
         }));
 
         previousOrdersHistory = data.previousOrders;
