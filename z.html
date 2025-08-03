@@ -1,0 +1,2620 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת הזמנות ח.סבן - יוקרתי</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- SweetAlert2 for beautiful alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Google Fonts - Inter for modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* General Body and Font */
+        body {
+            font-family: 'Inter', sans-serif;
+            direction: rtl; /* Right-to-left for Hebrew */
+            text-align: right; /* Align text to the right */
+            /* Background with horizontal stripes */
+            background: linear-gradient(to bottom, #000000 0%, #000000 20%, #e0f2fe 20%, #e0f2fe 100%); /* Black top, light blue bottom */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between; /* Pushes header/footer to edges */
+            padding: 1rem;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* App Container */
+        .app-container {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* rounded-3xl */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 2.5rem; /* Increased padding */
+            max-width: 56rem; /* Increased max-width for more space */
+            width: 100%;
+            height: calc(100vh - 2rem); /* Adjusted for full height minus padding */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden; /* Ensure content stays within bounds */
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: #1a202c; /* Darker blue for headings */
+        }
+
+        h2 {
+            color: #6b46c1; /* Purple for typing effect */
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e2e8f0;
+            border-radius: 9999px;
+            height: 0.625rem;
+            margin-top: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(to right, #4299e1, #805ad5);
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .progress-step-label {
+            flex: 1;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #718096;
+        }
+
+        .progress-step-label.active-step {
+            color: #2d3748; /* Darker text for active step */
+            font-weight: 600;
+        }
+
+        /* Form Group Styling (Professional Look) */
+        .form-group {
+            margin-bottom: 1.5rem; /* Increased spacing between groups */
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1rem; /* Slightly larger label */
+            font-weight: 600; /* Bolder label */
+            color: #2d3748; /* Dark text for labels */
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem; /* Larger padding */
+            border: 1px solid #cbd5e0; /* Lighter border */
+            border-radius: 0.75rem; /* More rounded */
+            font-size: 1.1rem; /* Larger font size */
+            color: #2d3748; /* Darker text input */
+            background-color: #f7fafc; /* Light background */
+            transition: all 0.3s ease-in-out;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06); /* Subtle inner shadow */
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea; /* Indigo on focus */
+            box-shadow: 0 0 0 3px rgba(102, 110, 234, 0.25); /* Focus ring */
+            background-color: #ffffff;
+        }
+
+        .form-control-file {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            color: #2d3748;
+            background-color: #f7fafc;
+            transition: all 0.3s ease-in-out;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .form-control-file:hover {
+            border-color: #a0aec0;
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background: linear-gradient(to right, #4c51bf, #6b46c1); /* Deeper purple gradient */
+            color: white;
+            padding: 0.9rem 1.8rem; /* Larger buttons */
+            border-radius: 0.75rem; /* More rounded */
+            font-size: 1.1rem; /* Larger font */
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(76, 81, 191, 0.3);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(to right, #667eea, #805ad5); /* Lighter gradient on hover */
+            box-shadow: 0 6px 15px rgba(76, 81, 191, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #2d3748;
+            padding: 0.9rem 1.8rem;
+            border-radius: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-secondary:hover {
+            background-color: #cbd5e0;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+
+        .glass-button {
+            background: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+            backdrop-filter: blur(5px); /* Blur effect */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: #2d3748; /* Dark text */
+            transition: all 0.3s ease;
+        }
+
+        .glass-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Navigation Bar */
+        .bottom-nav-bar {
+            position: sticky; /* Changed to sticky for better mobile behavior */
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.05); /* Shadow above it */
+        }
+
+        .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: 0.75rem 0.5rem;
+            background-color: transparent;
+            border: none;
+            color: #718096; /* Grayed out */
+            transition: all 0.3s ease;
+            border-radius: 0.5rem;
+        }
+
+        .nav-button.active {
+            color: #4c51bf; /* Active color */
+            background-color: #e0e7ff; /* Light blue background for active */
+            box-shadow: 0 2px 5px rgba(76, 81, 191, 0.2);
+        }
+
+        .nav-button:hover:not(.active) {
+            color: #4a5568;
+            background-color: #f7fafc;
+        }
+
+        .nav-button i {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Quick Family Buttons */
+        .quick-family-button {
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Specific colors for quick family buttons */
+        .quick-family-button.color-red { background-color: #ef4444; }
+        .quick-family-button.color-blue { background-color: #3b82f6; }
+        .quick-family-button.color-yellow { background-color: #f59e0b; }
+        .quick-family-button.color-purple { background-color: #8b5cf6; }
+        .quick-family-button.color-green { background-color: #10b981; }
+        .quick-family-button.color-orange { background-color: #f97316; }
+
+        .quick-family-button:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
+            transform: translateY(-2px);
+        }
+
+        .quick-family-button:active {
+            transform: translateY(0);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); /* Sunken effect */
+        }
+
+        /* Product Selection Rows - Enhanced Professional Look */
+        .product-selection {
+            background-color: #f8faff; /* Lighter background for each product row */
+            border: 1px solid #e0e7ff; /* Soft blue border */
+            border-radius: 1rem; /* More rounded corners */
+            padding: 1.5rem; /* Increased padding */
+            margin-bottom: 1.5rem; /* Space between product rows */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* More prominent shadow */
+            transition: all 0.3s ease;
+        }
+
+        .product-selection:hover {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); /* Even more prominent on hover */
+            transform: translateY(-3px);
+        }
+
+        .product-selection .input-label {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .product-selection .form-control {
+            padding: 0.6rem 0.8rem;
+            font-size: 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .product-info-display {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background-color: #e0f2fe; /* Light blue background for info */
+            border-left: 5px solid #3b82f6; /* Blue accent bar */
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .product-info-display img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            border-radius: 0.5rem;
+            border: 1px solid #90cdf4;
+        }
+
+        .product-details-display {
+            flex-grow: 1;
+        }
+
+        .product-name-display {
+            font-weight: 700;
+            color: #2d3748;
+            font-size: 1.1rem;
+        }
+
+        .product-sku-display {
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        .product-history-info {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background-color: #fffbeb; /* Light yellow for history */
+            border-left: 5px solid #f6ad55; /* Orange accent bar */
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            color: #4a5568;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Current Order Products List */
+        .current-order-product-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .current-order-product-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .product-image-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e0;
+            cursor: pointer; /* Indicate clickable */
+        }
+
+        .product-details-summary {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-details-summary strong {
+            font-size: 1.05rem;
+            color: #2d3748;
+        }
+
+        .product-details-summary span {
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+
+        .product-note-display {
+            font-style: italic;
+            color: #5a67d8; /* Indigo for notes */
+        }
+
+        .product-note-input-inline {
+            width: 100%;
+            padding: 0.2rem 0.4rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 0.3rem;
+            font-size: 0.85rem;
+            color: #2d3748;
+            background-color: #f7fafc;
+            margin-top: 0.25rem;
+        }
+        .product-note-input-inline:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 110, 234, 0.2);
+        }
+
+
+        .product-quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quantity-input-small {
+            width: 60px; /* Fixed width for quantity */
+            padding: 0.4rem 0.6rem;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e0;
+            text-align: center;
+            font-size: 1rem;
+            color: #2d3748;
+            background-color: #f7fafc;
+        }
+
+        .action-buttons .delete-btn {
+            background-color: #ef4444; /* Red for delete */
+            color: white;
+            padding: 0.5rem 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .action-buttons .delete-btn:hover {
+            background-color: #dc2626;
+        }
+
+        /* Chat Interface Specifics */
+        .chat-input-area {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .emoji-btn {
+            background-color: #e2e8f0;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .emoji-btn:hover {
+            background-color: #cbd5e0;
+        }
+
+        /* Chat Message Bubbles */
+        .chat-message {
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            max-width: 80%;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        .chat-message.user-message {
+            background-color: #e0f2fe; /* Light blue for user messages */
+            align-self: flex-end; /* Align to right */
+            border-bottom-right-radius: 0.25rem; /* Sharper corner on sender side */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        .chat-message.admin-message {
+            background-color: #f0fdf4; /* Light green for admin messages */
+            align-self: flex-start; /* Align to left */
+            border-bottom-left-radius: 0.25rem; /* Sharper corner on sender side */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        .message-timestamp {
+            font-size: 0.75rem;
+            color: #718096;
+            margin-top: 0.25rem;
+            text-align: left; /* Align timestamp to left within bubble */
+        }
+
+        /* Modal Overlays */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            max-width: 90%; /* Responsive width */
+            max-height: 90vh; /* Responsive height */
+            overflow-y: auto;
+            transform: translateY(20px); /* Initial state for animation */
+            transition: transform 0.3s ease-out;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0); /* Final state for animation */
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #718096;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close-btn:hover {
+            color: #2d3748;
+        }
+
+        .modal-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        /* Image Preview Modal Specifics */
+        .image-preview-modal-content {
+            background: rgba(255, 255, 255, 0.9); /* Slightly transparent background */
+            padding: 1rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 95%;
+            max-height: 95vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #previewImage {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 0.75rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            opacity: 1;
+            transition: opacity 0.5s ease-out; /* Fade out effect */
+        }
+
+        /* Fade out animation for image */
+        .fade-out {
+            animation: fadeOut 0.5s forwards;
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+
+        /* Receipt Content in Confirmation Modal */
+        .receipt-content {
+            line-height: 1.8;
+            font-size: 1.05rem;
+            color: #2d3748;
+        }
+
+        .receipt-content h4 {
+            font-size: 1.5rem;
+            color: #4c51bf;
+            margin-bottom: 1rem;
+        }
+
+        .receipt-content p strong {
+            color: #4a5568;
+        }
+
+        .product-receipt-name {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .product-receipt-qty {
+            font-weight: 500;
+            color: #5a67d8;
+        }
+
+        /* Typing Effect Cursor */
+        .typing-effect {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background-color: #6b46c1;
+            vertical-align: middle;
+            animation: blink-caret 0.75s step-end infinite;
+        }
+
+        @keyframes blink-caret {
+            from, to { background-color: transparent; }
+            50% { background-color: #6b46c1; }
+        }
+
+        /* Animation for pulse effect on confirmation message */
+        .animate-pulse-effect {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.03); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .app-container {
+                padding: 1rem;
+                max-width: 100%; /* Full width on small screens */
+                height: calc(100vh - 4rem); /* Adjust for smaller screens and nav bar */
+                border-radius: 1rem;
+            }
+
+            .grid-cols-1.md\:grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-primary, .btn-secondary {
+                padding: 0.7rem 1.2rem;
+                font-size: 1rem;
+            }
+
+            .modal-content {
+                padding: 1rem;
+                border-radius: 1rem;
+            }
+
+            .modal-title {
+                font-size: 1.5rem;
+            }
+
+            .bottom-nav-bar {
+                padding: 0.5rem;
+            }
+
+            .nav-button {
+                padding: 0.5rem;
+            }
+
+            .nav-button i {
+                font-size: 1.5rem;
+            }
+
+            .nav-button span {
+                font-size: 0.7rem;
+            }
+
+            .product-selection {
+                padding: 1rem;
+                border-radius: 0.75rem;
+            }
+
+            .product-info-display {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .product-image-thumb {
+                width: 40px;
+                height: 40px;
+            }
+
+            .current-order-product-item {
+                flex-wrap: wrap;
+                justify-content: space-between;
+                padding: 0.5rem;
+            }
+
+            .product-details-summary {
+                flex-basis: 60%;
+            }
+
+            .product-quantity-controls {
+                flex-basis: 30%;
+                justify-content: flex-end;
+            }
+
+            .action-buttons {
+                flex-basis: 100%;
+                margin-top: 0.5rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex flex-col items-center justify-between p-4 font-sans text-right">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center z-[10000] text-white transition-opacity duration-300 opacity-0 invisible">
+        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-16 w-16 mb-4"></div>
+        <p class="text-xl font-semibold">טוען נתונים...</p>
+    </div>
+
+    <div class="app-container bg-white rounded-3xl shadow-2xl p-8 w-full max-w-4xl border border-blue-200 transform transition-all duration-500 scale-95 hover:scale-100 flex flex-col">
+        <header class="text-center mb-8">
+            <!-- Logos for collaboration -->
+            <div class="flex items-center justify-center mb-4 gap-4">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcYS_xImwWt1fAYIK1UTXHtbCfmt5TOny5UQ&s" alt="לוגו זבולון עדירן" class="h-16 w-auto rounded-full shadow-md border border-gray-200">
+                <span class="text-3xl font-bold text-gray-700">|</span>
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRR1_PVzqyK74L9l5eC5grCsPGCsTinQnmHvw&s" alt="לוגו ח. סבן" class="h-16 w-auto rounded-full shadow-md border border-gray-200">
+            </div>
+            <h1 class="text-4xl font-extrabold text-dark-blue mb-2">מערכת הזמנות <span class="text-orange-500">סבן</span></h1>
+            <p class="text-lg text-gray-700 mb-4">
+                <span id="currentDateTime" class="font-medium"></span>
+            </p>
+            <h2 id="typingEffectText" class="text-2xl font-semibold text-purple-700 min-h-[32px]"></h2>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-6 relative overflow-hidden">
+                <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-2.5 rounded-full transition-all duration-500 ease-in-out" style="width: 0%;"></div>
+                <div class="flex justify-between text-xs font-medium text-gray-600 mt-2">
+                    <span id="step1Label" class="flex-1 text-center active-step">בחירת משפחה</span>
+                    <span id="step2Label" class="flex-1 text-center">פרטי הזמנה</span>
+                    <span id="step3Label" class="flex-1 text-center">בחירת מוצרים</span>
+                    <span id="step4Label" class="flex-1 text-center">אישור ושליחה</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content area - dynamic sections -->
+        <main class="flex-grow overflow-y-auto custom-scrollbar p-2">
+            <!-- Section: Login -->
+            <section id="loginContent" class="content-section">
+                <h3 class="text-2xl font-bold text-dark-blue mb-4 text-center">ברוכים הבאים!</h3>
+                <p class="text-center text-gray-700 mb-6">אנא התחבר למערכת ההזמנות.</p>
+                <div class="form-group mb-4">
+                    <label for="usernameInput" class="input-label">שם משתמש:</label>
+                    <input type="text" id="usernameInput" class="form-control" placeholder="הקלד שם משתמש">
+                </div>
+                <div class="form-group mb-6">
+                    <label for="passwordInput" class="input-label">סיסמה:</label>
+                    <input type="password" id="passwordInput" class="form-control" placeholder="הקלד סיסמה">
+                </div>
+                <button id="loginBtn" class="btn-primary w-full">
+                    <i class="fas fa-sign-in-alt mr-2"></i> התחבר
+                </button>
+            </section>
+
+            <!-- Section: Step 1 - Family Selection -->
+            <section id="step1Content" class="content-section hidden">
+                <h3 class="text-2xl font-bold text-dark-blue mb-4 text-center">שלב 1: בחר משפחה</h3>
+                <div class="form-group mb-6">
+                    <label for="familySelect" class="input-label text-lg">בחר משפחה קיימת:</label>
+                    <select id="familySelect" class="form-control text-lg py-3">
+                        <option value="">-- בחר משפחה --</option>
+                    </select>
+                </div>
+                <div id="quickFamilyButtons" class="flex flex-wrap justify-center gap-3 mb-6">
+                    <p class="w-full text-center text-gray-600 mb-2">או בחר מהרשימה המהירה:</p>
+                    <!-- Quick family buttons will be populated by JS -->
+                </div>
+            </section>
+
+            <!-- Section: Order Form (Combines former Step 2, 3, 4 logic) -->
+            <section id="orderFormContent" class="content-section hidden">
+                <h3 id="dynamicFamilyHeading" class="text-3xl font-bold text-dark-blue mb-6 text-center"></h3>
+
+                <!-- Family Details Form -->
+                <div id="familyDetailsForm" class="bg-gray-50 p-6 rounded-xl shadow-inner mb-8 border-2 border-indigo-300">
+                    <h4 class="text-xl font-semibold text-dark-blue mb-4">פרטי משפחה וכתובת</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="form-group">
+                            <label for="familyNameDisplay" class="input-label">שם משפחה:</label>
+                            <!-- This field will display the selected family name, but won't be directly editable here -->
+                            <input type="text" id="familyNameDisplay" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="addressInput" class="input-label">כתובת:</label>
+                            <input type="text" id="addressInput" class="form-control" placeholder="כתובת מלאה">
+                        </div>
+                        <div class="form-group">
+                            <label for="contactInput" class="input-label">איש קשר:</label>
+                            <input type="text" id="contactInput" class="form-control" placeholder="שם איש קשר">
+                        </div>
+                        <div class="form-group">
+                            <label for="phoneInput" class="input-label">טלפון:</label>
+                            <input type="tel" id="phoneInput" class="form-control" placeholder="מספר טלפון">
+                        </div>
+                        <div class="form-group">
+                            <label for="deliveryType" class="input-label">סוג הובלה:</label>
+                            <select id="deliveryType" class="form-control">
+                                <option value="">-- בחר סוג הובלה --</option>
+                                <option value="רגילה">רגילה</option>
+                                <option value="מנוף">מנוף</option>
+                                <option value="הובלה קטנה">הובלה קטנה</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Previous Orders History -->
+                <div class="bg-blue-50 p-6 rounded-xl shadow-inner mb-8 border-2 border-blue-400">
+                    <h4 class="text-xl font-semibold text-dark-blue mb-4 flex items-center">
+                        <i class="fas fa-history mr-2 text-blue-600"></i> היסטוריית הזמנות קודמות למשפחה
+                    </h4>
+                    <div id="historyDisplay" class="max-h-60 overflow-y-auto custom-scrollbar p-2">
+                        <p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>
+                    </div>
+                </div>
+
+                <!-- Product Selection -->
+                <div class="bg-green-50 p-6 rounded-xl shadow-inner mb-8 border-2 border-green-400">
+                    <h4 class="text-xl font-semibold text-dark-blue mb-4 flex items-center">
+                        <i class="fas fa-boxes mr-2 text-green-600"></i> בחירת מוצרים להזמנה
+                    </h4>
+                    <div id="productsContainer">
+                        <!-- Product selection rows will be added here by JS -->
+                    </div>
+                    <button id="addProductBtn" class="btn-secondary w-full mt-4">
+                        <i class="fas fa-plus-circle mr-2"></i> הוסף מוצר נוסף
+                    </button>
+                </div>
+
+                <!-- Image Upload -->
+                <div class="bg-yellow-50 p-6 rounded-xl shadow-inner mb-8 border-2 border-yellow-400">
+                    <h4 class="text-xl font-semibold text-dark-blue mb-4 flex items-center">
+                        <i class="fas fa-camera mr-2 text-yellow-600"></i> העלאת תמונת מוצר מהשטח (אופציונלי)
+                    </h4>
+                    <input type="file" id="productImage" accept="image/*" class="form-control-file w-full p-2 border border-gray-300 rounded-lg">
+                    <p class="text-sm text-gray-600 mt-2">ניתן לצרף תמונה אחת של מוצר מהאתר.</p>
+                </div>
+
+                <!-- Current Order Summary -->
+                <div class="bg-purple-50 p-6 rounded-xl shadow-inner mb-8 border-2 border-purple-400">
+                    <h4 class="text-xl font-semibold text-dark-blue mb-4 flex items-center">
+                        <i class="fas fa-shopping-cart mr-2 text-purple-600"></i> סיכום הזמנה נוכחית
+                    </h4>
+                    <input type="text" id="productFilterInput" class="form-control mb-4" placeholder="סנן מוצרים ברשימה...">
+                    <div id="currentOrderProductsList" class="max-h-60 overflow-y-auto custom-scrollbar p-2">
+                        <p class="text-gray-500 text-center">אין מוצרים בהזמנה זו עדיין.</p>
+                    </div>
+                </div>
+
+                <button id="submitOrderBtn" class="btn-primary w-full mt-6">
+                    <i class="fas fa-paper-plane mr-2"></i> שלח הזמנה
+                </button>
+            </section>
+
+            <!-- Section: Contacts List -->
+            <section id="contactsContent" class="content-section hidden">
+                <h3 class="text-2xl font-bold text-dark-blue mb-4 text-center">אנשי קשר</h3>
+                <input type="text" id="contactFilterInput" class="form-control mb-4" placeholder="סנן אנשי קשר...">
+                <div id="contactsList" class="max-h-96 overflow-y-auto custom-scrollbar p-2">
+                    <p class="text-gray-500 text-center">טוען אנשי קשר...</p>
+                </div>
+            </section>
+
+            <!-- Section: Chat Interface -->
+            <section id="chatContent" class="content-section hidden flex flex-col h-full">
+                <h3 id="chatContactNameHeader" class="text-2xl font-bold text-dark-blue mb-4 text-center">צ'אט וואטסאפ</h3>
+                <div id="chatMessages" class="flex-grow bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-y-auto custom-scrollbar mb-4 flex flex-col gap-3">
+                    <p class="text-gray-500 text-center">היסטוריית הודעות תופיע כאן.</p>
+                </div>
+                <div class="chat-input-area flex gap-2">
+                    <input type="text" id="chatInput" class="form-control flex-grow" placeholder="הקלד הודעה...">
+                    <button id="sendChatBtn" class="btn-primary flex-shrink-0 px-4 py-2">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <!-- Basic Emoji Picker (can be expanded) -->
+                <div class="flex flex-wrap gap-2 mt-2 justify-center">
+                    <button class="emoji-btn" data-emoji="😀">😀</button>
+                    <button class="emoji-btn" data-emoji="👍">👍</button>
+                    <button class="emoji-btn" data-emoji="✅">✅</button>
+                    <button class="emoji-btn" data-emoji="📦">📦</button>
+                    <button class="emoji-btn" data-emoji="🚚">🚚</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Datalist for Product Search (Global) -->
+        <datalist id="productOptions"></datalist>
+
+        <!-- Modals -->
+        <!-- Image Preview Modal -->
+        <div id="imagePreviewModal" class="modal-overlay hidden">
+            <div class="modal-content text-center image-preview-modal-content">
+                <button class="modal-close-btn" onclick="closeImagePreviewModal()"><i class="fas fa-times"></i></button>
+                <img id="previewImage" src="" alt="Product Image Preview" class="max-w-full max-h-[80vh] object-contain mx-auto rounded-lg shadow-lg">
+            </div>
+        </div>
+
+        <!-- Product Details/History Modal -->
+        <div id="productDetailsModal" class="modal-overlay hidden">
+            <div class="modal-content max-w-lg">
+                <button class="modal-close-btn" onclick="closeProductDetailsModal()"><i class="fas fa-times"></i></button>
+                <h3 id="productDetailsModalTitle" class="modal-title"></h3>
+                <div class="flex flex-col items-center mb-4">
+                    <img id="productDetailsImage" src="" alt="Product Image" class="w-24 h-24 object-contain rounded-lg border border-gray-200 shadow-sm mb-2" onerror="this.onerror=null;this.src='https://placehold.co/60x60/CCCCCC/000000?text=NoImg';">
+                    <p id="productDetailsName" class="font-semibold text-lg text-dark-blue"></p>
+                    <p id="productDetailsSku" class="text-gray-600 text-sm"></p>
+                    <p id="productDetailsQuantity" class="text-gray-700 text-base"></p>
+                    <p id="productDetailsNote" class="text-gray-700 text-base"></p>
+                </div>
+                <h4 class="text-lg font-semibold text-dark-blue mb-2 border-b pb-1">היסטוריית הזמנות למוצר זה:</h4>
+                <div id="productHistoryInModal" class="max-h-48 overflow-y-auto custom-scrollbar p-2">
+                    <!-- History will be loaded here -->
+                </div>
+                <button class="btn-primary w-full mt-4" onclick="showQuantitySelectionModal(document.getElementById('productDetailsName').innerText.replace('שם: ', ''))">
+                    <i class="fas fa-cart-plus mr-2"></i> הוסף מוצר זה להזמנה
+                </button>
+            </div>
+        </div>
+
+        <!-- Quantity Selection Modal (for adding from history) -->
+        <div id="quantitySelectionModal" class="modal-overlay hidden">
+            <div class="modal-content max-w-sm">
+                <button class="modal-close-btn" onclick="closeQuantitySelectionModal()"><i class="fas fa-times"></i></button>
+                <h3 id="modalProductName" class="modal-title mb-4"></h3>
+                <div class="form-group mb-4">
+                    <label for="modalQuantitySelect" class="input-label">כמות:</label>
+                    <input type="number" id="modalQuantitySelect" class="form-control text-center" value="1" min="1">
+                </div>
+                <button id="addHistoricalProductBtn" class="btn-primary w-full">
+                    <i class="fas fa-check-circle mr-2"></i> אשר והוסף
+                </button>
+            </div>
+        </div>
+
+        <!-- Order Confirmation Modal -->
+        <div id="orderConfirmationModal" class="modal-overlay hidden">
+            <div class="modal-content max-w-xl">
+                <button class="modal-close-btn" onclick="closeConfirmationModal()"><i class="fas fa-times"></i></button>
+                <h3 class="modal-title mb-4">אישור הזמנה</h3>
+                <div id="receiptContent" class="receipt-content bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <!-- Receipt summary will be generated here by JS -->
+                </div>
+                <!-- New WhatsApp Share Button -->
+                <button id="whatsappShareBtn" class="btn-primary w-full mt-6">
+                    <i class="fab fa-whatsapp mr-2"></i> שלח לוואטסאפ
+                </button>
+            </div>
+        </div>
+
+        <!-- Interactive Pop-up for "Product was purchased before..." -->
+        <div id="productExistsConfirmationModal" class="modal-overlay hidden">
+            <div class="modal-content max-w-sm text-center">
+                <h3 class="modal-title mb-4">המוצר קיים בהזמנה!</h3>
+                <p id="productExistsMessage" class="mb-6 text-lg text-gray-700"></p>
+                <div class="flex justify-around gap-4">
+                    <button id="confirmAddProductBtn" class="btn-primary flex-1">כן, הוסף</button>
+                    <button id="cancelAddProductBtn" class="btn-secondary flex-1">לא, תודה</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav-bar bg-white rounded-t-3xl shadow-2xl p-4 w-full max-w-4xl border-t border-blue-200 flex justify-around items-center mt-4">
+        <button id="navLoginBtn" class="nav-button active" data-target-view="login">
+            <i class="fas fa-door-open text-2xl mb-1"></i>
+            <span class="text-sm">כניסה 🚪</span>
+        </button>
+        <button id="navFamiliesBtn" class="nav-button" data-target-view="families">
+            <i class="fas fa-users text-2xl mb-1"></i>
+            <span class="text-sm">משפחות 👨‍👩‍👧‍👦</span>
+        </button>
+        <button id="navContactsBtn" class="nav-button" data-target-view="contacts">
+            <i class="fas fa-address-book text-2xl mb-1"></i>
+            <span class="text-sm">אנשי קשר ☎️</span>
+        </button>
+        <button id="navChatBtn" class="nav-button" data-target-view="chat">
+            <i class="fas fa-comments text-2xl mb-1"></i>
+            <span class="text-sm">הודעות 💬</span>
+        </button>
+    </nav>
+
+    <script>
+        // Function to show SweetAlert2 messages (Toast style)
+        function showToast(icon, title, text) {
+            const duration = text.length > 19 ? 5000 : 3000; // 5 seconds for long text, 3 for short
+            Swal.fire({
+                icon: icon,
+                title: title,
+                text: text,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: duration,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        }
+
+        // Function to show loading overlay
+        function showLoading(message = 'טוען נתונים...') {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.querySelector('p').innerText = message;
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.style.opacity = '1';
+            loadingOverlay.style.visibility = 'visible';
+        }
+
+        // Function to hide loading overlay
+        function hideLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.opacity = '0';
+            loadingOverlay.style.visibility = 'hidden';
+        }
+
+        // Global data stores
+        let familiesData = {}; // Stores family details fetched from Google Sheet "לקוחות"
+        let productsCatalog = []; // Stores product catalog fetched from Google Sheet "מחסן מוצרים"
+        let previousOrdersHistory = []; // Stores previous orders for smart history from "הזמנות קודמות"
+        let currentOrderProducts = []; // Stores products currently added to the order for display/editing
+        let allContactsData = []; // Stores all contact data from Google Sheet for Contacts screen
+        let lastOrderSummaryData = null; // Stores the last order summary data for WhatsApp sharing
+        let currentChatContact = null; // Stores the name of the contact whose chat is currently open
+
+        // Google Apps Script Web App URL
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxvBPHFmT9trPCTGGzrhcKAxik28Pzco7OAhnY0gWLFKDHzfFyHpllheCt9ac78RMH-ZA/exec'; // Updated URL based on console error
+        // Company WhatsApp Number
+        const COMPANY_WHATSAPP_NUMBER = '972508860896';
+
+        // Current step in the order process (for progress bar)
+        let currentStep = 0; // 0 for login, 1 for family select, 2 for order form, 3 for products, 4 for confirmation
+
+        // Function to update live date and time in the header
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false // 24-hour format
+            };
+            const formattedDateTime = now.toLocaleString('he-IL', options).replace(/\./g, '/').replace(',', '');
+            document.getElementById('currentDateTime').textContent = formattedDateTime;
+        }
+
+        // Function for typing effect (runs once)
+        let typingEffectPlayed = false;
+        function typeWriter(text, i, fnCallback) {
+            const typingElement = document.getElementById('typingEffectText');
+            if (i < text.length) {
+                typingElement.innerHTML = text.substring(0, i + 1) + '<span class="typing-effect"></span>';
+                setTimeout(function() {
+                    typeWriter(text, i + 1, fnCallback);
+                }, 50); // Typing speed
+            } else if (typeof fnCallback == 'function') {
+                typingElement.innerHTML = text; // Remove blinking cursor
+                // No loop, just call callback if provided
+                if (fnCallback) fnCallback();
+            }
+        }
+
+        // Function to start the typing animation (runs once)
+        function startTypingAnimation() {
+            if (!typingEffectPlayed) {
+                const phrase = "למשפחות זבולון עדירן ברוכים הבאים למערכת ההזמנות!";
+                typeWriter(phrase, 0, () => {
+                    typingEffectPlayed = true;
+                });
+            }
+        }
+
+        // Function to update the progress bar and step labels
+        function updateProgressBar(step) {
+            currentStep = step;
+            const progressBar = document.getElementById('progressBar');
+            const stepLabels = [
+                document.getElementById('step1Label'),
+                document.getElementById('step2Label'),
+                document.getElementById('step3Label'),
+                document.getElementById('step4Label')
+            ];
+
+            let progressWidth = 0;
+            switch (step) {
+                case 1: progressWidth = 25; break;
+                case 2: progressWidth = 50; break;
+                case 3: progressWidth = 75; break;
+                case 4: progressWidth = 100; break;
+                default: progressWidth = 0; // For login/other screens
+            }
+            progressBar.style.width = `${progressWidth}%`;
+
+            stepLabels.forEach((label, index) => {
+                if (index + 1 <= step) {
+                    label.classList.add('active-step');
+                } else {
+                    label.classList.remove('active-step');
+                }
+            });
+        }
+
+        // Function to switch between content sections
+        function showContent(sectionId) {
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+
+            // Update active navigation button
+            const navButtons = document.querySelectorAll('.nav-button');
+            navButtons.forEach(button => {
+                if (button.dataset.targetView === sectionId.replace('Content', '')) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+
+            // Reset progress bar if not on order form
+            if (sectionId !== 'orderFormContent') {
+                updateProgressBar(0);
+            }
+        }
+
+        // Function to fetch data from Google Apps Script
+        async function fetchDataFromGoogleSheets() {
+            showLoading('טוען נתוני משפחות, מוצרים והיסטוריית הזמנות...');
+            try {
+                const response = await fetch(`${WEB_APP_URL}?action=getInitialData`);
+                console.log('Fetch response status for getInitialData:', response.status);
+                console.log('Fetch response headers for getInitialData:', response.headers);
+
+                if (!response.ok) {
+                    const errorText = await response.text(); // Get raw error text
+                    console.error('HTTP error response text for getInitialData:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}. Response: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Parsed data from Apps Script (getInitialData):', data); // Log the parsed data
+
+                if (data.success === false) { // Assuming Apps Script sends { success: false, message: ... } on error
+                    throw new Error(data.message || 'Failed to fetch initial data from Google Sheets.');
+                }
+
+                // Populate global data stores
+                familiesData = {};
+                // Ensure data.families is an array before iterating
+                if (Array.isArray(data.families)) {
+                    data.families.forEach(family => {
+                        familiesData[family['שם משפחה']] = {
+                            address: family['כתובת'] || 'לא ידוע',
+                            contact: family['איש קשר'] || 'לא ידוע',
+                            phone: family['טלפון'] || 'לא ידוע',
+                        };
+                    });
+                } else {
+                    console.warn("data.families is not an array:", data.families);
+                    familiesData = {}; // Ensure it's empty if not an array
+                }
+
+
+                // Ensure data.products is an array before mapping
+                if (Array.isArray(data.products)) {
+                    productsCatalog = data.products.map(p => ({
+                        name: p['שם מוצר'],
+                        sku: p['מק"ט'], // This line correctly maps the SKU
+                        imageUrl: p['תמונה (URL)'] || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg'
+                    }));
+                } else {
+                    console.warn("data.products is not an array:", data.products);
+                    productsCatalog = []; // Ensure it's empty if not an array
+                }
+
+                // Ensure data.previousOrders is an array before assigning
+                if (Array.isArray(data.previousOrders)) {
+                    previousOrdersHistory = data.previousOrders;
+                } else {
+                    console.warn("data.previousOrders is not an array:", data.previousOrders);
+                    previousOrdersHistory = []; // Ensure it's empty if not an array
+                }
+
+
+                // Populate allContactsData for the Contacts screen
+                allContactsData = Object.values(familiesData).map(family => ({
+                    familyName: family.name, // Assuming family.name exists, or adjust to family['שם משפחה'] if data structure is different
+                    contactPerson: family.contact,
+                    phoneNumber: family.phone,
+                    address: family.address
+                }));
+                populateContactsList(); // Populate contacts list on load
+
+                populateFamilySelect();
+                populateQuickFamilyButtons();
+                populateProductDatalist(); // Ensure this is called once to populate the global datalist
+                addProductSelection(); // Add the first product selection row
+
+            } catch (error) {
+                console.error('Error fetching initial data:', error);
+                showToast('error', 'שגיאה', `אירעה שגיאה בטעינת הנתונים הראשוניים: ${error.message}. אנא ודא שה-Apps Script פרוס כראוי והגיליונות קיימים.`);
+                // Ensure global data stores are reset to empty arrays/objects on error to prevent further TypeErrors
+                familiesData = {};
+                productsCatalog = [];
+                previousOrdersHistory = [];
+                allContactsData = [];
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function populateFamilySelect() {
+            const familySelect = document.getElementById('familySelect');
+            // Clear existing options except the first one
+            while (familySelect.options.length > 1) {
+                familySelect.remove(1);
+            }
+            for (const familyName in familiesData) {
+                const option = document.createElement('option');
+                option.value = familyName;
+                option.textContent = familyName;
+                familySelect.appendChild(option);
+            }
+            // If no families loaded, disable select or show message
+            if (Object.keys(familiesData).length === 0) {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "אין משפחות זמינות";
+                option.disabled = true;
+                option.selected = true;
+                familySelect.appendChild(option);
+                familySelect.disabled = true;
+            } else {
+                familySelect.disabled = false;
+            }
+        }
+
+        function populateQuickFamilyButtons() {
+            const quickFamilyButtonsContainer = document.getElementById('quickFamilyButtons');
+            // Clear existing buttons, keep the instruction paragraph
+            const existingButtons = quickFamilyButtonsContainer.querySelectorAll('button');
+            existingButtons.forEach(button => button.remove());
+
+            const colorClasses = ['color-red', 'color-blue', 'color-yellow', 'color-purple', 'color-green', 'color-orange'];
+            let index = 0;
+
+            for (const familyName in familiesData) {
+                const button = document.createElement('button');
+                button.className = 'quick-family-button ' + colorClasses[index % colorClasses.length]; // Use new class for styling and assign color
+                button.textContent = familyName;
+                button.onclick = () => {
+                    document.getElementById('familySelect').value = familyName;
+                    document.getElementById('familySelect').dispatchEvent(new Event('change')); // Trigger change event
+                };
+                quickFamilyButtonsContainer.appendChild(button);
+                index++;
+            }
+        }
+
+        // This function populates the GLOBAL datalist with ALL products.
+        // The browser's native datalist filtering will then provide suggestions.
+        function populateProductDatalist() {
+            const productOptions = document.getElementById('productOptions');
+            if (productOptions) {
+                productOptions.innerHTML = ''; // Clear existing options
+                productsCatalog.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.name;
+                    option.setAttribute('data-sku', product.sku);
+                    productOptions.appendChild(option);
+                });
+            } else {
+                console.warn("Datalist element with ID 'productOptions' not found. It might be dynamically removed or not present.");
+            }
+        }
+
+        let productRowCounter = 0; // To keep track of multiple product selection rows
+
+        function addProductSelection(productToPrepopulate = null) {
+            const productsContainer = document.getElementById('productsContainer');
+            const currentIndex = productRowCounter++; // Increment counter for unique IDs
+
+            const newProductDiv = document.createElement('div');
+            newProductDiv.className = 'form-group product-selection';
+            newProductDiv.innerHTML = `
+                <label for="productSearch_${currentIndex}" class="input-label">שם מוצר / מק"ט:</label>
+                <input type="text" id="productSearch_${currentIndex}" list="productOptions" class="form-control product-search-input" placeholder="הקלד לחיפוש מוצר או בחר מהרשימה">
+
+                <input type="text" id="freeTextProduct_${currentIndex}" class="form-control free-text-product-input mt-2" placeholder="הקלד שם מוצר ידנית (לא חובה)">
+
+                <label for="quantityInput_${currentIndex}" class="input-label mt-2">כמות:</label>
+                <input type="number" id="quantityInput_${currentIndex}" class="form-control quantity-input" value="1" min="1">
+                <input type="text" id="productNote_${currentIndex}" class="form-control product-note-input mt-2" placeholder="הערה לאיש קשר למוצר (לא חובה)">
+                <div class="product-info-display mt-2" id="productInfo_${currentIndex}"></div>
+                <div class="product-history-info mt-2" id="productHistoryInfo_${currentIndex}"></div>
+                <button type="button" class="delete-product-row-btn btn-secondary mt-2 w-full glass-button" data-index="${currentIndex}">
+                    <i class="fas fa-times-circle mr-2"></i> הסר מוצר זה
+                </button>
+            `;
+            productsContainer.appendChild(newProductDiv);
+
+            // Get references to the newly created elements
+            const productSearchInput = document.getElementById(`productSearch_${currentIndex}`);
+            const freeTextProductInput = document.getElementById(`freeTextProduct_${currentIndex}`);
+            const quantityInput = document.getElementById(`quantityInput_${currentIndex}`);
+            const productNoteInput = document.getElementById(`productNote_${currentIndex}`);
+            const productInfoDiv = document.getElementById(`productInfo_${currentIndex}`);
+            const productHistoryInfoDiv = document.getElementById(`productHistoryInfo_${currentIndex}`);
+            const deleteRowBtn = document.querySelector(`.delete-product-row-btn[data-index="${currentIndex}"]`);
+
+            // Pre-populate if productToPrepopulate is provided (e.g., from history)
+            if (productToPrepopulate) {
+                if (productsCatalog.some(p => p.name === productToPrepopulate.name)) {
+                    productSearchInput.value = productToPrepopulate.name;
+                } else {
+                    freeTextProductInput.value = productToPrepopulate.name;
+                }
+                quantityInput.value = productToPrepopulate.quantity || 1;
+                productNoteInput.value = productToPrepopulate.note || '';
+                // Manually update the internal array for this new row
+                addOrUpdateCurrentOrderProduct({
+                    name: productToPrepopulate.name,
+                    sku: productToPrepopulate.sku || 'N/A',
+                    imageUrl: productToPrepopulate.imageUrl || 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                    quantity: parseInt(quantityInput.value, 10),
+                    note: productNoteInput.value.trim()
+                }, currentIndex);
+                // After pre-populating, trigger the display update
+                updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex);
+            }
+
+
+            // Event listener for product search input (datalist)
+            productSearchInput.addEventListener('input', (event) => {
+                updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex);
+            });
+
+            // Event listener for free text product input
+            freeTextProductInput.addEventListener('input', (event) => {
+                updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex);
+            });
+
+            // Event listeners for quantity and note changes to update currentOrderProducts
+            quantityInput.addEventListener('input', () => {
+                updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex);
+            });
+
+            productNoteInput.addEventListener('input', () => {
+                updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex);
+            });
+
+            // Event listener for deleting the product row from the form
+            if (deleteRowBtn) {
+                deleteRowBtn.addEventListener('click', () => {
+                    newProductDiv.remove();
+                    removeCurrentOrderProduct(currentIndex);
+                    showToast('info', 'המוצר הוסר', 'שורת המוצר הוסרה מהטופס.');
+                });
+            }
+        }
+
+        /**
+         * Updates the product display and internal data based on input changes.
+         * This function consolidates the logic for product search/free text, quantity, and notes.
+         * It also handles auto-focusing the next field.
+         */
+        function updateProductDisplayAndData(productSearchInput, freeTextProductInput, quantityInput, productNoteInput, productInfoDiv, productHistoryInfoDiv, currentIndex) {
+            const searchInputValue = productSearchInput.value.trim();
+            const freeTextInputValue = freeTextProductInput.value.trim();
+            
+            productInfoDiv.innerHTML = ''; // Clear info display
+            productHistoryInfoDiv.innerHTML = ''; // Clear history display
+
+            let productName = '';
+            let productSku = 'N/A';
+            let productImageUrl = 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg';
+
+            // Determine the active product name and if it's from catalog
+            let selectedProduct = null;
+            if (searchInputValue !== '') {
+                selectedProduct = productsCatalog.find(p => p.name === searchInputValue);
+                if (selectedProduct) {
+                    productName = selectedProduct.name;
+                    productSku = selectedProduct.sku;
+                    productImageUrl = selectedProduct.imageUrl;
+                    freeTextProductInput.value = ''; // Clear free text if catalog product is selected
+                } else {
+                    productName = searchInputValue; // Treat as free text if no exact match in catalog
+                }
+            } else if (freeTextInputValue !== '') {
+                productName = freeTextInputValue;
+            }
+
+            // Update product info display based on determined product
+            if (productName.length >= 3 || selectedProduct) { // Display info if >= 3 chars or exact match
+                if (selectedProduct) {
+                    productInfoDiv.innerHTML = `
+                        <div class="product-item-display">
+                            <img src="${productImageUrl}" alt="${productName}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${productImageUrl}')">
+                            <div class="product-details-display">
+                                <p class="product-name-display">${productName}</p>
+                                <p class="product-sku-display">מק"ט: ${productSku}</p>
+                            </div>
+                        </div>
+                    `;
+                    updateProductHistoryDisplay(productName, productHistoryInfoDiv);
+                    // Auto-focus to quantity if a product is selected/identified
+                    quantityInput.focus();
+                } else if (productName.length >= 3) { // Only show free text info if at least 3 chars
+                    productInfoDiv.innerHTML = `
+                        <div class="product-item-display">
+                            <img src="${productImageUrl}" alt="${productName}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/CCCCCC/000000?text=NoImg';">
+                            <div class="product-details-display">
+                                <p class="product-name-display">${productName} (פריט חופשי)</p>
+                                <p class="product-sku-display">מק"ט: N/A</p>
+                            </div>
+                        </div>
+                    `;
+                    productHistoryInfoDiv.innerHTML = `<p class="text-gray-500">אין היסטוריית הזמנות לפריט חופשי.</p>`;
+                    quantityInput.focus(); // Auto-focus to quantity for free text too
+                }
+            } else if (productName.length > 0 && productName.length < 3) {
+                productInfoDiv.innerHTML = `<p class="text-gray-500">הקלד לפחות 3 אותיות לחיפוש מוצר.</p>`;
+            }
+
+            // Update the global currentOrderProducts array
+            addOrUpdateCurrentOrderProduct({
+                name: productName,
+                sku: productSku,
+                imageUrl: productImageUrl,
+                quantity: parseInt(quantityInput.value, 10) || 1, // Default to 1 if invalid
+                note: productNoteInput.value.trim()
+            }, currentIndex);
+        }
+
+
+        // Function to update the history display based on the family name input
+        function updateFamilyHistoryDisplay(familyName) {
+            const historyDisplay = document.getElementById('historyDisplay');
+            historyDisplay.innerHTML = ''; // Clear existing history
+
+            if (!familyName.trim()) {
+                historyDisplay.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
+                return;
+            }
+            
+            // Check if previousOrdersHistory is defined before filtering
+            if (!previousOrdersHistory) {
+                console.error("previousOrdersHistory is undefined. Cannot update family history display.");
+                historyDisplay.innerHTML = '<p class="text-red-500">שגיאה: היסטוריית הזמנות לא נטענה. אנא רענן את הדף.</p>';
+                return;
+            }
+
+            const familyHistory = previousOrdersHistory.filter(order =>
+                order['שם משפחה'] && order['שם משפחה'].toLowerCase() === familyName.toLowerCase()
+            );
+
+            if (familyHistory.length > 0) {
+                const aggregatedHistory = {};
+                familyHistory.forEach(order => {
+                    const productName = order['שם מוצר'];
+                    const quantity = parseInt(order['כמות']) || 0;
+                    const orderDate = order['תאריך ושעה'];
+
+                    if (!aggregatedHistory[productName]) {
+                        aggregatedHistory[productName] = { totalQty: 0, lastDate: '' };
+                    }
+                    aggregatedHistory[productName].totalQty += quantity;
+                    if (orderDate > aggregatedHistory[productName].lastDate) {
+                        aggregatedHistory[productName].lastDate = orderDate;
+                    }
+                });
+
+                for (const prodName in aggregatedHistory) {
+                    const item = aggregatedHistory[prodName];
+                    const p = document.createElement('p');
+                    p.className = 'history-item';
+                    p.innerHTML = `<i class="fas fa-box"></i> ${prodName} (סה"כ: ${item.totalQty}, אחרונה: ${item.lastDate.split(',')[0]})`;
+                    p.addEventListener('click', () => {
+                        const productFromCatalog = productsCatalog.find(p => p.name === prodName);
+                        showProductDetailsModal({
+                            name: prodName,
+                            sku: productFromCatalog ? productFromCatalog.sku : 'N/A',
+                            imageUrl: productFromCatalog ? productFromCatalog.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg',
+                            quantity: item.totalQty, // This is the total historical quantity, not current order quantity
+                            note: '' // No note from history display
+                        });
+                    });
+                    historyDisplay.appendChild(p);
+                }
+            } else {
+                historyDisplay.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות זמינה למשפחה זו.</p>';
+            }
+        }
+
+
+        function updateProductHistoryDisplay(productName, displayDiv) {
+            const selectedFamilyName = document.getElementById('familyNameDisplay').value; // Get from display field
+            if (!selectedFamilyName.trim()) {
+                displayDiv.innerHTML = '';
+                return;
+            }
+
+            // Check if previousOrdersHistory is defined before filtering
+            if (!previousOrdersHistory) {
+                console.error("previousOrdersHistory is undefined. Cannot update product history display.");
+                displayDiv.innerHTML = '<p class="text-red-500">שגיאה: היסטוריית הזמנות לא נטענה.</p>';
+                return;
+            }
+
+            const familyProductOrders = previousOrdersHistory.filter(order =>
+                order['שם משפחה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === productName
+            ).sort((a, b) => {
+                    const parseDateString = (dateStr) => {
+                        const [datePart, timePart] = dateStr.split(',');
+                        const [day, month, year] = datePart.split('.').map(Number);
+                        const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                        return new Date(year, month - 1, day, hours, minutes, seconds);
+                    };
+                    const dateA = parseDateString(a['תאריך ושעה']);
+                    const dateB = parseDateString(b['תאריך ושעה']);
+                    return dateB.getTime() - dateA.getTime();
+                });
+
+            if (familyProductOrders.length > 0) {
+                const totalQuantity = familyProductOrders.reduce((sum, order) => sum + (parseInt(order['כמות']) || 0), 0);
+                
+                const lastOrderDate = familyProductOrders[0]['תאריך ושעה'].split(',')[0];
+
+                displayDiv.innerHTML = `
+                    <i class="fas fa-history"></i> המוצר '${productName}' הוזמן ${totalQuantity} פעמים (אחרונה: ${lastOrderDate})
+                `;
+            } else {
+                displayDiv.innerHTML = `<i class="fas fa-info-circle"></i> המוצר '${productName}' לא הוזמן בעבר על ידי משפחה זו.`;
+            }
+        }
+
+        let selectedHistoricalProductName = '';
+
+        function showQuantitySelectionModal(productName) {
+            selectedHistoricalProductName = productName;
+            document.getElementById('modalProductName').innerText = `הוסף: ${productName}`;
+            document.getElementById('modalQuantitySelect').value = '1'; // Reset quantity
+            document.getElementById('quantitySelectionModal').classList.remove('hidden');
+            document.getElementById('quantitySelectionModal').classList.add('active');
+        }
+
+        function closeQuantitySelectionModal() {
+            document.getElementById('quantitySelectionModal').classList.remove('active');
+            document.getElementById('quantitySelectionModal').classList.add('hidden');
+            selectedHistoricalProductName = '';
+        }
+
+        function addHistoricalProductToOrderForm() {
+            const quantity = parseInt(document.getElementById('modalQuantitySelect').value, 10);
+            if (selectedHistoricalProductName && quantity > 0) {
+                const product = productsCatalog.find(p => p.name === selectedHistoricalProductName);
+                const sku = product ? product.sku : 'N/A';
+                const imageUrl = product ? product.imageUrl : 'https://placehold.co/60x60/CCCCCC/000000?text=NoImg';
+
+                // Check if the product is already in the current order before adding
+                const isProductAlreadyInOrder = currentOrderProducts.some(p => p.name === selectedHistoricalProductName);
+
+                if (isProductAlreadyInOrder) {
+                    // Show the interactive pop-up for duplicate product
+                    document.getElementById('productExistsMessage').innerText = `המוצר '${selectedHistoricalProductName}' כבר קיים בהזמנה. האם תרצה להוסיף אותו שוב?`;
+                    document.getElementById('productExistsConfirmationModal').classList.remove('hidden');
+                    document.getElementById('productExistsConfirmationModal').classList.add('active');
+
+                    // Store the product data and a flag indicating it's from history for the pop-up's action
+                    document.getElementById('productExistsConfirmationModal').dataset.tempProductData = JSON.stringify({
+                        name: selectedHistoricalProductName,
+                        sku: sku,
+                        imageUrl: imageUrl,
+                        quantity: quantity,
+                        note: ''
+                    });
+                    document.getElementById('productExistsConfirmationModal').dataset.fromHistory = 'true';
+
+                    closeQuantitySelectionModal(); // Close the quantity selection modal
+                    return; // Stop further processing until user confirms
+                }
+
+                addProductSelection({
+                    name: selectedHistoricalProductName,
+                    sku: sku,
+                    imageUrl: imageUrl,
+                    quantity: quantity,
+                    note: ''
+                });
+
+                showToast('success', 'נוסף בהצלחה', `'${selectedHistoricalProductName}' בכמות ${quantity} נוסף להזמנה.`);
+                closeQuantitySelectionModal();
+                closeProductDetailsModal(); // Close the product details modal after adding a product from it
+            } else {
+                showToast('error', 'שגיאה', 'אנא בחר כמות חוקית.');
+            }
+        }
+
+        function addOrUpdateCurrentOrderProduct(productData, formIndex) {
+            if (formIndex === undefined) {
+                console.warn("addOrUpdateCurrentOrderProduct called without formIndex. This should ideally come from addHistoricalProductToOrderForm or addProductSelection.");
+                return;
+            }
+
+            const existingIndex = currentOrderProducts.findIndex(p => p.formIndex === formIndex);
+
+            // Filter out invalid products (empty name or zero/negative quantity)
+            if (!productData.name.trim() || productData.quantity <= 0) {
+                if (existingIndex > -1) {
+                    currentOrderProducts.splice(existingIndex, 1); // Remove invalid product
+                }
+            } else {
+                // Check for duplicate product names, excluding the current row being edited
+                const isProductAlreadyInOrder = currentOrderProducts.some(p =>
+                    p.name === productData.name && p.formIndex !== formIndex
+                );
+
+                if (isProductAlreadyInOrder) {
+                    // Show the interactive pop-up
+                    document.getElementById('productExistsMessage').innerText = `המוצר '${productData.name}' כבר קיים בהזמנה. האם תרצה להוסיף אותו שוב?`;
+                    document.getElementById('productExistsConfirmationModal').classList.remove('hidden');
+                    document.getElementById('productExistsConfirmationModal').classList.add('active');
+
+                    // Store the productData and formIndex temporarily for the pop-up's action
+                    document.getElementById('productExistsConfirmationModal').dataset.tempProductData = JSON.stringify(productData);
+                    document.getElementById('productExistsConfirmationModal').dataset.tempFormIndex = formIndex;
+                    document.getElementById('productExistsConfirmationModal').dataset.fromHistory = 'false'; // Not from history button
+
+                    // Remove the product from currentOrderProducts if it was just added by mistake
+                    if (existingIndex > -1) {
+                        currentOrderProducts.splice(existingIndex, 1);
+                    }
+                    renderCurrentOrderProducts(); // Re-render to reflect removal
+                    return; // Stop further processing until user confirms
+                }
+
+                if (existingIndex > -1) {
+                    currentOrderProducts[existingIndex] = { ...productData, formIndex };
+                } else {
+                    currentOrderProducts.push({ ...productData, formIndex });
+                }
+            }
+            renderCurrentOrderProducts(); // Re-render the display list
+        }
+
+        // Function to handle confirmation from the "Product Exists" modal
+        function handleProductExistsConfirmation(confirm) {
+            const modal = document.getElementById('productExistsConfirmationModal');
+            modal.classList.remove('active');
+            modal.classList.add('hidden');
+
+            const productData = JSON.parse(modal.dataset.tempProductData);
+            const formIndex = parseInt(modal.dataset.tempFormIndex, 10);
+            const fromHistory = modal.dataset.fromHistory === 'true';
+
+            if (confirm) {
+                // User confirmed, add the product
+                const existingIndex = currentOrderProducts.findIndex(p => p.formIndex === formIndex);
+                if (existingIndex > -1) {
+                    currentOrderProducts[existingIndex] = { ...productData, formIndex };
+                } else {
+                    currentOrderProducts.push({ ...productData, formIndex });
+                }
+                showToast('info', 'המוצר נוסף', `'${productData.name}' נוסף שוב להזמנה.`);
+            } else {
+                // User cancelled, remove the product row from the form
+                const productDivToRemove = document.querySelector(`.product-selection input[id="productSearch_${formIndex}"]`)?.closest('.product-selection') ||
+                                        document.querySelector(`.product-selection input[id="freeTextProduct_${formIndex}"]`)?.closest('.product-selection');
+                if (productDivToRemove) {
+                    productDivToRemove.remove();
+                }
+                // If it was from history, also clear the temporary data
+                if (fromHistory) {
+                    selectedHistoricalProductName = '';
+                }
+                showToast('info', 'הפעולה בוטלה', `'${productData.name}' לא נוסף שוב להזמנה.`);
+            }
+            renderCurrentOrderProducts(); // Re-render the display list
+        }
+
+
+        // Function to remove a product from currentOrderProducts
+        function removeCurrentOrderProduct(formIndex) {
+            currentOrderProducts = currentOrderProducts.filter(p => p.formIndex !== formIndex);
+            renderCurrentOrderProducts(); // Re-render the display list
+            showToast('info', 'המוצר הוסר', 'שורת המוצר הוסרה מרשימת ההזמנה.');
+        }
+
+        // Function to render the current order products list (the "table")
+        function renderCurrentOrderProducts() {
+            const listContainer = document.getElementById('currentOrderProductsList');
+            const filterInput = document.getElementById('productFilterInput');
+            const filterText = filterInput.value.trim().toLowerCase();
+
+            listContainer.innerHTML = ''; // Clear existing list
+
+            if (currentOrderProducts.length === 0) {
+                listContainer.innerHTML = '<p class="text-gray-500 text-center">אין מוצרים בהזמנה זו עדיין.</p>';
+                return;
+            }
+
+            const filteredProducts = currentOrderProducts.filter(p =>
+                p.name.toLowerCase().includes(filterText) || (p.sku && p.sku.toLowerCase().includes(filterText))
+            );
+
+            if (filteredProducts.length === 0 && filterText !== '') {
+                listContainer.innerHTML = '<p class="text-gray-500 text-center">לא נמצאו מוצרים תואמים לחיפוש.</p>';
+                return;
+            }
+
+            // Sort products alphabetically by name for consistent display
+            filteredProducts.sort((a, b) => a.name.localeCompare(b.name, 'he'));
+
+            filteredProducts.forEach(product => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'current-order-product-item';
+                itemDiv.innerHTML = `
+                    <img src="${product.imageUrl}" alt="${product.name}" class="product-image-thumb" onerror="this.onerror=null;this.src='https://placehold.co/40x40/CCCCCC/000000?text=NoImg';" onclick="showImagePreviewModal('${product.imageUrl}')">
+                    <div class="product-details-summary">
+                        <strong>${product.name}</strong>
+                        <span>מק"ט: ${product.sku}</span>
+                        <input type="text" class="product-note-input-inline" value="${product.note || ''}" placeholder="הערה" data-form-index="${product.formIndex}">
+                    </div>
+                    <div class="product-quantity-controls">
+                        <label for="qty_item_${product.formIndex}" class="sr-only">כמות</label>
+                        <input type="number" id="qty_item_${product.formIndex}" class="quantity-input-small" value="${product.quantity}" min="1">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="delete-btn glass-button" data-form-index="${product.formIndex}"><i class="fas fa-trash"></i> מחק</button>
+                    </div>
+                `;
+                listContainer.appendChild(itemDiv);
+
+                // Add event listeners for quantity change and delete button
+                const qtyInput = itemDiv.querySelector(`#qty_item_${product.formIndex}`);
+                if (qtyInput) {
+                    qtyInput.addEventListener('input', (event) => {
+                        const newQuantity = parseInt(event.target.value, 10);
+                        const productToUpdate = currentOrderProducts.find(p => p.formIndex === product.formIndex);
+                        if (productToUpdate) {
+                            if (newQuantity > 0) {
+                                productToUpdate.quantity = newQuantity;
+                            } else { 
+                                removeCurrentOrderProduct(product.formIndex);
+                            }
+                        }
+                    });
+                    // Add keyboard event listener for Enter key to move to next field
+                    qtyInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault(); // Prevent form submission
+                            const nextProductRow = itemDiv.nextElementSibling;
+                            if (nextProductRow) {
+                                const nextProductSearchInput = nextProductRow.querySelector('.product-search-input');
+                                if (nextProductSearchInput) {
+                                    nextProductSearchInput.focus();
+                                }
+                            } else {
+                                // If this is the last item, add a new row and focus its search input
+                                addProductBtn.click(); // Simulate click to add new product row
+                                // The new row will be added to the DOM; find its productSearchInput and focus it
+                                const newProductSearchInput = productsContainer.lastElementChild.querySelector('.product-search-input');
+                                if (newProductSearchInput) {
+                                    newProductSearchInput.focus();
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Add event listener for inline note editing
+                const inlineNoteInput = itemDiv.querySelector('.product-note-input-inline');
+                if (inlineNoteInput) {
+                    inlineNoteInput.addEventListener('input', (event) => {
+                        const updatedNote = event.target.value.trim();
+                        const productToUpdate = currentOrderProducts.find(p => p.formIndex === product.formIndex);
+                        if (productToUpdate) {
+                            productToUpdate.note = updatedNote;
+                        }
+                    });
+                }
+
+                const deleteButton = itemDiv.querySelector('.delete-btn');
+                if (deleteButton) {
+                    deleteButton.addEventListener('click', () => {
+                        removeCurrentOrderProduct(product.formIndex);
+                    });
+                }
+            });
+        }
+
+
+        // Image Preview Modal Functions
+        let imagePreviewTimeout;
+        function showImagePreviewModal(imageUrl) {
+            const modal = document.getElementById('imagePreviewModal');
+            const previewImage = document.getElementById('previewImage');
+
+            previewImage.src = imageUrl;
+            previewImage.classList.remove('fade-out'); // Ensure no fade-out class from previous use
+
+            modal.classList.remove('hidden');
+            modal.classList.add('active');
+
+            // Clear any existing timeout
+            if (imagePreviewTimeout) {
+                clearTimeout(imagePreviewTimeout);
+            }
+
+            // Set timeout to close modal after 5 seconds with fade effect
+            imagePreviewTimeout = setTimeout(() => {
+                previewImage.classList.add('fade-out'); // Add fade-out class
+                // After animation, hide modal
+                previewImage.addEventListener('animationend', () => {
+                    closeImagePreviewModal();
+                    previewImage.classList.remove('fade-out'); // Clean up class
+                }, { once: true }); // Ensure listener runs only once
+            }, 5000); // 5 seconds
+        }
+
+        function closeImagePreviewModal() {
+            clearTimeout(imagePreviewTimeout); // Clear any pending timeout
+            document.getElementById('imagePreviewModal').classList.remove('active');
+            document.getElementById('imagePreviewModal').classList.add('hidden');
+            document.getElementById('previewImage').src = '';
+        }
+
+        // Product Details/History Modal Functions
+        function showProductDetailsModal(product) {
+            const modal = document.getElementById('productDetailsModal');
+            document.getElementById('productDetailsModalTitle').innerText = `פרטי מוצר: ${product.name}`;
+            document.getElementById('productDetailsImage').src = product.imageUrl;
+            document.getElementById('productDetailsName').innerText = `שם: ${product.name}`;
+            document.getElementById('productDetailsSku').innerText = `מק"ט: ${product.sku}`;
+            document.getElementById('productDetailsQuantity').innerText = `כמות בהזמנה זו: ${product.quantity}`;
+            document.getElementById('productDetailsNote').innerText = product.note ? `הערה: ${product.note}` : 'אין הערה.';
+
+            const historyInModal = document.getElementById('productHistoryInModal');
+            historyInModal.innerHTML = '<p class="text-gray-500">טוען היסטוריה...</p>';
+
+            const selectedFamilyName = document.getElementById('familyNameDisplay').value; // Get from display field
+            if (!selectedFamilyName.trim()) {
+                historyInModal.innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
+                return;
+            }
+            
+            // Check if previousOrdersHistory is defined before filtering
+            if (!previousOrdersHistory) {
+                console.error("previousOrdersHistory is undefined. Cannot update product history in modal.");
+                historyInModal.innerHTML = '<p class="text-red-500">שגיאה: היסטוריית הזמנות לא נטענה.</p>';
+                return;
+            }
+
+            const productSpecificHistory = previousOrdersHistory.filter(order =>
+                order['שם משפחה'] && order['שם משפחה'].toLowerCase() === selectedFamilyName.toLowerCase() && order['שם מוצר'] === product.name
+            ).sort((a, b) => {
+                    const parseDateString = (dateStr) => {
+                        const [datePart, timePart] = dateStr.split(',');
+                        const [day, month, year] = datePart.split('.').map(Number);
+                        const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                        return new Date(year, month - 1, day, hours, minutes, seconds);
+                    };
+                    const dateA = parseDateString(a['תאריך ושעה']);
+                    const dateB = parseDateString(b['תאריך ושעה']);
+                    return dateB.getTime() - dateA.getTime();
+                });
+
+            if (productSpecificHistory.length > 0) {
+                historyInModal.innerHTML = '';
+                const ul = document.createElement('ul');
+                ul.className = 'list-none p-0';
+                productSpecificHistory.forEach(order => {
+                    const li = document.createElement('li');
+                    li.className = 'bg-white p-2 rounded-md mb-2 shadow-sm border border-gray-200';
+                    li.innerHTML = `
+                        <p><strong>משפחה:</strong> ${order['שם משפחה']}</p>
+                        <p><strong>תאריך:</strong> ${order['תאריך ושעה'].split(',')[0]}</p>
+                        <p><strong>שעה:</strong> ${order['תאריך ושעה'].split(',')[1]}</p>
+                        <p><strong>כמות:</strong> ${order['כמות']}</p>
+                    `;
+                    ul.appendChild(li);
+                });
+                historyInModal.appendChild(ul);
+            } else {
+                historyInModal.innerHTML = '<p class="text-gray-500">אין היסטוריית הזמנות למוצר זה על ידי משפחה זו.</p>';
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('active');
+        }
+
+        function closeProductDetailsModal() {
+            document.getElementById('productDetailsModal').classList.remove('active');
+            document.getElementById('productDetailsModal').classList.add('hidden');
+        }
+
+        // Modal functions for order confirmation
+        function showConfirmationModal(orderSummary) {
+            const modal = document.getElementById('orderConfirmationModal');
+            const receiptContent = document.getElementById('receiptContent');
+
+            // Store the orderSummaryData globally for WhatsApp sharing
+            lastOrderSummaryData = orderSummary;
+
+            let productsHtml = '<ul>';
+            orderSummary.products.forEach(p => {
+                productsHtml += `<li><span class="product-receipt-name">${p.name}</span> <span class="product-receipt-qty">× ${p.quantity}</span></li>`;
+                if (p.note) {
+                    productsHtml += `<li class="text-sm text-gray-600 mr-4">הערה: ${p.note}</li>`;
+                }
+            });
+            productsHtml += '</ul>';
+
+            receiptContent.innerHTML = `
+                <h4 class="text-center">קבלה / תעודת משלוח</h4>
+                <p><strong>משפחה:</strong> ${orderSummary.familyName}</p>
+                <p><strong>כתובת:</strong> ${orderSummary.address}</p>
+                <p><strong>איש קשר:</strong> ${orderSummary.contact}</p>
+                <p><strong>טלפון:</strong> ${orderSummary.phone}</p>
+                <p><strong>סוג הובלה:</strong> ${orderSummary.deliveryType || 'לא נבחר'}</p>
+                <p><strong>תאריך:</strong> ${orderSummary.timestamp.split(',')[0]}</p>
+                <p><strong>שעה:</strong> ${orderSummary.timestamp.split(',')[1]}</p>
+                <h5 class="text-xl font-semibold text-dark-blue mt-4 mb-2">פרטי מוצרים:</h5>
+                ${productsHtml}
+                ${orderSummary.imageData ? '<p class="mt-4 text-center text-gray-600"><i class="fas fa-image"></i> צורפה תמונת מוצר מהשטח</p>' : ''}
+                <p class="text-center text-lg font-bold text-dark-blue mt-6 animate-pulse-effect">
+                    לאחר בדיקת הנתונים, לחץ על הכפתור למטה לשליחה סופית!
+                </p>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('active');
+        }
+
+        function closeConfirmationModal() {
+            document.getElementById('orderConfirmationModal').classList.remove('active');
+            document.getElementById('orderConfirmationModal').classList.add('hidden');
+        }
+
+        /**
+         * Sends the order data to Google Apps Script.
+         * @param {Object} orderData The structured order data.
+         * @returns {Promise<Object>} The JSON response from the Apps Script.
+         */
+        async function sendOrder(orderData) {
+            showLoading('שולח הזמנה ושומר...');
+            const formData = new FormData();
+            formData.append('action', 'submitOrder');
+            formData.append('timestamp', orderData.timestamp);
+            formData.append('familyName', orderData.familyName);
+            formData.append('address', orderData.address);
+            formData.append('contact', orderData.contact);
+            formData.append('phone', orderData.phone);
+            formData.append('deliveryType', orderData.deliveryType);
+            // Stringify the products array as FormData does not handle nested objects directly
+            formData.append('products', JSON.stringify(orderData.products)); 
+            
+            if (orderData.imageData) {
+                // If imageData is base64 string, append it directly. Apps Script will decode.
+                formData.append('imageData', orderData.imageData);
+                formData.append('imageFileName', orderData.imageFileName || 'image.png');
+            }
+
+            try {
+                const response = await fetch(`${WEB_APP_URL}`, {
+                    method: 'POST',
+                    body: formData // No Content-Type header needed for FormData; browser sets it automatically
+                });
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error sending order:', error);
+                throw new Error(`אירעה שגיאה בשליחת ההזמנה: ${error.message}. נסה שוב מאוחר יותר.`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Generates and sends WhatsApp message.
+         * @param {Object} orderData The structured order data.
+         */
+        function sendOrderToWhatsApp(orderData) {
+            let whatsappMessage = `*📦 הזמנה חדשה - ${orderData.contact} ממשפחת ${orderData.familyName}*\n\n`; // Updated title
+            whatsappMessage += `*כתובת:* ${orderData.address}\n`;
+            whatsappMessage += `*טלפון:* ${orderData.phone}\n`;
+            whatsappMessage += `*סוג הובלה:* ${orderData.deliveryType || 'לא נבחר'}\n`;
+            whatsappMessage += `\n🧾 *מוצרים:*\n`;
+            orderData.products.forEach(p => {
+                whatsappMessage += `• ${p.name} × ${p.quantity}`;
+                if (p.note) {
+                    whatsappMessage += ` (הערה: ${p.note})`;
+                }
+                whatsappMessage += `\n`;
+            });
+            whatsappMessage += `\n🕓 *תאריך:* ${orderData.timestamp.split(',')[0]}\n`;
+            whatsappMessage += `*שעה:* ${orderData.timestamp.split(',')[1]}\n`;
+            if (orderData.imageData) { // Check imageData from the orderData object
+                whatsappMessage += `\n*הערה:* צורפה תמונה של מוצר מהשטח.`;
+            }
+
+            const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+            window.open(whatsappUrl, '_blank');
+            showToast('success', 'הודעה נשלחה', 'ההודעה נשלחה בהצלחה לווטסאפ.');
+        }
+
+        /**
+         * Main function to handle saving order and sharing.
+         * This function orchestrates sending the order and then sharing via WhatsApp.
+         */
+        async function sendOrderAndShare() {
+            const whatsappShareBtn = document.getElementById('whatsappShareBtn');
+            whatsappShareBtn.disabled = true;
+            whatsappShareBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שולח...';
+
+            // Ensure lastOrderSummaryData is available
+            if (!lastOrderSummaryData) {
+                showToast('error', 'שגיאה', 'אין נתוני הזמנה לשיתוף. אנא בצע הזמנה תחילה.');
+                whatsappShareBtn.disabled = false;
+                whatsappShareBtn.innerHTML = '<i class="fab fa-whatsapp mr-2"></i> שלח לוואטסאפ';
+                return;
+            }
+
+            // Convert image to base64 if it exists and hasn't been converted yet
+            const productImageFile = document.getElementById('productImage').files[0];
+            if (productImageFile && !lastOrderSummaryData.imageData) {
+                try {
+                    lastOrderSummaryData.imageData = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(productImageFile);
+                    });
+                    lastOrderSummaryData.imageFileName = productImageFile.name;
+                } catch (error) {
+                        console.error('Error converting image to base64 for submission:', error);
+                    showToast('error', 'שגיאה', 'אירעה שגיאה בהמרת התמונה לשליחה. נסה שוב.');
+                    whatsappShareBtn.disabled = false;
+                    whatsappShareBtn.innerHTML = '<i class="fab fa-whatsapp mr-2"></i> שלח לוואטסאפ';
+                    return;
+                }
+            }
+
+            try {
+                const result = await sendOrder(lastOrderSummaryData); // Call the new sendOrder function
+
+                if (result.success) {
+                    // Updated success message
+                    showToast('success', 'הזמנה נשלחה בהצלחה!', `שלום ${lastOrderSummaryData.contact}, ההזמנה שלך בוצעה ותועבר למחלקת הזמנות. ניצור איתך קשר למועד אספקה.`);
+                    sendOrderToWhatsApp(lastOrderSummaryData); // Call the new sendOrderToWhatsApp function
+                    
+                    // Clear form after successful submission and reset to family selection
+                    resetOrderForm();
+                    showContent('step1Content'); // Go back to family selection
+                    updateProgressBar(1); // Reset progress bar to step 1
+
+                    // Re-fetch data to update history for next order
+                    fetchDataFromGoogleSheets();
+
+                } else {
+                    showToast('error', 'שגיאה', result.message || 'אירעה שגיאה בשליחת ההזמנה.');
+                }
+            }
+            catch (error) {
+                console.error('Error in sendOrderAndShare:', error); // Log the error from sendOrder
+                showToast('error', 'שגיאה', `אירעה שגיאה בשליחת ההזמנה: ${error.message}. נסה שוב מאוחר יותר.`);
+            } finally {
+                whatsappShareBtn.disabled = false;
+                whatsappShareBtn.innerHTML = '<i class="fab fa-whatsapp mr-2"></i> שלח לוואטסאפ';
+                closeConfirmationModal(); // Close the confirmation modal
+            }
+        }
+
+
+        // Function to reset the order form fields
+        function resetOrderForm() {
+            document.getElementById('familySelect').value = ''; // Reset family select dropdown
+            document.getElementById('familyNameDisplay').value = ''; // Clear display field
+            document.getElementById('addressInput').value = '';
+            document.getElementById('contactInput').value = '';
+            document.getElementById('phoneInput').value = '';
+            document.getElementById('deliveryType').value = '';
+            document.getElementById('historyDisplay').innerHTML = '<p class="text-gray-500">בחר משפחה כדי לראות היסטוריה.</p>';
+            document.getElementById('productsContainer').innerHTML = '';
+            productRowCounter = 0;
+            currentOrderProducts = [];
+            addProductSelection(); // Add initial product row
+            renderCurrentOrderProducts();
+            document.getElementById('productImage').value = '';
+            lastOrderSummaryData = null; // Clear stored order data
+        }
+
+        // Function to populate contacts list for the "Contacts" screen
+        function populateContactsList() {
+            const contactsListContainer = document.getElementById('contactsList');
+            const contactFilterInput = document.getElementById('contactFilterInput');
+            const filterText = contactFilterInput.value.trim().toLowerCase();
+
+            contactsListContainer.innerHTML = ''; // Clear existing list
+
+            if (allContactsData.length === 0) {
+                contactsListContainer.innerHTML = '<p class="text-gray-500 text-center">אין אנשי קשר זמינים.</p>';
+                return;
+            }
+
+            const filteredContacts = allContactsData.filter(contact =>
+                (contact.contactPerson && contact.contactPerson.toLowerCase().includes(filterText)) ||
+                (contact.familyName && contact.familyName.toLowerCase().includes(filterText)) ||
+                (contact.phoneNumber && contact.phoneNumber.includes(filterText))
+            );
+
+            if (filteredContacts.length === 0 && filterText !== '') {
+                contactsListContainer.innerHTML = '<p class="text-gray-500 text-center">לא נמצאו אנשי קשר תואמים לחיפוש.</p>';
+                return;
+            }
+
+            filteredContacts.sort((a, b) => (a.contactPerson || a.familyName).localeCompare(b.contactPerson || b.familyName, 'he'));
+
+            filteredContacts.forEach(contact => {
+                const contactDiv = document.createElement('div');
+                contactDiv.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-2 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors duration-200';
+                contactDiv.innerHTML = `
+                    <div>
+                        <p class="font-semibold text-dark-blue">${contact.contactPerson || contact.familyName}</p>
+                        <p class="text-sm text-gray-600">${contact.familyName ? `משפחה: ${contact.familyName}` : ''} ${contact.phoneNumber ? `| טלפון: ${contact.phoneNumber}` : ''}</p>
+                        <p class="text-sm text-gray-600">${contact.address ? `כתובת: ${contact.address}` : ''}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn-secondary px-3 py-1 text-sm glass-button show-orders-btn" data-family-name="${contact.familyName}">
+                            <i class="fas fa-eye mr-1"></i> הצג הזמנות
+                        </button>
+                        <button class="btn-primary px-3 py-1 text-sm glass-button show-chat-btn" data-contact-person="${contact.contactPerson || contact.familyName}">
+                            <i class="fas fa-comments mr-1"></i> פתח צ'אט
+                        </button>
+                    </div>
+                `;
+                contactsListContainer.appendChild(contactDiv);
+
+                // Add event listener to the "Show Orders" button
+                contactDiv.querySelector('.show-orders-btn').addEventListener('click', (event) => {
+                    const familyName = event.target.dataset.familyName;
+                    if (familyName) {
+                        // Navigate to order form and pre-fill family data
+                        showContent('orderFormContent');
+                        document.getElementById('familySelect').value = familyName; // Set dropdown value (if it were visible)
+                        // Manually set the familyNameDisplay as the select is hidden on this screen
+                        document.getElementById('familyNameDisplay').value = familyName;
+                        const familyDetails = familiesData[familyName];
+                        if (familyDetails) {
+                            document.getElementById('addressInput').value = familyDetails.address || '';
+                            document.getElementById('contactInput').value = familyDetails.contact || '';
+                            document.getElementById('phoneInput').value = familyDetails.phone || '';
+                        }
+                        updateFamilyHistoryDisplay(familyName); // Update history for this family
+                        updateProgressBar(2); // Move to order form step
+                        showToast('info', 'פרטי משפחה נטענו', `פרטי משפחת ${familyName} נטענו לטופס ההזמנה.`);
+                    }
+                });
+
+                // Add event listener to the "Show Chat" button
+                contactDiv.querySelector('.show-chat-btn').addEventListener('click', (event) => {
+                    const contactPerson = event.target.dataset.contactPerson;
+                    if (contactPerson) {
+                        currentChatContact = contactPerson; // Set the current chat contact
+                        document.getElementById('chatContactNameHeader').innerText = `צ'אט עם ${contactPerson}`;
+                        showContent('chatContent');
+                        updateProgressBar(0); // Reset progress
+                        fetchChatHistory(contactPerson); // Fetch and display chat history for this contact
+                    }
+                });
+            });
+        }
+
+        /**
+         * Fetches chat history for a given contact from Google Apps Script.
+         * @param {string} contactName The name of the contact to fetch chat history for.
+         */
+        async function fetchChatHistory(contactName) {
+            showLoading(`טוען היסטוריית צ'אט עבור ${contactName}...`);
+            const chatMessagesContainer = document.getElementById('chatMessages');
+            chatMessagesContainer.innerHTML = ''; // Clear existing messages
+
+            try {
+                const response = await fetch(`${WEB_APP_URL}?action=getChatHistory&contactName=${encodeURIComponent(contactName)}`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}. Response: ${errorText}`);
+                }
+                const data = await response.json();
+                console.log('Chat history data:', data);
+
+                if (data.success && Array.isArray(data.chatHistory) && data.chatHistory.length > 0) {
+                    data.chatHistory.sort((a, b) => {
+                        // Assuming 'תאריך ושעה' is in 'DD.MM.YYYY, HH:MM:SS' format
+                        const parseDateTime = (dtStr) => {
+                            const [datePart, timePart] = dtStr.split(', ');
+                            const [day, month, year] = datePart.split('.').map(Number);
+                            const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                            return new Date(year, month - 1, day, hours, minutes, seconds);
+                        };
+                        return parseDateTime(a['תאריך ושעה']).getTime() - parseDateTime(b['תאריך ושעה']).getTime();
+                    });
+
+                    data.chatHistory.forEach(message => {
+                        if (message['הודעת משתמש']) {
+                            appendChatMessage(message['הודעת משתמש'], message['תאריך ושעה'], 'user');
+                        }
+                        if (message['תשובת מנהל מערכת']) {
+                            appendChatMessage(message['תשובת מנהל מערכת'], message['תאריך ושעה'], 'admin');
+                        }
+                    });
+                    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Scroll to bottom
+                } else {
+                    chatMessagesContainer.innerHTML = '<p class="text-gray-500 text-center">אין היסטוריית צ\'אט עבור איש קשר זה.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching chat history:', error);
+                showToast('error', 'שגיאה', `אירעה שגיאה בטעינת היסטוריית הצ'אט: ${error.message}`);
+                chatMessagesContainer.innerHTML = '<p class="text-red-500 text-center">שגיאה בטעינת היסטוריית צ\'אט.</p>';
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Appends a chat message to the display.
+         * @param {string} messageText The text of the message.
+         * @param {string} timestamp The timestamp of the message.
+         * @param {'user'|'admin'} senderType The type of sender ('user' or 'admin').
+         */
+        function appendChatMessage(messageText, timestamp, senderType) {
+            const chatMessagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${senderType}-message`;
+            messageDiv.innerHTML = `
+                <p>${messageText}</p>
+                <span class="message-timestamp">${timestamp.split(',')[0]} ${timestamp.split(',')[1]}</span>
+            `;
+            chatMessagesContainer.appendChild(messageDiv);
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Scroll to bottom
+        }
+
+
+        /**
+         * Sends a chat message (saves to sheet and sends to WhatsApp).
+         * @param {string} message The message to send.
+         */
+        async function sendChatMessage(message) {
+            if (!message.trim()) {
+                showToast('warning', 'הודעה ריקה', 'אנא הקלד הודעה לשליחה.');
+                return;
+            }
+            if (!currentChatContact) {
+                showToast('error', 'שגיאה', 'אנא בחר איש קשר לפני שליחת הודעה.');
+                return;
+            }
+
+            showLoading('שולח הודעה ושומר היסטוריה...');
+            const currentTimestamp = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+
+            try {
+                const formData = new FormData();
+                formData.append('action', 'saveChatMessage');
+                formData.append('contactName', currentChatContact);
+                formData.append('timestamp', currentTimestamp);
+                formData.append('userMessage', message); // User's message
+
+                const response = await fetch(`${WEB_APP_URL}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    appendChatMessage(message, currentTimestamp, 'user'); // Add to local display immediately
+                    document.getElementById('chatInput').value = ''; // Clear input
+                    showToast('success', 'הודעה נשלחה', 'ההודעה נשלחה ונשמרה בהיסטוריה.');
+
+                    // Now, send to WhatsApp externally
+                    const whatsappUrl = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(`הודעה מ${currentChatContact}:\n${message}`)}`;
+                    window.open(whatsappUrl, '_blank');
+
+                    // Re-fetch chat history to get potential admin response (polling)
+                    setTimeout(() => fetchChatHistory(currentChatContact), 1000); // Fetch after a short delay
+                } else {
+                    showToast('error', 'שגיאה', result.message || 'אירעה שגיאה בשמירת ההודעה.');
+                }
+            } catch (error) {
+                console.error('Error sending chat message:', error);
+                showToast('error', 'שגיאה', `אירעה שגיאה בשליחת ההודעה: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize live date and time
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            // Start typing animation (runs once on load)
+            startTypingAnimation();
+
+            fetchDataFromGoogleSheets(); // Load initial data
+
+            // Initial view: Login screen
+            showContent('loginContent');
+
+            // Get elements
+            const loginBtn = document.getElementById('loginBtn');
+            const familySelect = document.getElementById('familySelect');
+            const dynamicFamilyHeading = document.getElementById('dynamicFamilyHeading');
+            const familyNameDisplay = document.getElementById('familyNameDisplay'); // New display field
+            const addressInput = document.getElementById('addressInput');
+            const contactInput = document.getElementById('contactInput');
+            const phoneInput = document.getElementById('phoneInput');
+            const historyDisplay = document.getElementById('historyDisplay');
+            const addProductBtn = document.getElementById('addProductBtn');
+            const submitOrderBtn = document.getElementById('submitOrderBtn');
+            const deliveryTypeSelect = document.getElementById('deliveryType');
+            const addHistoricalProductButton = document.getElementById('addHistoricalProductBtn');
+            const productFilterInput = document.getElementById('productFilterInput');
+            const confirmAddProductBtn = document.getElementById('confirmAddProductBtn');
+            const cancelAddProductBtn = document.getElementById('cancelAddProductBtn');
+            const contactFilterInput = document.getElementById('contactFilterInput');
+            const sendChatBtn = document.getElementById('sendChatBtn');
+            const chatInput = document.getElementById('chatInput');
+            const emojiButtons = document.querySelectorAll('.emoji-btn');
+            const whatsappShareBtn = document.getElementById('whatsappShareBtn'); // New WhatsApp share button
+
+
+            // Event listeners for navigation buttons
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetView = button.dataset.targetView;
+                    if (targetView === 'families') {
+                        showContent('step1Content');
+                        updateProgressBar(1); // Set progress to step 1
+                    } else if (targetView === 'login') {
+                        showContent('loginContent');
+                        updateProgressBar(0); // Reset progress
+                    } else if (targetView === 'contacts') {
+                        showContent('contactsContent');
+                        populateContactsList(); // Re-populate contacts list on view
+                        updateProgressBar(0); // Reset progress
+                    } else if (targetView === 'chat') {
+                        showContent('chatContent');
+                        updateProgressBar(0); // Reset progress
+                        // If a chat contact is already selected, load its history
+                        if (currentChatContact) {
+                            document.getElementById('chatContactNameHeader').innerText = `צ'אט עם ${currentChatContact}`;
+                            fetchChatHistory(currentChatContact);
+                        } else {
+                            document.getElementById('chatContactNameHeader').innerText = `צ'אט וואטסאפ`;
+                            document.getElementById('chatMessages').innerHTML = '<p class="text-gray-500 text-center">אנא בחר איש קשר כדי להתחיל צ\'אט.</p>';
+                        }
+                    }
+                });
+            });
+
+
+            // Login Button (basic for now)
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    const username = document.getElementById('usernameInput').value;
+                    const password = document.getElementById('passwordInput').value;
+
+                    // Simple mock login for demonstration
+                    if (username === 'סבן' && password === '1234') { // Updated username and password
+                        showToast('success', 'התחברת בהצלחה', `שלום ${username}, ברוך הבא למערכת ההזמנות!`);
+                        showContent('step1Content'); // Go to family selection after login
+                        updateProgressBar(1); // Set progress to step 1
+                    } else {
+                        showToast('error', 'שגיאת התחברות', 'שם משתמש או סיסמה שגויים.');
+                    }
+                });
+            }
+
+
+            // Event listener for adding historical product from modal
+            if (addHistoricalProductButton) {
+                addHistoricalProductButton.addEventListener('click', addHistoricalProductToOrderForm);
+            }
+
+            // Event listeners for product exists confirmation modal
+            if (confirmAddProductBtn) {
+                confirmAddProductBtn.addEventListener('click', () => handleProductExistsConfirmation(true));
+            }
+            if (cancelAddProductBtn) {
+                cancelAddProductBtn.addEventListener('click', () => handleProductExistsConfirmation(false));
+            }
+
+            // Event listener for product filter in the current order list
+            if (productFilterInput) {
+                productFilterInput.addEventListener('input', renderCurrentOrderProducts);
+            }
+
+            // Event listener for contact filter in the contacts list
+            if (contactFilterInput) {
+                contactFilterInput.addEventListener('input', populateContactsList);
+            }
+
+            // Attach event listener for the new WhatsApp share button
+            if (whatsappShareBtn) {
+                whatsappShareBtn.addEventListener('click', () => {
+                    if (lastOrderSummaryData) {
+                        sendOrderToWhatsApp(lastOrderSummaryData);
+                    } else {
+                        showToast('error', 'שגיאה', 'אין נתוני הזמנה לשיתוף. אנא בצע הזמנה תחילה.');
+                    }
+                });
+            }
+
+
+            familySelect.addEventListener('change', (event) => {
+                const selectedFamilyName = event.target.value;
+                // Check if selectedFamilyName is valid before accessing familiesData
+                if (selectedFamilyName && familiesData[selectedFamilyName]) {
+                    showContent('orderFormContent'); // Show order form content
+                    updateProgressBar(2); // Move to Step 2 (Order Details)
+
+                    const data = familiesData[selectedFamilyName];
+                    dynamicFamilyHeading.textContent = `הזמנה עבור משפחת ${selectedFamilyName}`;
+                    familyNameDisplay.value = selectedFamilyName; // Populate the display field
+
+                    // Make fields editable and populate
+                    addressInput.value = data.address || '';
+                    addressInput.removeAttribute('readonly'); // Make editable
+                    contactInput.value = data.contact || '';
+                    contactInput.removeAttribute('readonly'); // Make editable
+                    phoneInput.value = data.phone || '';
+                    phoneInput.removeAttribute('readonly'); // Make editable
+
+                    // Show welcome message
+                    showToast('info', 'ברוך הבא!', `שלום ${data.contact || selectedFamilyName}, ברוך הבא למערכת ההזמנות!`);
+
+                    // Populate history display
+                    updateFamilyHistoryDisplay(selectedFamilyName);
+
+                    // Clear existing product selections and add a fresh one
+                    document.getElementById('productsContainer').innerHTML = '';
+                    productRowCounter = 0; // Reset counter
+                    currentOrderProducts = []; // Clear current order products when family changes
+                    addProductSelection(); // Add initial product row
+                    renderCurrentOrderProducts(); // Render the empty or updated current order list
+
+                } else {
+                    // If no family selected or invalid, reset form and go back to family selection
+                    resetOrderForm();
+                    showContent('step1Content');
+                    updateProgressBar(1);
+                    // Show a specific error if family data is missing unexpectedly
+                    if (selectedFamilyName && !familiesData[selectedFamilyName]) {
+                        showToast('error', 'שגיאה', `פרטי משפחת "${selectedFamilyName}" לא נמצאו. אנא בחר משפחה אחרת או רענן את הדף.`);
+                    }
+                }
+            });
+
+            addProductBtn.addEventListener('click', () => {
+                addProductSelection();
+                updateProgressBar(3); // Move to Step 3 (Product Selection)
+                // Auto-focus the new product search input
+                const newProductSearchInput = document.getElementById(`productSearch_${productRowCounter - 1}`);
+                if (newProductSearchInput) {
+                    newProductSearchInput.focus();
+                }
+            });
+
+            submitOrderBtn.addEventListener('click', async () => {
+                const familyName = familyNameDisplay.value; // Get from display field
+                const address = addressInput.value;
+                const contact = contactInput.value;
+                const phone = phoneInput.value;
+                const deliveryType = deliveryTypeSelect.value;
+
+                if (!familyName.trim() || !address.trim() || !contact.trim() || !phone.trim()) {
+                    showToast('error', 'שגיאה', 'אנא מלא את כל פרטי המשפחה, הכתובת, איש הקשר והטלפון.');
+                    return;
+                }
+
+                let hasValidProduct = currentOrderProducts.some(p => p.quantity > 0 && p.name.trim() !== '');
+
+                if (!hasValidProduct) {
+                    showToast('error', 'שגיאה', 'אנא בחר לפחות מוצר אחד להזמנה או הזן שם מוצר ידנית.');
+                    return;
+                }
+
+                if (!deliveryType) {
+                    showToast('error', 'שגיאה', 'אנא בחר סוג הובלה.');
+                    return;
+                }
+
+                const orderSummaryData = {
+                    timestamp: new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }),
+                    familyName,
+                    address,
+                    contact,
+                    phone,
+                    products: currentOrderProducts.map(p => ({
+                        name: p.name,
+                        sku: p.sku,
+                        quantity: p.quantity,
+                        note: p.note
+                    })),
+                    imageData: null, // Placeholder, will be populated in sendOrderAndShare
+                    imageFileName: null, // Placeholder
+                    deliveryType
+                };
+
+                // Before showing confirmation modal, convert image to base64 if it exists
+                const productImageFile = document.getElementById('productImage').files[0];
+                if (productImageFile) {
+                    try {
+                        orderSummaryData.imageData = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(productImageFile);
+                        });
+                        orderSummaryData.imageFileName = productImageFile.name;
+                    } catch (error) {
+                        console.error('Error converting image to base64 for display:', error);
+                        showToast('error', 'שגיאה', 'אירעה שגיאה בהמרת התמונה לתצוגה. ההזמנה תישלח ללא תמונה.');
+                        orderSummaryData.imageData = null;
+                        orderSummaryData.imageFileName = null;
+                    }
+                }
+
+                updateProgressBar(4); // Move to Step 4 (Summary)
+                showConfirmationModal(orderSummaryData);
+            });
+
+            // Chat functionality
+            if (sendChatBtn) {
+                sendChatBtn.addEventListener('click', () => {
+                    sendChatMessage(chatInput.value); // Use the new sendChatMessage function
+                });
+            }
+
+            if (chatInput) {
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        sendChatMessage(chatInput.value); // Use the new sendChatMessage function
+                    }
+                });
+            }
+
+            if (emojiButtons) {
+                emojiButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        chatInput.value += button.dataset.emoji;
+                        chatInput.focus(); // Keep focus on input after adding emoji
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
